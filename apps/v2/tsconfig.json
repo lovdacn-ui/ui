@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -16,6 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "nativewind",
     "incremental": true,
     "plugins": [
       {
@@ -23,19 +20,16 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/.source/*": [
-        "./.source/*"
-      ],
-      "collections/*": [
-        "./content/docs/*"
-      ]
+      "@/*": ["./*"],
+      "@/.source/*": ["./.source/*"],
+      "@preview/assets/*": ["../preview/assets/*"],
+      "@preview/*": ["../preview/src/*"],
+      "collections/*": ["./content/docs/*"]
     }
   },
   "include": [
     "next-env.d.ts",
+    "nativewind-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
@@ -43,7 +37,5 @@
     "**/*.mts",
     ".source/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }
