@@ -9,15 +9,15 @@ import {
   decodePresetWithWarnings,
   type PresetConfig,
   type PresetNormalization,
-} from '@/lib/generated/preset-catalog';
+} from '@preview/lib/generated/preset-catalog';
 import {
   CUSTOMIZER_RECIPES,
   type CustomizerRecipe,
-} from '@/lib/generated/customizer-recipes';
+} from '@preview/lib/generated/customizer-recipes';
 import {
   applyPreviewTheme,
   type PreviewColorScheme,
-} from '@/lib/preview-theme';
+} from '@preview/lib/preview-theme';
 
 const ICON_LOADERS = {
   lucide: async () => lucideIconAdapter,
@@ -43,6 +43,7 @@ type PreviewDesignSystemProviderProps = {
   revision: number;
   onApplied: (result: AppliedDesignSystem) => void;
   children: React.ReactNode;
+  cssColorValues?: boolean;
 };
 
 type LoadedResources = {
@@ -70,6 +71,7 @@ export function PreviewDesignSystemProvider({
   revision,
   onApplied,
   children,
+  cssColorValues = false,
 }: PreviewDesignSystemProviderProps) {
   const normalization = React.useMemo(() => normalizeDesign(preset), [preset]);
   const { config } = normalization;
@@ -78,9 +80,9 @@ export function PreviewDesignSystemProvider({
 
   React.useLayoutEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      applyPreviewTheme(preset, colorScheme);
+      applyPreviewTheme(preset, colorScheme, { cssColorValues });
     }
-  }, [colorScheme, preset]);
+  }, [colorScheme, cssColorValues, preset]);
 
   React.useEffect(() => {
     let active = true;

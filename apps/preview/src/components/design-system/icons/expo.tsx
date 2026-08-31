@@ -80,8 +80,6 @@ export const expoIconAdapter: IconAdapter = ({
       className={className}
       accessibilityLabel={decorative ? undefined : accessibilityLabel}
       aria-hidden={decorative}
-      accessibilityElementsHidden={decorative}
-      importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'}
     />
   )
 }

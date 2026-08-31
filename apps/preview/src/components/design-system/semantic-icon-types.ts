@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import type { SemanticIconName } from '@/lib/generated/preset-catalog';
+import type { SemanticIconName } from '@preview/lib/generated/preset-catalog';
 
 export type SemanticIconWeight =
   | 'thin'
