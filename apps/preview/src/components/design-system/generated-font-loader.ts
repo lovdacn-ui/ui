@@ -2,7 +2,7 @@
 
 import * as Font from 'expo-font'
 
-import type { PresetFont } from '@/lib/generated/preset-catalog'
+import type { PresetFont } from '@preview/lib/generated/preset-catalog'
 
 export type FontWeightRole = 'regular' | 'medium' | 'semibold' | 'bold'
 export type LoadedFontFaces = Readonly<Record<FontWeightRole, string>>

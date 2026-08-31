@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Icon } from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@preview/components/ui/avatar';
+import { Icon } from '@preview/components/ui/icon';
+import { Input } from '@preview/components/ui/input';
+import { Separator } from '@preview/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -24,9 +24,9 @@ import {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Text } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+} from '@preview/components/ui/sidebar';
+import { Text } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import {
   Bell,
   Bot,

@@ -1,5 +1,5 @@
-import { View, type SharedAnimationProps } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
+import { View, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { cn } from '@preview/lib/utils';
 import * as SwitchPrimitives from '@rn-primitives/switch';
 import { Platform } from 'react-native';
 

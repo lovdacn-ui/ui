@@ -1,10 +1,10 @@
-import { Icon } from '@/components/ui/icon';
-import { Text, TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Icon } from '@preview/components/ui/icon';
+import { Text, TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import { Slot } from '@rn-primitives/slot';
 import { ChevronRight, MoreHorizontal } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, View } from '@/components/ui/primitives';
+import { Pressable, View } from '@preview/components/ui/primitives';
 import { Platform } from 'react-native';
 
 function Breadcrumb({ ...props }: React.ComponentProps<typeof View>) {

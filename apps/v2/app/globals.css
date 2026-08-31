@@ -3,6 +3,8 @@
 @import "fumadocs-ui/css/shadcn.css";
 @import "fumadocs-ui/css/preset.css";
 
+@source "../../preview/src";
+
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant fixed (&:is(.layout-fixed *));
 
@@ -38,6 +40,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -78,6 +85,11 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0% 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -135,6 +147,83 @@
   --selection-foreground: oklch(0.205 0 0);
 }
 
+/* Docs component demos always use the Zinc preset with the small radius. */
+[data-docs-component-preview="true"] {
+  color-scheme: light;
+  --radius: 0.125rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 5.9% 10%);
+  --chart-1: hsl(240 5.9% 52%);
+  --chart-2: hsl(240 5.9% 62%);
+  --chart-3: hsl(240 5.9% 42%);
+  --chart-4: hsl(240 5.9% 72%);
+  --chart-5: hsl(240 5.9% 34%);
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --surface: var(--secondary);
+  --surface-foreground: var(--foreground);
+  --selection: var(--primary);
+  --selection-foreground: var(--primary-foreground);
+}
+
+.dark [data-docs-component-preview="true"] {
+  color-scheme: dark;
+  --background: hsl(240 10% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(240 10% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  --popover: hsl(240 10% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(0 0% 98%);
+  --primary-foreground: hsl(240 5.9% 10%);
+  --secondary: hsl(240 3.7% 15.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-foreground: hsl(240 5% 64.9%);
+  --accent: hsl(240 3.7% 15.9%);
+  --accent-foreground: hsl(0 0% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(0 0% 98%);
+  --chart-1: hsl(0 0% 58%);
+  --chart-2: hsl(0 0% 68%);
+  --chart-3: hsl(0 0% 48%);
+  --chart-4: hsl(0 0% 76%);
+  --chart-5: hsl(0 0% 40%);
+}
+
 /*
  * Beta skin — the orange theme applies ONLY while beta is active. It is driven by
  * a `beta` class on <html> (set before first paint, persisted in localStorage), so
@@ -184,7 +273,11 @@
 }
 
 .beta-panel-body {
-  color: color-mix(in oklab, var(--beta-accent-strong) 78%, var(--color-foreground));
+  color: color-mix(
+    in oklab,
+    var(--beta-accent-strong) 78%,
+    var(--color-foreground)
+  );
 }
 
 /*
@@ -262,8 +355,9 @@
  */
 .theme-morph,
 .theme-morph *:not(canvas) {
-  transition-property: background-color, border-color, color, fill, stroke,
-    box-shadow, text-decoration-color, outline-color;
+  transition-property:
+    background-color, border-color, color, fill, stroke, box-shadow,
+    text-decoration-color, outline-color;
   transition-duration: 900ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }

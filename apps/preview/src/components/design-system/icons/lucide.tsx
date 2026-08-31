@@ -130,8 +130,6 @@ export const lucideIconAdapter: IconAdapter = ({
       className={className}
       accessibilityLabel={decorative ? undefined : accessibilityLabel}
       aria-hidden={decorative}
-      accessibilityElementsHidden={decorative}
-      importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'}
     />
   )
 }

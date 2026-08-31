@@ -3,14 +3,14 @@ import { Platform, View, useColorScheme } from 'react-native';
 
 import {
   PreviewDesignSystemProvider,
-} from '@/components/design-system/preview-design-system';
-import { CustomizerDashboard } from '@/components/previews/customizer-dashboard';
+} from '@preview/components/design-system/preview-design-system';
+import { CustomizerDashboard } from '@preview/components/previews/customizer-dashboard';
 import {
   createPreviewChild,
   getReferrerOrigin,
   type PreviewChild,
-} from '@/lib/preview-protocol';
-import type { PreviewColorScheme } from '@/lib/preview-theme';
+} from '@preview/lib/preview-protocol';
+import type { PreviewColorScheme } from '@preview/lib/preview-theme';
 
 type PreviewDesign = {
   preset?: string;
@@ -36,7 +36,11 @@ function readInitialDesign(systemColorScheme: string | null | undefined): Previe
   };
 }
 
-export default function CustomizerPreviewPage() {
+export default function CustomizerPreviewPage({
+  cssColorValues = false,
+}: {
+  cssColorValues?: boolean;
+} = {}) {
   const systemColorScheme = useColorScheme();
   const [design, setDesign] = React.useState<PreviewDesign>(() =>
     readInitialDesign(systemColorScheme)
@@ -95,6 +99,7 @@ export default function CustomizerPreviewPage() {
       colorScheme={design.colorScheme}
       revision={design.revision}
       onApplied={handleApplied}
+      cssColorValues={cssColorValues}
     >
       <View
         className="flex-1 w-full bg-background"

@@ -1,19 +1,20 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
-import { Link } from 'expo-router';
-import { Apple, GalleryVerticalEnd, GitFork, Mail } from 'lucide-react-native';
-import * as React from 'react';
-import { View } from 'react-native';
+import { Button } from "@preview/components/ui/button";
+import { Card } from "@preview/components/ui/card";
+import { Icon } from "@preview/components/ui/icon";
+import { Input } from "@preview/components/ui/input";
+import { Label } from "@preview/components/ui/label";
+import { Separator } from "@preview/components/ui/separator";
+import { Text } from "@preview/components/ui/text";
+import { usePreviewNavigation } from "@preview/components/preview-navigation";
+import { Apple, GalleryVerticalEnd, GitFork, Mail } from "lucide-react-native";
+import * as React from "react";
+import { View } from "react-native";
 
 /** Preview of the `login-04` block (docs iframe). */
 export function LoginForm04() {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const navigate = usePreviewNavigation();
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
 
   return (
     <View className="mx-auto w-full max-w-4xl gap-4">
@@ -47,7 +48,12 @@ export function LoginForm04() {
               <Label nativeID="password-04">
                 <Text>Password</Text>
               </Label>
-              <Button variant="link" size="sm" className="h-auto p-0" onPress={() => {}}>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onPress={() => {}}
+              >
                 <Text>Forgot password?</Text>
               </Button>
             </View>
@@ -68,7 +74,9 @@ export function LoginForm04() {
 
           <View className="flex-row items-center gap-3">
             <Separator className="flex-1" />
-            <Text className="text-muted-foreground text-xs">OR CONTINUE WITH</Text>
+            <Text className="text-muted-foreground text-xs">
+              OR CONTINUE WITH
+            </Text>
             <Separator className="flex-1" />
           </View>
 
@@ -100,25 +108,35 @@ export function LoginForm04() {
           </View>
 
           <View className="flex-row items-center justify-center gap-1">
-            <Text className="text-muted-foreground text-sm">Don&apos;t have an account?</Text>
-            <Link href="/present?component=signup-02&chrome=web" asChild>
-              <Button variant="link" size="sm" className="h-auto p-0">
-                <Text>Sign up</Text>
-              </Button>
-            </Link>
+            <Text className="text-muted-foreground text-sm">
+              Don&apos;t have an account?
+            </Text>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0"
+              onPress={() => navigate("signup-02")}
+            >
+              <Text>Sign up</Text>
+            </Button>
           </View>
         </View>
 
         <View className="bg-primary hidden min-h-[500px] w-2/5 justify-between p-8 md:flex">
           <View className="bg-primary-foreground/15 size-12 items-center justify-center rounded-2xl">
-            <Icon as={GalleryVerticalEnd} className="text-primary-foreground" size={24} />
+            <Icon
+              as={GalleryVerticalEnd}
+              className="text-primary-foreground"
+              size={24}
+            />
           </View>
           <View className="gap-3">
             <Text className="text-primary-foreground text-3xl font-bold leading-tight">
               Everything your team needs, in one place.
             </Text>
             <Text className="text-primary-foreground/80 leading-6">
-              Sign in to continue collaborating, tracking progress, and shipping great work.
+              Sign in to continue collaborating, tracking progress, and shipping
+              great work.
             </Text>
           </View>
         </View>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { expoPreviewOrigin } from "@/lib/preview"
 import { CreateCustomizer } from "./customizer"
 import { DEFAULT_CONFIG, decodePreset } from "./preset-data"
 
@@ -37,8 +36,6 @@ export default async function CreatePage({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-background">
-      <link rel="dns-prefetch" href={expoPreviewOrigin} />
-      <link rel="preconnect" href={expoPreviewOrigin} crossOrigin="anonymous" />
       <CreateCustomizer initialConfig={initialConfig} />
     </div>
   )

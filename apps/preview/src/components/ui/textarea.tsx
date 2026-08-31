@@ -1,5 +1,5 @@
-import { TextInput } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
+import { TextInput } from '@preview/components/ui/primitives';
+import { cn } from '@preview/lib/utils';
 import { Platform } from 'react-native';
 
 function Textarea({

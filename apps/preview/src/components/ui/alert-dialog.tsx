@@ -1,10 +1,10 @@
-import { buttonTextVariants, buttonVariants } from '@/components/ui/button';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { buttonTextVariants, buttonVariants } from '@preview/components/ui/button';
+import { NativeOnlyAnimatedView } from '@preview/components/ui/native-only-animated-view';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import * as AlertDialogPrimitive from '@rn-primitives/alert-dialog';
 import * as React from 'react';
-import { durations, View } from '@/components/ui/primitives';
+import { durations, View } from '@preview/components/ui/primitives';
 import { Platform, type GestureResponderEvent, type ViewProps } from 'react-native';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';

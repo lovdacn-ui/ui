@@ -58,7 +58,6 @@ const RadiusIcon = (
 import { useTheme } from "next-themes"
 import { packageSpec, useBeta } from "@/lib/beta"
 import { cn } from "@/lib/utils"
-import { expoPreviewOrigin, getExpoCustomizerPreviewUrl } from "@/lib/preview"
 import { usePreviewHandshake } from "@/lib/use-preview-handshake"
 import { Picker } from "./picker"
 import {
@@ -166,9 +165,11 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   // not reload the Expo application.
   const [initialPresetCode] = React.useState(() => encodePreset(initialConfig))
   const webPreviewUrl = React.useMemo(
-    () => getExpoCustomizerPreviewUrl({ preset: initialPresetCode }),
+    () => `/create/preview?${new URLSearchParams({ preset: initialPresetCode }).toString()}`,
     [initialPresetCode]
   )
+  const previewOrigin =
+    typeof window === "undefined" ? "" : window.location.origin
 
   const {
     iframeRef: previewFrameRef,
@@ -179,7 +180,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
     retry: retryPreview,
   } = usePreviewHandshake({
     src: webPreviewUrl,
-    childOrigin: expoPreviewOrigin,
+    childOrigin: previewOrigin,
     colorScheme,
     preset: presetCode,
     // The frame is revealed only after it echoes back the exact preset and color

@@ -1,7 +1,7 @@
-import { Icon } from '@/components/ui/icon';
-import { Pressable, type SharedAnimationProps } from '@/components/ui/primitives';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Icon } from '@preview/components/ui/icon';
+import { Pressable, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import * as TogglePrimitive from '@rn-primitives/toggle';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { View } from '@/components/ui/primitives';
+import { View } from '@preview/components/ui/primitives';
 import { ActivityIndicator } from 'react-native';
-import { cn } from '@/lib/utils';
+import { cn } from '@preview/lib/utils';
 import { Loader2 } from 'lucide-react-native';
 import Animated, {
   cancelAnimation,
@@ -57,7 +57,7 @@ function AnimatedSpinnerIcon({ size, color }: { size: number; color?: string }) 
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
-  }));
+  }), [rotation]);
 
   return (
     <Animated.View style={animatedStyle}>

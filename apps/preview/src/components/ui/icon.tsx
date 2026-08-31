@@ -1,6 +1,6 @@
-import { View, type SharedAnimationProps } from '@/components/ui/primitives';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { View, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import type { LucideIcon, LucideProps } from 'lucide-react-native';
 import { cssInterop } from 'nativewind';
 import * as React from 'react';
@@ -33,7 +33,7 @@ cssInterop(IconImpl, {
  * @example
  * ```tsx
  * import { ArrowRight } from 'lucide-react-native';
- * import { Icon } from '@/registry/components/ui/icon';
+ * import { Icon } from '@preview/registry/components/ui/icon';
  *
  * <Icon as={ArrowRight} className="text-red-500" size={16} />
  * ```

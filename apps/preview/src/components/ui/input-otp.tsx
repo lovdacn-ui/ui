@@ -1,6 +1,6 @@
-import { Pressable, TextInput, View } from '@/components/ui/primitives';
-import { Text } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Pressable, TextInput, View } from '@preview/components/ui/primitives';
+import { Text } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import * as React from 'react';
 import { Platform } from 'react-native';
 

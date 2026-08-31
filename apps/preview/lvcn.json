@@ -9,9 +9,9 @@
     "baseColor": "olive"
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui"
+    "components": "@preview/components",
+    "utils": "@preview/lib/utils",
+    "ui": "@preview/components/ui"
   },
   "components": [
     "accordion",

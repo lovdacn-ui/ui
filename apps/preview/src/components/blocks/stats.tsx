@@ -1,13 +1,13 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@preview/components/ui/badge';
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
+} from '@preview/components/ui/card';
+import { Icon } from '@preview/components/ui/icon';
+import { Text } from '@preview/components/ui/text';
 import { TrendingDown, TrendingUp } from 'lucide-react-native';
 import * as React from 'react';
 import { View } from 'react-native';

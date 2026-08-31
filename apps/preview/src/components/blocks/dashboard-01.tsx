@@ -1,16 +1,16 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@preview/components/ui/avatar';
+import { Badge } from '@preview/components/ui/badge';
+import { Button } from '@preview/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+} from '@preview/components/ui/card';
+import { Icon } from '@preview/components/ui/icon';
+import { Input } from '@preview/components/ui/input';
+import { Separator } from '@preview/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -28,9 +28,9 @@ import {
   SidebarRail,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Text } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+} from '@preview/components/ui/sidebar';
+import { Text } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import {
   Activity,
   Bell,

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { usePreviewDesignSystem } from './preview-design-system';
 import type { SemanticIconWeight } from './semantic-icon-types';
-import type { SemanticIconName } from '@/lib/generated/preset-catalog';
+import type { SemanticIconName } from '@preview/lib/generated/preset-catalog';
 
 export type SemanticIconProps = {
   name: SemanticIconName;

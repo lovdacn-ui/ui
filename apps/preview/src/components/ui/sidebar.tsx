@@ -1,11 +1,11 @@
-import { Icon } from '@/components/ui/icon';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Text, TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Icon } from '@preview/components/ui/icon';
+import { Separator } from '@preview/components/ui/separator';
+import { Skeleton } from '@preview/components/ui/skeleton';
+import { Text, TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react-native';
-import { Pressable, View } from '@/components/ui/primitives';
+import { Pressable, View } from '@preview/components/ui/primitives';
 import * as React from 'react';
 import { AccessibilityInfo, Animated, Platform, ScrollView, useWindowDimensions } from 'react-native';
 

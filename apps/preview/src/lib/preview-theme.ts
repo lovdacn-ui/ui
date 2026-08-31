@@ -5,7 +5,7 @@ import {
   decodePresetWithWarnings,
   type PresetConfig,
   type PresetNormalization,
-} from '@/lib/generated/preset-catalog';
+} from '@preview/lib/generated/preset-catalog';
 
 export type PreviewColorScheme = 'light' | 'dark';
 
@@ -98,12 +98,20 @@ function chartRampFromHsl(hsl: string, isDark: boolean) {
   return stops.map((lightness) => `${match[1]} ${match[2]}% ${lightness}%`);
 }
 
+export type PreviewThemeOptions = {
+  /** Tailwind v4 consumes complete CSS colors instead of HSL components. */
+  cssColorValues?: boolean;
+};
+
 export function applyPreviewTheme(
   preset: string | undefined,
-  colorScheme: PreviewColorScheme
+  colorScheme: PreviewColorScheme,
+  options: PreviewThemeOptions = {}
 ): PresetNormalization | null {
   const root = document.documentElement;
   const isDark = colorScheme === 'dark';
+  const colorValue = (value: string) =>
+    options.cssColorValues ? `hsl(${value})` : value;
   root.classList.toggle('dark', isDark);
   root.style.colorScheme = colorScheme;
 
@@ -116,19 +124,19 @@ export function applyPreviewTheme(
   const baseColors = BASE_COLORS_HSL[config.baseColor] ?? BASE_COLORS_HSL.neutral;
   const activeColors = isDark ? baseColors.dark : baseColors.light;
   for (const [key, value] of Object.entries(activeColors)) {
-    root.style.setProperty(`--${key}`, value);
+    root.style.setProperty(`--${key}`, colorValue(value));
   }
 
   const theme = THEME_ACCENTS[config.theme] ?? THEME_ACCENTS.cyan;
   const activeTheme = isDark ? theme.dark : theme.light;
-  root.style.setProperty('--primary', activeTheme.primary);
-  root.style.setProperty('--primary-foreground', activeTheme.foreground);
-  root.style.setProperty('--ring', activeTheme.primary);
+  root.style.setProperty('--primary', colorValue(activeTheme.primary));
+  root.style.setProperty('--primary-foreground', colorValue(activeTheme.foreground));
+  root.style.setProperty('--ring', colorValue(activeTheme.primary));
 
   const chartTheme = THEME_ACCENTS[config.chartColor] ?? THEME_ACCENTS.teal;
   const activeChart = isDark ? chartTheme.dark : chartTheme.light;
   chartRampFromHsl(activeChart.primary, isDark).forEach((color, index) => {
-    root.style.setProperty(`--chart-${index + 1}`, color);
+    root.style.setProperty(`--chart-${index + 1}`, colorValue(color));
   });
 
   root.style.setProperty('--radius', RADIUS_VALUES[config.radius]);

@@ -1,6 +1,6 @@
-import { Pressable, View, type SharedAnimationProps } from '@/components/ui/primitives';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Pressable, View, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import * as TabsPrimitive from '@rn-primitives/tabs';
 import { Platform } from 'react-native';
 

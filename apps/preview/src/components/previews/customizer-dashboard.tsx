@@ -11,9 +11,9 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import {
   getFontFace,
   usePreviewDesignSystem,
-} from '@/components/design-system/preview-design-system';
-import { SemanticIcon } from '@/components/design-system/semantic-icon';
-import { cn } from '@/lib/utils';
+} from '@preview/components/design-system/preview-design-system';
+import { SemanticIcon } from '@preview/components/design-system/semantic-icon';
+import { cn } from '@preview/lib/utils';
 
 const TextClassContext = React.createContext('');
 
