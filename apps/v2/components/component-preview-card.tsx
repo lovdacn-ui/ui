@@ -1,103 +1,85 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useTheme } from "next-themes"
-import { cn } from "@/lib/utils"
-import { getExpoPreviewUrl, expoPreviewOrigin } from "@/lib/preview"
-import { usePreviewHandshake } from "@/lib/use-preview-handshake"
+import * as React from "react";
+import dynamic from "next/dynamic";
 
-/** Live preview frame for docs — embeds Expo Web components. */
+import { cn } from "@/lib/utils";
+
+function PreviewLoadingState() {
+  return (
+    <div
+      className="flex size-full items-center justify-center text-sm text-muted-foreground"
+      role="status"
+    >
+      Loading preview…
+    </div>
+  );
+}
+
+const InlineComponentPreview = dynamic(
+  () =>
+    import("@lvcn/preview/inline-preview").then(
+      (module) => module.InlineComponentPreview,
+    ),
+  {
+    ssr: false,
+    loading: PreviewLoadingState,
+  },
+);
+
+/** Live docs preview rendered inline through React Native Web. */
 export function ComponentPreviewCard({
   children,
   className,
   title,
   name,
 }: {
-  children?: React.ReactNode
-  className?: string
-  title?: string
-  name?: string
+  children?: React.ReactNode;
+  className?: string;
+  title?: string;
+  name?: string;
 }) {
-  const componentName = name ?? title?.toLowerCase().replace(/ /g, "-")
+  const componentName = name ?? title?.toLowerCase().replace(/ /g, "-");
   const hasTallBlockPreview = [
     "login-03",
     "login-04",
     "signup-02",
     "signup-03",
-  ].includes(componentName ?? "")
-  const { resolvedTheme } = useTheme()
-
-  const colorScheme = React.useMemo<"light" | "dark">(() => {
-    if (resolvedTheme === "dark" || resolvedTheme === "light") return resolvedTheme
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    }
-    return "light"
-  }, [resolvedTheme])
-
-  // Stable src — only the component lives in the URL. The color scheme is
-  // delivered live via postMessage so toggling dark mode never reloads (or
-  // flashes) the iframe.
-  const src = React.useMemo(
-    () => (componentName ? getExpoPreviewUrl({ component: componentName, chrome: "web" }) : ""),
-    [componentName]
-  )
-
-  // Readiness is a session handshake (see lib/preview-protocol.ts): the request
-  // is retried, and a presenter that never answers reveals a recoverable state
-  // instead of leaving the frame at opacity 0 forever.
-  const { iframeRef, frameKey, revealed, pending, unreachable, handleLoad, retry } =
-    usePreviewHandshake({ src, childOrigin: expoPreviewOrigin, colorScheme })
+  ].includes(componentName ?? "");
 
   return (
     <div
       className={cn(
         "my-6 overflow-hidden rounded-xl border border-border bg-background shadow-sm",
-        className
+        className,
       )}
     >
       <div
         className={cn(
           "relative flex w-full items-center justify-center bg-muted/5",
-          hasTallBlockPreview
-            ? "min-h-[760px]"
-            : "aspect-video min-h-[450px]"
+          hasTallBlockPreview ? "min-h-[760px]" : "aspect-video min-h-[450px]",
         )}
       >
         {componentName ? (
-          <>
-            {pending && (
-              <div
-                className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
-                role="status"
-              >
-                Loading preview…
-              </div>
-            )}
-            <iframe
-              key={frameKey}
-              ref={iframeRef}
-              src={src}
-              onLoad={handleLoad}
-              data-preview-frame="true"
-              className={cn(
-                "w-full border-0",
-                hasTallBlockPreview ? "h-[760px]" : "h-[450px]",
-                revealed ? "opacity-100" : "opacity-0"
-              )}
-              title={`${title} Live Preview`}
-            />
-          </>
+          <div
+            className="absolute inset-0"
+            data-docs-component-preview="true"
+            data-preview-inline="true"
+            role="region"
+            aria-label={`${title ?? componentName} live preview`}
+          >
+            <InlineComponentPreview component={componentName} />
+          </div>
         ) : (
-          children ?? (
-            <div className="flex flex-col items-center gap-2 text-center p-8">
+          (children ?? (
+            <div className="flex flex-col items-center gap-2 p-8 text-center">
               <div className="rounded-lg border border-dashed border-border bg-muted/40 px-6 py-4 text-sm text-muted-foreground">
                 No preview available
               </div>
             </div>
-          )
+          ))
         )}
       </div>
     </div>
-  )
+  );
 }
