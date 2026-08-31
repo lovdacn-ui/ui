@@ -1,8 +1,19 @@
 import * as React from "react";
 import { Icon } from "@/components/ui/icon";
 import { Pressable, Text, View } from "@/components/ui/primitives";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
+
+const THIS_YEAR = new Date().getFullYear();
+const DEFAULT_FROM_YEAR = THIS_YEAR - 100;
+const DEFAULT_TO_YEAR = THIS_YEAR + 20;
 
 interface CalendarProps {
   value?: Date;
@@ -10,6 +21,8 @@ interface CalendarProps {
   className?: string;
   locale?: string;
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  fromYear?: number;
+  toYear?: number;
 }
 
 function sameDay(left: Date, right: Date) {
@@ -26,8 +39,15 @@ function Calendar({
   className,
   locale,
   weekStartsOn = 0,
+  fromYear = DEFAULT_FROM_YEAR,
+  toYear = DEFAULT_TO_YEAR,
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = React.useState(value || new Date());
+
+  React.useEffect(() => {
+    if (value) setCurrentDate(value);
+  }, [value]);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDayIndex =
@@ -52,6 +72,24 @@ function Calendar({
       year: "numeric",
     },
   );
+  const monthOptions = React.useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        value: String(index),
+        label: new Date(2024, index, 1).toLocaleDateString(locale, {
+          month: "long",
+        }),
+      })),
+    [locale],
+  );
+  const yearOptions = React.useMemo(() => {
+    const firstYear = Math.min(Math.trunc(fromYear), Math.trunc(toYear), year);
+    const lastYear = Math.max(Math.trunc(fromYear), Math.trunc(toYear), year);
+    return Array.from({ length: lastYear - firstYear + 1 }, (_, index) => {
+      const optionYear = firstYear + index;
+      return { value: String(optionYear), label: String(optionYear) };
+    });
+  }, [fromYear, toYear, year]);
   const weekdays = React.useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => {
@@ -88,13 +126,60 @@ function Calendar({
         className,
       )}
     >
-      <View className="mb-4 flex-row items-center justify-between">
-        <Text
-          accessibilityRole="header"
-          className="text-foreground text-sm font-semibold leading-normal"
-        >
-          {monthLabel}
-        </Text>
+      <View className="mb-4 flex-row items-center gap-2">
+        <View className="min-w-0 flex-1 flex-row gap-2">
+          <Select
+            value={monthOptions[month]}
+            onValueChange={(option) => {
+              const nextMonth = Number(option?.value);
+              if (!Number.isInteger(nextMonth) || nextMonth < 0 || nextMonth > 11)
+                return;
+              setCurrentDate(new Date(year, nextMonth, 1));
+            }}
+          >
+            <SelectTrigger
+              accessibilityLabel="Select month"
+              className="min-w-0 flex-1"
+            >
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                />
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={{ value: String(year), label: String(year) }}
+            onValueChange={(option) => {
+              const nextYear = Number(option?.value);
+              if (!Number.isInteger(nextYear)) return;
+              setCurrentDate(new Date(nextYear, month, 1));
+            }}
+          >
+            <SelectTrigger
+              accessibilityLabel="Select year"
+              className="w-24"
+            >
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                />
+              ))}
+            </SelectContent>
+          </Select>
+        </View>
+
         <View className="flex-row gap-1">
           <Pressable
             accessibilityLabel={`Show ${previousMonthLabel}`}
@@ -147,7 +232,12 @@ function Calendar({
               accessibilityHint={today ? "Today" : undefined}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              onPress={() => onChange?.(item.date)}
+              onPress={() => {
+                setCurrentDate(
+                  new Date(item.date.getFullYear(), item.date.getMonth(), 1),
+                );
+                onChange?.(item.date);
+              }}
               className={cn(
                 "my-0.5 h-11 min-h-11 items-center justify-center rounded-md",
                 selected && "bg-primary",

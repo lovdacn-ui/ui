@@ -1,151 +1,260 @@
-import * as React from 'react';
-import { Pressable, Text, View } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import * as React from "react";
+import { Icon } from "@preview/components/ui/icon";
+import {
+  Pressable,
+  Text,
+  View,
+} from "@preview/components/ui/primitives";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@preview/components/ui/select";
+import { cn } from "@preview/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+
+const THIS_YEAR = new Date().getFullYear();
+const DEFAULT_FROM_YEAR = THIS_YEAR - 100;
+const DEFAULT_TO_YEAR = THIS_YEAR + 20;
 
 interface CalendarProps {
   value?: Date;
   onChange?: (date: Date) => void;
   className?: string;
+  locale?: string;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  fromYear?: number;
+  toYear?: number;
 }
 
-function Calendar({ value, onChange, className }: CalendarProps) {
+function sameDay(left: Date, right: Date) {
+  return (
+    left.getDate() === right.getDate() &&
+    left.getMonth() === right.getMonth() &&
+    left.getFullYear() === right.getFullYear()
+  );
+}
+
+function Calendar({
+  value,
+  onChange,
+  className,
+  locale,
+  weekStartsOn = 0,
+  fromYear = DEFAULT_FROM_YEAR,
+  toYear = DEFAULT_TO_YEAR,
+}: CalendarProps) {
   const [currentDate, setCurrentDate] = React.useState(value || new Date());
-  const selectedDate = value;
+
+  React.useEffect(() => {
+    if (value) setCurrentDate(value);
+  }, [value]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
-  // Get first day of month and total days in month
-  const firstDayIndex = new Date(year, month, 1).getDay();
+  const firstDayIndex =
+    (new Date(year, month, 1).getDay() - weekStartsOn + 7) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
-
-  // Get total days in previous month
   const totalDaysPrevMonth = new Date(year, month, 0).getDate();
+  const monthLabel = currentDate.toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  });
+  const previousMonthLabel = new Date(year, month - 1, 1).toLocaleDateString(
+    locale,
+    {
+      month: "long",
+      year: "numeric",
+    },
+  );
+  const nextMonthLabel = new Date(year, month + 1, 1).toLocaleDateString(
+    locale,
+    {
+      month: "long",
+      year: "numeric",
+    },
+  );
+  const monthOptions = React.useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        value: String(index),
+        label: new Date(2024, index, 1).toLocaleDateString(locale, {
+          month: "long",
+        }),
+      })),
+    [locale],
+  );
+  const yearOptions = React.useMemo(() => {
+    const firstYear = Math.min(Math.trunc(fromYear), Math.trunc(toYear), year);
+    const lastYear = Math.max(Math.trunc(fromYear), Math.trunc(toYear), year);
+    return Array.from({ length: lastYear - firstYear + 1 }, (_, index) => {
+      const optionYear = firstYear + index;
+      return { value: String(optionYear), label: String(optionYear) };
+    });
+  }, [fromYear, toYear, year]);
+  const weekdays = React.useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) => {
+        const sunday = new Date(2024, 0, 7 + ((weekStartsOn + index) % 7));
+        return sunday.toLocaleDateString(locale, { weekday: "short" });
+      }),
+    [locale, weekStartsOn],
+  );
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  const weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-  const days = [];
-
-  // Previous month offset days
-  for (let i = firstDayIndex - 1; i >= 0; i--) {
+  const days: Array<{ day: number; isCurrentMonth: boolean; date: Date }> = [];
+  for (let index = firstDayIndex - 1; index >= 0; index -= 1) {
     days.push({
-      day: totalDaysPrevMonth - i,
+      day: totalDaysPrevMonth - index,
       isCurrentMonth: false,
-      date: new Date(year, month - 1, totalDaysPrevMonth - i),
+      date: new Date(year, month - 1, totalDaysPrevMonth - index),
     });
   }
-
-  // Current month days
-  for (let i = 1; i <= totalDays; i++) {
-    days.push({
-      day: i,
-      isCurrentMonth: true,
-      date: new Date(year, month, i),
-    });
+  for (let day = 1; day <= totalDays; day += 1) {
+    days.push({ day, isCurrentMonth: true, date: new Date(year, month, day) });
   }
-
-  // Next month offset days to complete the calendar grid rows (6 rows * 7 days = 42 cells)
-  const remainingCells = 42 - days.length;
-  for (let i = 1; i <= remainingCells; i++) {
+  for (let day = 1; days.length < 42; day += 1) {
     days.push({
-      day: i,
+      day,
       isCurrentMonth: false,
-      date: new Date(year, month + 1, i),
+      date: new Date(year, month + 1, day),
     });
   }
-
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
-  const isSelected = (date: Date) => {
-    if (!selectedDate) return false;
-    return (
-      date.getDate() === selectedDate.getDate() &&
-      date.getMonth() === selectedDate.getMonth() &&
-      date.getFullYear() === selectedDate.getFullYear()
-    );
-  };
-
-  const handleDateSelect = (date: Date) => {
-    if (onChange) {
-      onChange(date);
-    }
-  };
 
   return (
-    <View className={cn('p-3 rounded-lg border border-border bg-background w-full max-w-[320px]', className)}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-sm font-semibold text-foreground">
-          {monthNames[month]} {year}
-        </Text>
+    <View
+      accessibilityLabel={`Calendar, ${monthLabel}`}
+      className={cn(
+        "bg-background border-border w-full max-w-sm rounded-lg border p-3",
+        className,
+      )}
+    >
+      <View className="mb-4 flex-row items-center gap-2">
+        <View className="min-w-0 flex-1 flex-row gap-2">
+          <Select
+            value={monthOptions[month]}
+            onValueChange={(option) => {
+              const nextMonth = Number(option?.value);
+              if (!Number.isInteger(nextMonth) || nextMonth < 0 || nextMonth > 11)
+                return;
+              setCurrentDate(new Date(year, nextMonth, 1));
+            }}
+          >
+            <SelectTrigger
+              accessibilityLabel="Select month"
+              className="min-w-0 flex-1"
+            >
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                />
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={{ value: String(year), label: String(year) }}
+            onValueChange={(option) => {
+              const nextYear = Number(option?.value);
+              if (!Number.isInteger(nextYear)) return;
+              setCurrentDate(new Date(nextYear, month, 1));
+            }}
+          >
+            <SelectTrigger
+              accessibilityLabel="Select year"
+              className="w-24"
+            >
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                />
+              ))}
+            </SelectContent>
+          </Select>
+        </View>
+
         <View className="flex-row gap-1">
           <Pressable
-            onPress={handlePrevMonth}
-            className="p-1.5 rounded-md border border-border active:bg-muted"
+            accessibilityLabel={`Show ${previousMonthLabel}`}
+            accessibilityRole="button"
+            onPress={() => setCurrentDate(new Date(year, month - 1, 1))}
+            className="border-border h-11 min-h-11 w-11 min-w-11 items-center justify-center rounded-md border active:bg-muted"
           >
-            <ChevronLeft size={16} className="text-foreground" />
+            <Icon as={ChevronLeft} size={18} className="text-foreground" />
           </Pressable>
           <Pressable
-            onPress={handleNextMonth}
-            className="p-1.5 rounded-md border border-border active:bg-muted"
+            accessibilityLabel={`Show ${nextMonthLabel}`}
+            accessibilityRole="button"
+            onPress={() => setCurrentDate(new Date(year, month + 1, 1))}
+            className="border-border h-11 min-h-11 w-11 min-w-11 items-center justify-center rounded-md border active:bg-muted"
           >
-            <ChevronRight size={16} className="text-foreground" />
+            <Icon as={ChevronRight} size={18} className="text-foreground" />
           </Pressable>
         </View>
       </View>
 
-      {/* Weekdays */}
-      <View className="flex-row justify-between mb-2">
+      <View className="mb-1 flex-row">
         {weekdays.map((day, index) => (
-          <View key={index} className="w-8 items-center">
-            <Text className="text-xs text-muted-foreground font-medium">{day}</Text>
+          <View
+            key={`${day}-${index}`}
+            className="items-center"
+            style={{ width: "14.2857%" }}
+          >
+            <Text className="text-muted-foreground text-xs font-medium leading-normal">
+              {day}
+            </Text>
           </View>
         ))}
       </View>
 
-      {/* Days Grid */}
-      <View className="flex-row flex-wrap justify-between">
-        {days.map((item, index) => {
-          const selected = isSelected(item.date);
-          const today = isToday(item.date);
+      <View className="flex-row flex-wrap">
+        {days.map((item) => {
+          const selected = Boolean(value && sameDay(item.date, value));
+          const today = sameDay(item.date, new Date());
+          const dateLabel = item.date.toLocaleDateString(locale, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          });
 
           return (
             <Pressable
-              key={index}
-              onPress={() => handleDateSelect(item.date)}
+              key={item.date.toISOString()}
+              accessibilityLabel={dateLabel}
+              accessibilityHint={today ? "Today" : undefined}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => {
+                setCurrentDate(
+                  new Date(item.date.getFullYear(), item.date.getMonth(), 1),
+                );
+                onChange?.(item.date);
+              }}
               className={cn(
-                'w-8 h-8 items-center justify-center rounded-md my-0.5',
-                selected && 'bg-primary text-primary-foreground',
-                !selected && today && 'bg-accent text-accent-foreground',
-                !selected && !today && 'active:bg-muted'
+                "my-0.5 h-11 min-h-11 items-center justify-center rounded-md",
+                selected && "bg-primary",
+                !selected && today && "bg-accent",
+                !selected && !today && "active:bg-muted",
               )}
+              style={{ width: "14.2857%" }}
             >
               <Text
                 className={cn(
-                  'text-xs font-medium',
-                  selected ? 'text-primary-foreground' : 'text-foreground',
-                  !item.isCurrentMonth && 'text-muted-foreground opacity-50'
+                  "text-xs font-medium leading-normal",
+                  selected ? "text-primary-foreground" : "text-foreground",
+                  !item.isCurrentMonth && "text-muted-foreground opacity-50",
                 )}
               >
                 {item.day}
@@ -158,7 +267,7 @@ function Calendar({ value, onChange, className }: CalendarProps) {
   );
 }
 
-Calendar.displayName = 'Calendar';
+Calendar.displayName = "Calendar";
 
 export { Calendar };
 export type { CalendarProps };
