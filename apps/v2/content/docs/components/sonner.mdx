@@ -60,36 +60,127 @@ bunx --bun lovdacn@latest add sonner
 <Step>Install the following dependencies:</Step>
 
 ```bash
-npm install react-native-reanimated lucide-react-native
+npm install @rn-primitives/portal react-native-reanimated react-native-safe-area-context
 ```
 
-<Step>Add the registry components this component depends on: `utils`.</Step>
+<Step>Add the registry components this component depends on: `semantic-icon`, `icon`, `primitives`, `utils`.</Step>
 
 <Step>Copy and paste the following code into your project.</Step>
 
 ```tsx title="components/ui/sonner.tsx"
+import { Icon } from '@/components/ui/icon';
 import * as React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from '@/components/ui/primitives';
 import { cn } from '@/lib/utils';
-import { X, CheckCircle2, AlertCircle, Info } from 'lucide-react-native';
-import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
+import { X, CheckCircle2, AlertCircle, Info } from '@/components/ui/semantic-icon';
+import { Portal } from '@rn-primitives/portal';
+import { AccessibilityInfo } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInUp,
+  FadeOutUp,
+  ReduceMotion,
+} from 'react-native-reanimated';
 
-type ToastType = 'default' | 'success' | 'error' | 'warning' | 'info';
+type ToastType = 'success' | 'error' | 'info';
 
-type ToastData = {
+type ToastOptions = {
+  description?: string;
+  type?: ToastType;
+  duration?: number;
+};
+
+type ToastData = Required<Pick<ToastOptions, 'type' | 'duration'>> & {
   id: string;
   title: string;
   description?: string;
-  type?: ToastType;
 };
 
-type ToastContextProps = {
-  toasts: ToastData[];
-  toast: (title: string, options?: Omit<ToastData, 'id' | 'title'>) => void;
-  dismiss: (id: string) => void;
+type ToastContextValue = {
+  toast: (title: string, options?: ToastOptions) => void;
 };
 
-const ToastContext = React.createContext<ToastContextProps | null>(null);
+type ToastProviderProps = {
+  children: React.ReactNode;
+  portal?: boolean;
+};
+
+const ToastContext = React.createContext<ToastContextValue | null>(null);
+
+let toastId = 0;
+const toastListeners = new Set<
+  (title: string, options?: ToastOptions) => void
+>();
+
+const toast = {
+  show(title: string, options?: ToastOptions) {
+    toastListeners.forEach((listener) => listener(title, options));
+  },
+};
+
+function ToastProvider({ children, portal = true }: ToastProviderProps) {
+  const [toasts, setToasts] = React.useState<ToastData[]>([]);
+
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((current) => current.filter((item) => item.id !== id));
+  }, []);
+
+  const showToast = React.useCallback(
+    (title: string, options: ToastOptions = {}) => {
+      const nextToast: ToastData = {
+        id: `toast-${++toastId}`,
+        title,
+        description: options.description,
+        type: options.type ?? 'info',
+        duration: options.duration ?? 4000,
+      };
+
+      setToasts((current) => [...current, nextToast].slice(-3));
+
+      const announcement = options.description
+        ? `${title}. ${options.description}`
+        : title;
+      AccessibilityInfo.announceForAccessibility(announcement);
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    for (const item of toasts) {
+      timers.set(
+        item.id,
+        setTimeout(() => removeToast(item.id), item.duration)
+      );
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [toasts, removeToast]);
+
+  React.useEffect(() => {
+    const listener = (title: string, options?: ToastOptions) =>
+      showToast(title, options);
+    toastListeners.add(listener);
+    return () => {
+      toastListeners.delete(listener);
+    };
+  }, [showToast]);
+
+  const value = React.useMemo(() => ({ toast: showToast }), [showToast]);
+  const viewport = (
+    <ToastViewport toasts={toasts} onDismiss={removeToast} />
+  );
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      {portal ? (
+        <Portal name="lovdacn-toast-viewport">{viewport}</Portal>
+      ) : (
+        viewport
+      )}
+    </ToastContext.Provider>
+  );
+}
 
 function useToast() {
   const context = React.useContext(ToastContext);
@@ -99,87 +190,88 @@ function useToast() {
   return context;
 }
 
-function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToastData[]>([]);
+const toastVariants = {
+  success: {
+    icon: CheckCircle2,
+    iconClassName: 'text-green-600 dark:text-green-500',
+  },
+  error: {
+    icon: AlertCircle,
+    iconClassName: 'text-destructive',
+  },
+  info: {
+    icon: Info,
+    iconClassName: 'text-foreground',
+  },
+} as const;
 
-  const toast = React.useCallback((title: string, options?: Omit<ToastData, 'id' | 'title'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const newToast: ToastData = {
-      id,
-      title,
-      ...options,
-    };
-    setToasts((prev) => [...prev, newToast]);
-
-    // Auto dismiss after 4 seconds
-    setTimeout(() => {
-      dismiss(id);
-    }, 4000);
-  }, []);
-
-  const dismiss = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+function AnimatedToast({
+  item,
+  onDismiss,
+}: {
+  item: ToastData;
+  onDismiss: (id: string) => void;
+}) {
+  const variant = toastVariants[item.type];
+  const VariantIcon = variant.icon;
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
-      {children}
-      <ToastViewport />
-    </ToastContext.Provider>
+    <Animated.View
+      entering={FadeInUp.reduceMotion(ReduceMotion.System)}
+      exiting={FadeOutUp.reduceMotion(ReduceMotion.System)}
+      style={{ width: '100%', maxWidth: 400 }}>
+      <View
+        accessibilityRole="alert"
+        className={cn(
+          'bg-background border-border pointer-events-auto w-full max-w-[400px] flex-row items-start gap-3 rounded-lg border p-4 shadow-md'
+        )}>
+        <Icon as={VariantIcon} size={20} className={variant.iconClassName} />
+        <View className="flex-1 gap-1">
+          <Text className="text-foreground text-sm font-semibold">
+            {item.title}
+          </Text>
+          {item.description ? (
+            <Text className="text-muted-foreground text-sm">
+              {item.description}
+            </Text>
+          ) : null}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss notification"
+          onPress={() => onDismiss(item.id)}
+          className="opacity-70 active:opacity-100">
+          <Icon as={X} size={16} className="text-muted-foreground" />
+        </Pressable>
+      </View>
+    </Animated.View>
   );
 }
 
-function ToastViewport() {
-  const { toasts, dismiss } = useToast();
+function ToastViewport({
+  toasts,
+  onDismiss,
+}: {
+  toasts: ToastData[];
+  onDismiss: (id: string) => void;
+}) {
+  const insets = React.useContext(SafeAreaInsetsContext);
 
   return (
-    <View className="absolute top-12 left-4 right-4 z-50 flex-col items-center pointer-events-none gap-2">
+    <View
+      style={{
+        top: Math.max(insets?.top ?? 0, 16),
+        pointerEvents: 'box-none',
+      }}
+      className="absolute right-4 left-4 z-50 flex-col items-center gap-2">
       {toasts.map((item) => (
-        <AnimatedToast key={item.id} item={item} onDismiss={() => dismiss(item.id)} />
+        <AnimatedToast key={item.id} item={item} onDismiss={onDismiss} />
       ))}
     </View>
   );
 }
 
-function AnimatedToast({ item, onDismiss }: { item: ToastData; onDismiss: () => void }) {
-  const icons = {
-    success: <CheckCircle2 size={18} className="text-green-500" />,
-    error: <AlertCircle size={18} className="text-destructive" />,
-    warning: <AlertCircle size={18} className="text-yellow-500" />,
-    info: <Info size={18} className="text-blue-500" />,
-    default: null,
-  };
-
-  return (
-    <Animated.View
-      entering={FadeInUp}
-      exiting={FadeOutUp}
-      className={cn(
-        'w-full max-w-[400px] flex-row items-start gap-3 p-4 rounded-lg border border-border bg-background shadow-md pointer-events-auto'
-      )}
-    >
-      {item.type && icons[item.type]}
-      <View className="flex-1">
-        <Text className="text-sm font-semibold text-foreground">{item.title}</Text>
-        {item.description && (
-          <Text className="text-xs text-muted-foreground mt-1">{item.description}</Text>
-        )}
-      </View>
-      <Pressable onPress={onDismiss} className="p-1 rounded-md active:bg-muted">
-        <X size={14} className="text-muted-foreground" />
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-const toast = {
-  show: (title: string, options?: Omit<ToastData, 'id' | 'title'>) => {
-    // Provided for programmatic trigger similarity to web
-  }
-};
-
 export { ToastProvider, useToast, toast };
-export type { ToastData, ToastType };
 ```
 
 <Step>Update the import paths to match your project setup.</Step>
@@ -189,7 +281,7 @@ export type { ToastData, ToastType };
 </TabsContent>
 </Tabs>
 
-**Registry dependencies:** `utils`
+**Registry dependencies:** `semantic-icon`, `icon`, `primitives`, `utils`
 
 ## Usage
 
