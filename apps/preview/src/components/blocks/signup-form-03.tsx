@@ -1,39 +1,46 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@preview/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Text } from '@/components/ui/text';
-import { Link } from 'expo-router';
-import { GalleryVerticalEnd } from 'lucide-react-native';
-import * as React from 'react';
-import { View } from 'react-native';
+} from "@preview/components/ui/card";
+import { Icon } from "@preview/components/ui/icon";
+import { Input } from "@preview/components/ui/input";
+import { Label } from "@preview/components/ui/label";
+import { Text } from "@preview/components/ui/text";
+import { usePreviewNavigation } from "@preview/components/preview-navigation";
+import { GalleryVerticalEnd } from "lucide-react-native";
+import * as React from "react";
+import { View } from "react-native";
 
 /** Preview of the `signup-03` block (docs iframe). */
 export function SignupForm03() {
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [confirmation, setConfirmation] = React.useState('');
+  const navigate = usePreviewNavigation();
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmation, setConfirmation] = React.useState("");
 
   return (
     <View className="mx-auto w-full max-w-sm gap-6">
       <View className="flex-row items-center justify-center gap-2">
         <View className="bg-primary size-7 items-center justify-center rounded-lg">
-          <Icon as={GalleryVerticalEnd} className="text-primary-foreground" size={16} />
+          <Icon
+            as={GalleryVerticalEnd}
+            className="text-primary-foreground"
+            size={16}
+          />
         </View>
         <Text className="font-medium">Acme Inc.</Text>
       </View>
 
       <Card>
         <CardHeader className="items-center gap-1">
-          <CardTitle className="text-center text-xl">Create your account</CardTitle>
+          <CardTitle className="text-center text-xl">
+            Create your account
+          </CardTitle>
           <CardDescription className="text-center">
             Enter your details below to get started
           </CardDescription>
@@ -109,12 +116,17 @@ export function SignupForm03() {
           </Button>
 
           <View className="flex-row items-center justify-center gap-1">
-            <Text className="text-muted-foreground text-sm">Already have an account?</Text>
-            <Link href="/present?component=login-03&chrome=web" asChild>
-              <Button variant="link" size="sm" className="h-auto p-0">
-                <Text>Sign in</Text>
-              </Button>
-            </Link>
+            <Text className="text-muted-foreground text-sm">
+              Already have an account?
+            </Text>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0"
+              onPress={() => navigate("login-03")}
+            >
+              <Text>Sign in</Text>
+            </Button>
           </View>
         </CardContent>
       </Card>

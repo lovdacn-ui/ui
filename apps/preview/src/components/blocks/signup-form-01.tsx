@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@preview/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,11 +6,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Text } from '@/components/ui/text';
+} from '@preview/components/ui/card';
+import { Checkbox } from '@preview/components/ui/checkbox';
+import { Input } from '@preview/components/ui/input';
+import { Label } from '@preview/components/ui/label';
+import { Text } from '@preview/components/ui/text';
 import * as React from 'react';
 import { View } from 'react-native';
 
