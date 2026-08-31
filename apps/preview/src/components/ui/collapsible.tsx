@@ -1,4 +1,4 @@
-import { Pressable, View, type SharedAnimationProps } from '@/components/ui/primitives';
+import { Pressable, View, type SharedAnimationProps } from '@preview/components/ui/primitives';
 import * as CollapsiblePrimitive from '@rn-primitives/collapsible';
 import * as React from 'react';
 

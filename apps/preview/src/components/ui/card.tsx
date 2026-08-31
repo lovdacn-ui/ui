@@ -1,6 +1,6 @@
-import { View } from '@/components/ui/primitives';
-import { Text, TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { View } from '@preview/components/ui/primitives';
+import { Text, TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 
 function Card({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {
   return (

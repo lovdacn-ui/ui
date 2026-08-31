@@ -1,4 +1,4 @@
-import { View, type SharedAnimationProps } from '@/components/ui/primitives';
+import { View, type SharedAnimationProps } from '@preview/components/ui/primitives';
 import * as AspectRatioPrimitive from '@rn-primitives/aspect-ratio';
 
 function AspectRatio({

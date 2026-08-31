@@ -1,6 +1,6 @@
-import { Icon } from '@/components/ui/icon';
-import { View, type SharedAnimationProps } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
+import { Icon } from '@preview/components/ui/icon';
+import { View, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { cn } from '@preview/lib/utils';
 import * as CheckboxPrimitive from '@rn-primitives/checkbox';
 import { Check } from 'lucide-react-native';
 import { Platform } from 'react-native';

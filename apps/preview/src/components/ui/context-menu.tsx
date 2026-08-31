@@ -1,11 +1,11 @@
-import { Icon } from '@/components/ui/icon';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { Icon } from '@preview/components/ui/icon';
+import { NativeOnlyAnimatedView } from '@preview/components/ui/native-only-animated-view';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import * as ContextMenuPrimitive from '@rn-primitives/context-menu';
 import { Check, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react-native';
 import * as React from 'react';
-import { durations, Text, View } from '@/components/ui/primitives';
+import { durations, Text, View } from '@preview/components/ui/primitives';
 import { Platform, type StyleProp, StyleSheet, type ViewStyle } from 'react-native';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';

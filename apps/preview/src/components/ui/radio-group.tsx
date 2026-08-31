@@ -1,5 +1,5 @@
-import { View, type SharedAnimationProps } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
+import { View, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { cn } from '@preview/lib/utils';
 import * as RadioGroupPrimitive from '@rn-primitives/radio-group';
 import * as React from 'react';
 import { Platform } from 'react-native';

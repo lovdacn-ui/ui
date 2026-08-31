@@ -1,5 +1,5 @@
-import { Text, type SharedAnimationProps } from '@/components/ui/primitives';
-import { cn } from '@/lib/utils';
+import { Text, type SharedAnimationProps } from '@preview/components/ui/primitives';
+import { cn } from '@preview/lib/utils';
 import * as LabelPrimitive from '@rn-primitives/label';
 import { Platform } from 'react-native';
 

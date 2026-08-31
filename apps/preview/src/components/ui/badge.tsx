@@ -1,6 +1,6 @@
-import { View } from '@/components/ui/primitives';
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { View } from '@preview/components/ui/primitives';
+import { TextClassContext } from '@preview/components/ui/text';
+import { cn } from '@preview/lib/utils';
 import { Slot } from '@rn-primitives/slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform } from 'react-native';
