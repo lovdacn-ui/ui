@@ -228,7 +228,7 @@ type LoopKind = 'spin' | 'pulse' | 'bounce' | 'shake' | 'wiggle';
 
 /**
  * Shared timing tokens — the single vocabulary for animation duration/easing across
- * lovdaCN. Components import these from `@/components/ui/primitives` (which mirrors
+ * lovdaCN. Components import these from `@preview/components/ui/primitives` (which mirrors
  * them) so they never have to depend on this engine directly.
  *
  * Keep these values in sync with the copies in the PLAIN primitives variant and with
@@ -950,19 +950,52 @@ export function useMotion(config: UseMotionConfig) {
 
   // One derived value per animatable property. Each re-runs ONLY when a discrete
   // state shared value changes — never every frame — and starts the animation.
-  const opacity = useDerivedValue(() => resolveInvented('opacity'));
-  const scale = useDerivedValue(() => resolveInvented('scale'));
-  const scaleX = useDerivedValue(() => resolveInvented('scaleX'));
-  const scaleY = useDerivedValue(() => resolveInvented('scaleY'));
-  const translateX = useDerivedValue(() => resolveInvented('translateX'));
-  const translateY = useDerivedValue(() => resolveInvented('translateY'));
-  const rotate = useDerivedValue(() => resolveInvented('rotate'));
-  const rotateX = useDerivedValue(() => resolveInvented('rotateX'));
-  const rotateY = useDerivedValue(() => resolveInvented('rotateY'));
-  const backgroundColor = useDerivedValue(() => resolveOptional('backgroundColor'));
-  const borderColor = useDerivedValue(() => resolveOptional('borderColor'));
-  const color = useDerivedValue(() => resolveOptional('color'));
-  const borderRadius = useDerivedValue(() => resolveOptional('borderRadius'));
+  // Explicit dependencies are required on web when the Reanimated Babel/worklets
+  // transform is not present (for example, inside the Next.js documentation app).
+  // Give every hook its own array because Reanimated appends an internal hash to it.
+  const webMotionInputs: unknown[] = [
+    n,
+    pressed,
+    hovered,
+    focused,
+    dragging,
+    semActive,
+    isDisabled,
+    mounted,
+    entrance,
+    rm,
+  ];
+  const opacity = useDerivedValue(
+    () => resolveInvented('opacity'),
+    [...webMotionInputs]
+  );
+  const scale = useDerivedValue(() => resolveInvented('scale'), [...webMotionInputs]);
+  const scaleX = useDerivedValue(() => resolveInvented('scaleX'), [...webMotionInputs]);
+  const scaleY = useDerivedValue(() => resolveInvented('scaleY'), [...webMotionInputs]);
+  const translateX = useDerivedValue(
+    () => resolveInvented('translateX'),
+    [...webMotionInputs]
+  );
+  const translateY = useDerivedValue(
+    () => resolveInvented('translateY'),
+    [...webMotionInputs]
+  );
+  const rotate = useDerivedValue(() => resolveInvented('rotate'), [...webMotionInputs]);
+  const rotateX = useDerivedValue(() => resolveInvented('rotateX'), [...webMotionInputs]);
+  const rotateY = useDerivedValue(() => resolveInvented('rotateY'), [...webMotionInputs]);
+  const backgroundColor = useDerivedValue(
+    () => resolveOptional('backgroundColor'),
+    [...webMotionInputs]
+  );
+  const borderColor = useDerivedValue(
+    () => resolveOptional('borderColor'),
+    [...webMotionInputs]
+  );
+  const color = useDerivedValue(() => resolveOptional('color'), [...webMotionInputs]);
+  const borderRadius = useDerivedValue(
+    () => resolveOptional('borderRadius'),
+    [...webMotionInputs]
+  );
 
   // useAnimatedStyle ONLY reads shared values and assembles the style. Motion owns the whole
   // transform array (composing the static operations it does not drive) and emits a property
@@ -1023,7 +1056,26 @@ export function useMotion(config: UseMotionConfig) {
     if (radius !== undefined) style.borderRadius = radius as number;
 
     return style;
-  });
+  }, [
+    backgroundColor,
+    borderColor,
+    borderRadius,
+    color,
+    composedStaticTransform,
+    loopKind,
+    loopProgress,
+    n,
+    opacity,
+    rm,
+    rotate,
+    rotateX,
+    rotateY,
+    scale,
+    scaleX,
+    scaleY,
+    translateX,
+    translateY,
+  ]);
 
   // Interaction handlers set discrete shared values. Setting `.value` from JS is
   // safe here (these are discrete, not per-frame). Reset on cancel/blur.

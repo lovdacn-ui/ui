@@ -73,7 +73,7 @@ function NativeIndicator({ value, className }: IndicatorProps) {
     return {
       width: `${width.value}%`,
     };
-  });
+  }, [width]);
 
   if (Platform.OS === 'web') {
     return null;

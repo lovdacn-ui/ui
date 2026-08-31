@@ -19,7 +19,10 @@ export function useSharedValue(initial) {
   return ref.current;
 }
 
-export function useDerivedValue(worklet) {
+export function useDerivedValue(worklet, dependencies) {
+  if (!Array.isArray(dependencies)) {
+    throw new Error('useDerivedValue requires explicit web dependencies in the motion engine');
+  }
   return {
     get value() {
       return worklet();
@@ -27,7 +30,10 @@ export function useDerivedValue(worklet) {
   };
 }
 
-export function useAnimatedStyle(worklet) {
+export function useAnimatedStyle(worklet, dependencies) {
+  if (!Array.isArray(dependencies)) {
+    throw new Error('useAnimatedStyle requires explicit web dependencies in the motion engine');
+  }
   return worklet();
 }
 

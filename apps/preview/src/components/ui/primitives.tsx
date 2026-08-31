@@ -8,9 +8,9 @@
  *
  * Components keep importing exactly the same names:
  *
- *   import { Pressable, View, Text, TextInput } from '@/components/ui/primitives';
+ *   import { Pressable, View, Text, TextInput } from '@preview/components/ui/primitives';
  *
- * These hosts are engine-backed (see `@/components/ui/motion`): animations run on
+ * These hosts are engine-backed (see `@preview/components/ui/motion`): animations run on
  * the UI thread, user handlers are composed rather than replaced, refs resolve to
  * the underlying host, and system reduced-motion is respected by default.
  *
@@ -32,7 +32,7 @@
  *   Colors and `borderRadius` are never invented: they animate only when both an idle and an
  *   active endpoint are supplied.
  *
- * The full contract lives in the header of `@/components/ui/motion`.
+ * The full contract lives in the header of `@preview/components/ui/motion`.
  */
 
 /** Marker: tells the CLI this file is the motion-aware variant so a later plain
@@ -48,7 +48,7 @@ export {
   // tokens without ever depending on the animation engine.
   durations,
   transitions,
-} from '@/components/ui/motion';
+} from '@preview/components/ui/motion';
 
 /**
  * Host INSTANCE types, exported under the same names as the components above so this
@@ -72,7 +72,7 @@ export type Pressable = React.ComponentRef<typeof RNPressable>;
 /**
  * Type surface kept EXACTLY in sync with the plain seam so the two files stay drop-in
  * replacements for one another. Engine-only types (e.g. `MotionChannel`) are intentionally not
- * re-exported here — import them from `@/components/ui/motion` if you need them.
+ * re-exported here — import them from `@preview/components/ui/motion` if you need them.
  */
 export type {
   ActiveAnimateConfig,
@@ -86,4 +86,4 @@ export type {
   MotionTransition,
   MotionUtilityString,
   SharedAnimationProps,
-} from '@/components/ui/motion';
+} from '@preview/components/ui/motion';

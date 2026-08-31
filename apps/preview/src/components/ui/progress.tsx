@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@preview/lib/utils';
 import * as ProgressPrimitive from '@rn-primitives/progress';
-import { View } from '@/components/ui/primitives';
+import { View } from '@preview/components/ui/primitives';
 import { Platform } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -73,7 +73,7 @@ function NativeIndicator({ value, className }: IndicatorProps) {
     return {
       width: `${width.value}%`,
     };
-  });
+  }, [width]);
 
   if (Platform.OS === 'web') {
     return null;

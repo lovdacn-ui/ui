@@ -7,7 +7,7 @@
  *
  *  1. transpiling `.ts` / `.tsx` with the Babel copy that is ALREADY installed in the
  *     workspace (`@babel/core` + `@babel/preset-typescript` + `@babel/plugin-transform-react-jsx`),
- *  2. mapping the `@/*` path alias to `apps/preview/src/*`,
+ *  2. mapping the `@/*` and `@preview/*` path aliases to `apps/preview/src/*`,
  *  3. mapping `react-native`, `react-native-reanimated`, `nativewind` and the two
  *     rn-primitives packages used by the semantic adapters to local test stubs.
  *
@@ -58,9 +58,10 @@ const MODULE_ALIASES = new Map([
 
 const SOURCE_EXTENSIONS = ['.tsx', '.ts', '.mjs', '.js'];
 
-/** Turn `@/components/ui/motion` into an existing file path under `src/`. */
+/** Turn `@/components/ui/motion` or `@preview/components/ui/motion` into an existing file under `src/`. */
 function resolveAliasPath(specifier) {
-  const relative = specifier.slice('@/'.length);
+  const prefix = specifier.startsWith('@preview/') ? '@preview/' : '@/';
+  const relative = specifier.slice(prefix.length);
   const base = path.join(SRC_ROOT, relative);
   for (const extension of SOURCE_EXTENSIONS) {
     const candidate = base + extension;
@@ -113,7 +114,7 @@ function resolve(specifier, context, nextResolve) {
     return { url: pathToFileURL(aliased).href, format: 'module', shortCircuit: true };
   }
 
-  if (specifier.startsWith('@/')) {
+  if (specifier.startsWith('@/') || specifier.startsWith('@preview/')) {
     return {
       url: pathToFileURL(resolveAliasPath(specifier)).href,
       format: 'module',
