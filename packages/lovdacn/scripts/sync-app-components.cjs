@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * Sync generated registry components into a consumer app.
@@ -11,31 +11,59 @@
  *   node scripts/sync-app-components.cjs <path-to-app>
  */
 
-const fs = require('fs-extra');
-const path = require('path');
-const registryChannel = require('./lib/registry-channel.cjs');
+const fs = require("fs-extra");
+const path = require("path");
+const registryChannel = require("./lib/registry-channel.cjs");
 
 const appRoot = process.argv[2];
 if (!appRoot) {
-  console.error('usage: node scripts/sync-app-components.cjs <path-to-app>');
+  console.error("usage: node scripts/sync-app-components.cjs <path-to-app>");
   process.exit(1);
 }
 
-const config = fs.readJsonSync(path.join(appRoot, 'lvcn.json'));
+const config = fs.readJsonSync(path.join(appRoot, "lvcn.json"));
 const style = config.style;
-const engine = config.styleEngine || 'nativewind';
-const stylesRoot = path.join(registryChannel.registryRoot(), 'styles', engine, style);
+const engine = config.styleEngine || "nativewind";
+const stylesRoot = path.join(
+  registryChannel.registryRoot(),
+  "styles",
+  engine,
+  style,
+);
 
 if (!fs.existsSync(stylesRoot)) {
   console.error(`No generated output at ${stylesRoot}`);
   process.exit(1);
 }
 
+// Derive both the on-disk path and import namespace from the configured aliases.
+// `@/components` maps to root `@`; `@preview/components` maps to `@preview`.
+const componentsAlias =
+  (config.aliases && config.aliases.components) || "@/components";
+const componentsSuffix = "/components";
+const importAliasRoot = componentsAlias.endsWith(componentsSuffix)
+  ? componentsAlias.slice(0, -componentsSuffix.length)
+  : "@";
+const importAliasPrefix = `${importAliasRoot}/`;
+
+function aliasToRelativePath(alias) {
+  if (alias.startsWith(importAliasPrefix))
+    return alias.slice(importAliasPrefix.length);
+  return alias.replace(/^@\//, "");
+}
+
+function rewriteImportsForApp(content) {
+  if (importAliasRoot === "@") return content;
+  return content.replaceAll("@/", importAliasPrefix);
+}
+
 // Where the app keeps its UI files, derived from the alias so a src/ layout works.
-const uiAlias = (config.aliases && config.aliases.ui) || '@/components/ui';
-const uiRelative = uiAlias.replace(/^@\//, '');
-const hasSrc = fs.existsSync(path.join(appRoot, 'src', uiRelative));
-const uiDir = hasSrc ? path.join(appRoot, 'src', uiRelative) : path.join(appRoot, uiRelative);
+const uiAlias = (config.aliases && config.aliases.ui) || "@/components/ui";
+const uiRelative = aliasToRelativePath(uiAlias);
+const hasSrc = fs.existsSync(path.join(appRoot, "src", uiRelative));
+const uiDir = hasSrc
+  ? path.join(appRoot, "src", uiRelative)
+  : path.join(appRoot, uiRelative);
 
 let written = 0;
 let skipped = 0;
@@ -47,9 +75,11 @@ let componentNames = config.components || [];
 if (componentNames.length === 0 && fs.existsSync(uiDir)) {
   componentNames = fs
     .readdirSync(uiDir)
-    .filter((name) => name.endsWith('.tsx') || name.endsWith('.ts'))
-    .map((name) => name.replace(/\.tsx?$/, ''));
-  console.log(`  lvcn.json has no components list; derived ${componentNames.length} from ${uiDir}`);
+    .filter((name) => name.endsWith(".tsx") || name.endsWith(".ts"))
+    .map((name) => name.replace(/\.tsx?$/, ""));
+  console.log(
+    `  lvcn.json has no components list; derived ${componentNames.length} from ${uiDir}`,
+  );
 }
 
 for (const name of componentNames) {
@@ -66,16 +96,20 @@ for (const name of componentNames) {
     const basename = path.basename(file.path);
     const target = /^components\/ui\//.test(file.path)
       ? path.join(uiDir, basename)
-      : path.join(hasSrc ? path.join(appRoot, 'src') : appRoot, file.path);
+      : path.join(hasSrc ? path.join(appRoot, "src") : appRoot, file.path);
     // Only refresh files the app already has, so this never invents new layout.
     if (!fs.existsSync(target)) {
       skipped += 1;
       continue;
     }
-    fs.writeFileSync(target, file.content, 'utf8');
+    fs.writeFileSync(target, rewriteImportsForApp(file.content), "utf8");
     written += 1;
   }
 }
 
-console.log(`\nsynced ${written} file(s) into ${path.relative(process.cwd(), uiDir)}  (${skipped} skipped)`);
-console.log(`channel: ${registryChannel.describe()}  style: ${style}  engine: ${engine}`);
+console.log(
+  `\nsynced ${written} file(s) into ${path.relative(process.cwd(), uiDir)}  (${skipped} skipped)`,
+);
+console.log(
+  `channel: ${registryChannel.describe()}  style: ${style}  engine: ${engine}`,
+);
