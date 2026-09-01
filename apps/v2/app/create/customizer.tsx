@@ -150,6 +150,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   const [copied, setCopied] = React.useState(false)
   const [openDialog, setOpenDialog] = React.useState(false)
   const [target, setTarget] = React.useState<"new" | "existing">("new")
+  const [shuffleActive, setShuffleActive] = React.useState(false)
 
   const presetCode = React.useMemo(() => encodePreset(config), [config])
   const colorScheme = React.useMemo<"light" | "dark">(() => {
@@ -175,9 +176,8 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
     iframeRef: previewFrameRef,
     frameKey: previewFrameKey,
     revealed: previewVisible,
-    unreachable: previewUnreachable,
+    applying: previewApplying,
     handleLoad: onPreviewLoad,
-    retry: retryPreview,
   } = usePreviewHandshake({
     src: webPreviewUrl,
     childOrigin: previewOrigin,
@@ -189,6 +189,16 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
     requireConfirmation: true,
   })
 
+  // Keep the shuffle treatment around just long enough for the completed design
+  // to settle. Slow font/icon loads keep it active until their exact revision is
+  // confirmed; fast cached changes still get a deliberate, non-jarring finish.
+  React.useEffect(() => {
+    if (!shuffleActive || previewApplying) return
+    const timeout = window.setTimeout(() => setShuffleActive(false), 260)
+    return () => window.clearTimeout(timeout)
+  }, [previewApplying, shuffleActive])
+
+  const previewTransitioning = previewVisible && (previewApplying || shuffleActive)
   const beta = useBeta()
 
   const command = React.useMemo(() => {
@@ -223,6 +233,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   }
 
   const shuffle = () => {
+    setShuffleActive(true)
     setConfig((c) => randomizeConfig(c, locks))
   }
 
@@ -387,6 +398,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
               onClick={shuffle}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-zinc-100/70 hover:bg-zinc-200/70 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/80 px-3 py-1.5 text-sm font-medium transition-all active:scale-[0.99]"
               title="Shuffle (press R)"
+              aria-busy={shuffleActive}
             >
               <DicesIcon className="size-4" />
               Shuffle
@@ -406,7 +418,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
       {/* Right Preview area */}
       <div className="flex-1 h-full flex flex-col overflow-hidden bg-background relative">
         {/* Desktop web preview - iframe pinned to fill container */}
-        <div className="relative z-10 flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
+        <div className="relative isolate z-10 flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
           {!previewVisible && <PreviewLoadingSkeleton />}
           <iframe
             key={previewFrameKey}
@@ -415,11 +427,22 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
             onLoad={onPreviewLoad}
             data-preview-frame="true"
             className={cn(
-              "absolute inset-0 h-full w-full border-0 select-none bg-background",
+              "absolute inset-0 h-full w-full border-0 select-none bg-background transition-opacity duration-300 motion-reduce:transition-none",
               previewVisible ? "opacity-100" : "opacity-0"
             )}
             title="Expo Web Preview"
           />
+
+          <div
+            aria-hidden="true"
+            data-preview-transition={previewTransitioning ? "active" : "idle"}
+            className={cn(
+              "pointer-events-none absolute inset-0 z-20 overflow-hidden transition-opacity duration-300 motion-reduce:hidden",
+              previewTransitioning ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--color-foreground),transparent_42%)] opacity-[0.07] dark:opacity-[0.09]" />
+          </div>
         </div>
       </div>
 

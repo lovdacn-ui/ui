@@ -46,11 +46,11 @@ type PreviewDesignSystemProviderProps = {
   cssColorValues?: boolean;
 };
 
-type LoadedResources = {
-  key: string;
-  fontFaces: LoadedFontFaces;
-  iconAdapter: IconAdapter;
-  warnings: string[];
+type ActiveDesignSystem = PreviewDesignSystemValue & {
+  resourceKey: string;
+  preset?: string;
+  colorScheme: PreviewColorScheme;
+  revision: number;
 };
 
 const PreviewDesignSystemContext = React.createContext<PreviewDesignSystemValue | null>(null);
@@ -74,31 +74,44 @@ export function PreviewDesignSystemProvider({
   cssColorValues = false,
 }: PreviewDesignSystemProviderProps) {
   const normalization = React.useMemo(() => normalizeDesign(preset), [preset]);
-  const { config } = normalization;
+  const { config, warnings: normalizationWarnings } = normalization;
   const resourceKey = `${config.font}:${config.iconLibrary}`;
-  const [resources, setResources] = React.useState<LoadedResources | null>(null);
+  const [activeDesign, setActiveDesign] = React.useState<ActiveDesignSystem | null>(null);
 
-  React.useLayoutEffect(() => {
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      applyPreviewTheme(preset, colorScheme, { cssColorValues });
-    }
-  }, [colorScheme, cssColorValues, preset]);
-
+  // Build the next design off-screen. Crucially, activeDesign is not cleared here:
+  // the last complete dashboard stays mounted while a new font or icon bundle is
+  // loading, so rapid picker changes and shuffle never expose an empty frame.
   React.useEffect(() => {
     let active = true;
+
     Promise.all([
       loadPreviewFont(config.font),
       ICON_LOADERS[config.iconLibrary](),
     ])
       .then(([fontFaces, iconAdapter]) => {
         if (!active) return;
-        setResources({ key: resourceKey, fontFaces, iconAdapter, warnings: [] });
+        setActiveDesign({
+          resourceKey,
+          preset,
+          colorScheme,
+          revision,
+          config,
+          recipe: CUSTOMIZER_RECIPES[config.style],
+          fontFaces,
+          iconAdapter,
+          warnings: [...normalizationWarnings],
+        });
       })
       .catch((error: unknown) => {
         if (!active) return;
         const message = error instanceof Error ? error.message : String(error);
-        setResources({
-          key: resourceKey,
+        setActiveDesign({
+          resourceKey,
+          preset,
+          colorScheme,
+          revision,
+          config,
+          recipe: CUSTOMIZER_RECIPES[config.style],
           fontFaces: {
             regular: 'System',
             medium: 'System',
@@ -106,49 +119,54 @@ export function PreviewDesignSystemProvider({
             bold: 'System',
           },
           iconAdapter: lucideIconAdapter,
-          warnings: [`Design-system resource failed to load: ${message}`],
+          warnings: [
+            ...normalizationWarnings,
+            `Design-system resource failed to load: ${message}`,
+          ],
         });
       });
+
     return () => {
       active = false;
     };
-  }, [config.font, config.iconLibrary, resourceKey]);
+  }, [colorScheme, config, normalizationWarnings, preset, resourceKey, revision]);
 
-  const readyResources = resources?.key === resourceKey ? resources : null;
-  const warnings = React.useMemo(
-    () => [...normalization.warnings, ...(readyResources?.warnings ?? [])],
-    [normalization.warnings, readyResources?.warnings]
-  );
+  // Theme variables and the matching context value are committed in one render.
+  // useLayoutEffect runs before paint, preventing a one-frame old/new theme mix.
+  React.useLayoutEffect(() => {
+    if (!activeDesign) return;
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      applyPreviewTheme(activeDesign.preset, activeDesign.colorScheme, { cssColorValues });
+    }
+  }, [activeDesign, cssColorValues]);
 
   React.useEffect(() => {
-    if (!readyResources) return;
+    if (
+      !activeDesign ||
+      activeDesign.revision !== revision ||
+      activeDesign.preset !== preset ||
+      activeDesign.colorScheme !== colorScheme
+    ) {
+      return;
+    }
+
+    const result = {
+      config: activeDesign.config,
+      warnings: activeDesign.warnings,
+    };
     const frame =
       Platform.OS === 'web' && typeof window !== 'undefined'
-        ? window.requestAnimationFrame(() => onApplied({ config, warnings }))
+        ? window.requestAnimationFrame(() => onApplied(result))
         : null;
-    if (frame === null) onApplied({ config, warnings });
+    if (frame === null) onApplied(result);
     return () => {
       if (frame !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(frame);
       }
     };
-  }, [colorScheme, config, onApplied, preset, readyResources, revision, warnings]);
+  }, [activeDesign, colorScheme, onApplied, preset, revision]);
 
-  const value = React.useMemo<PreviewDesignSystemValue | null>(
-    () =>
-      readyResources
-        ? {
-            config,
-            recipe: CUSTOMIZER_RECIPES[config.style],
-            fontFaces: readyResources.fontFaces,
-            iconAdapter: readyResources.iconAdapter,
-            warnings,
-          }
-        : null,
-    [config, readyResources, warnings]
-  );
-
-  if (!value) {
+  if (!activeDesign) {
     return (
       <View
         className="flex-1 w-full bg-background"
@@ -158,7 +176,7 @@ export function PreviewDesignSystemProvider({
   }
 
   return (
-    <PreviewDesignSystemContext.Provider value={value}>
+    <PreviewDesignSystemContext.Provider value={activeDesign}>
       {children}
     </PreviewDesignSystemContext.Provider>
   );
