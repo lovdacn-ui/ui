@@ -48,6 +48,8 @@ export type UsePreviewHandshakeResult = {
   revealed: boolean
   /** True while waiting for the presenter (show a loading affordance). */
   pending: boolean
+  /** True after a live configuration was sent and until that exact revision is painted. */
+  applying: boolean
   /** True when the presenter never answered in time (show a retry affordance). */
   unreachable: boolean
   handleLoad: () => void
@@ -71,6 +73,7 @@ export function usePreviewHandshake({
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null)
   const handshakeRef = React.useRef<PreviewHandshake | null>(null)
   const [reloadNonce, setReloadNonce] = React.useState(0)
+  const [applyingRevision, setApplyingRevision] = React.useState<number | null>(null)
   const frameKey = `${src}::${reloadNonce}`
   const [snapshot, setSnapshot] = React.useState(() => ({
     frameKey,
@@ -93,12 +96,13 @@ export function usePreviewHandshake({
     const revision = sentRef.current.revision + 1
     const next = configRef.current
     sentRef.current = { revision, colorScheme: next.colorScheme, preset: next.preset }
-    handshake.sendPreset({
+    const posted = handshake.sendPreset({
       revision,
       colorScheme: next.colorScheme,
       preset: next.preset,
     })
-  }, [])
+    if (requireConfirmation && posted) setApplyingRevision(revision)
+  }, [requireConfirmation])
 
   React.useEffect(() => {
     if (typeof window === "undefined") return
@@ -124,17 +128,24 @@ export function usePreviewHandshake({
       },
       onState: (nextState) => {
         setSnapshot({ frameKey: sessionFrameKey, state: nextState })
+        if (nextState.phase === "connecting" || nextState.phase === "unreachable") {
+          setApplyingRevision(null)
+        }
       },
       onReady: () => deliverConfig(),
       onApplied: (message) => {
         if (!requireConfirmation) return
         const expected = sentRef.current
-        // Exact match only: a stale revision would reveal the wrong theme.
+        // Exact match only: a stale revision must neither reveal the frame nor
+        // dismiss the transition for a newer configuration still being applied.
         if (
           message.revision === expected.revision &&
           message.colorScheme === expected.colorScheme &&
           message.preset === expected.preset
         ) {
+          setApplyingRevision((current) =>
+            current === message.revision ? null : current
+          )
           handshakeRef.current?.confirm()
         }
       },
@@ -174,6 +185,7 @@ export function usePreviewHandshake({
     phase: state.phase,
     revealed: state.revealed,
     pending: !state.revealed,
+    applying: applyingRevision !== null,
     unreachable: state.phase === "unreachable",
     handleLoad,
     retry,
