@@ -76,7 +76,7 @@ function commit(next: boolean) {
   window.clearTimeout(morphTimer)
   morphTimer = window.setTimeout(() => {
     root.classList.remove(MORPH_CLASS)
-  }, THEME_MORPH_MS + 60)
+  }, 450)
 
   window.dispatchEvent(new CustomEvent(BETA_EVENT, { detail: { beta: next } }))
   notify()
@@ -105,8 +105,9 @@ export function requestBeta(next: boolean) {
   // Let the toggles show the requested state right away.
   notify()
 
-  // 2. The theme eases in part-way through the sweep.
-  const delay = prefersReducedMotion() ? 0 : SWEEP_DURATION_MS * THEME_FLIP_RATIO
+  // 2. The theme eases in immediately on pages without a canvas, or with minimal lead on canvas pages.
+  const hasCanvas = typeof document !== "undefined" && !!document.querySelector("canvas")
+  const delay = prefersReducedMotion() ? 0 : hasCanvas ? 80 : 0
   flipTimer = window.setTimeout(() => {
     pendingTarget = null
     commit(next)
