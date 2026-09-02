@@ -212,25 +212,137 @@ function overlayLocks(
 function PreviewLoadingSkeleton() {
   return (
     <div
-      className="lvcn-create-preview-stage pointer-events-none absolute inset-0 grid grid-cols-1 gap-5 overflow-hidden p-6 md:grid-cols-3"
+      className="lvcn-create-preview-stage pointer-events-none absolute inset-0 overflow-y-auto p-5"
       role="status"
       aria-label="Loading preview"
     >
-      {[0, 1, 2].map((column) => (
-        <div key={column} className="space-y-5 animate-pulse" data-preview-skeleton="true">
-          {[0, 1, 2].map((card) => (
-            <div key={card} className="rounded-xl border border-zinc-200/80 bg-white/95 p-5 shadow-sm shadow-zinc-950/5">
-              <div className="h-4 w-2/5 rounded bg-zinc-200" />
-              <div className="mt-2 h-3 w-3/4 rounded bg-zinc-200/70" />
-              <div className="mt-5 space-y-3">
-                <div className="h-9 rounded-md bg-zinc-200/60" />
-                <div className="h-9 rounded-md bg-zinc-200/60" />
-                <div className="h-8 w-1/2 rounded-md bg-zinc-200" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" data-preview-skeleton="true">
+        {/* Column 1: System Status & Account Access */}
+        <div className="space-y-4 animate-pulse">
+          {/* System Status card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-48 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2.5">
+              <div className="h-14 rounded-lg border border-border/40 bg-muted/30 p-3 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-3 w-28 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="mt-1.5 h-2.5 w-40 rounded bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+              <div className="h-14 rounded-lg border border-border/40 bg-muted/30 p-3 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-3 w-24 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="mt-1.5 h-2.5 w-36 rounded bg-muted/50 dark:bg-zinc-800/50" />
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Account Access card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-52 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="h-2.5 w-20 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div>
+                <div className="h-2.5 w-24 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div className="h-9 w-full rounded-lg bg-muted/70 dark:bg-zinc-800/80" />
+            </div>
+          </div>
         </div>
-      ))}
+
+        {/* Column 2: Navigation Tabs, Receiving Method, Power Usage */}
+        <div className="space-y-4 animate-pulse">
+          {/* Navigation Tabs card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-44 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2.5">
+              <div className="flex h-8 w-full items-center rounded-lg border border-border/40 bg-muted/30 p-1 gap-1 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-full flex-1 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="h-full flex-1 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="h-full flex-1 rounded bg-muted dark:bg-zinc-700" />
+              </div>
+              <div className="h-7 w-full rounded-lg border border-border/30 bg-muted/20 dark:border-zinc-800/40 dark:bg-zinc-900/30" />
+            </div>
+          </div>
+
+          {/* Receiving Method card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-48 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="h-2.5 w-28 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div>
+                <div className="h-2.5 w-32 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div className="h-9 w-full rounded-lg bg-muted/70 dark:bg-zinc-800/80" />
+            </div>
+          </div>
+
+          {/* Power Usage card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-28 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-40 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2">
+              <div className="h-2 w-full rounded-full bg-muted/50 dark:bg-zinc-800/60" />
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Team Members, Stock Performance, Traffic Sources */}
+        <div className="space-y-4 animate-pulse">
+          {/* Team Members card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-40 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="size-8 shrink-0 rounded-full bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-3 w-24 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                  <div className="h-2.5 w-16 rounded bg-muted/40 dark:bg-zinc-800/40" />
+                </div>
+                <div className="h-5 w-12 rounded-full bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="size-8 shrink-0 rounded-full bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-3 w-20 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                  <div className="h-2.5 w-14 rounded bg-muted/40 dark:bg-zinc-800/40" />
+                </div>
+                <div className="h-5 w-14 rounded-full bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+            </div>
+          </div>
+
+          {/* Stock Performance card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-36 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div className="h-20 w-full rounded-lg border border-border/30 bg-muted/20 dark:border-zinc-800/40 dark:bg-zinc-900/30" />
+              <div className="flex items-baseline justify-between">
+                <div className="h-6 w-24 rounded bg-muted dark:bg-zinc-800" />
+                <div className="h-3.5 w-16 rounded bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+            </div>
+          </div>
+
+          {/* Traffic Sources card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-36 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-3 h-4 w-full rounded bg-muted/40 dark:bg-zinc-900/60" />
+          </div>
+        </div>
+      </div>
       <span className="sr-only">Loading preview</span>
     </div>
   )
