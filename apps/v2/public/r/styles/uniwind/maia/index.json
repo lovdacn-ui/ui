@@ -9,5 +9,10 @@
     "utils"
   ],
   "files": [],
+  "meta": {
+    "style": "maia",
+    "recipeStyle": "maia",
+    "legacy": false
+  },
   "type": "registry:style"
 }

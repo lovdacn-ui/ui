@@ -20,7 +20,9 @@
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "luma"
+    "style": "luma",
+    "recipeStyle": "luma",
+    "legacy": false
   },
   "type": "registry:ui"
 }

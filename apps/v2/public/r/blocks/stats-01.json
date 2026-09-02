@@ -4,10 +4,10 @@
   "type": "registry:block",
   "description": "A dashboard route with a stack of KPI stat cards and trend badges.",
   "dependencies": [
-    "lucide-react-native",
     "react-native-safe-area-context"
   ],
   "registryDependencies": [
+    "semantic-icon",
     "card",
     "badge",
     "icon",
@@ -23,8 +23,12 @@
     },
     {
       "path": "components/stats.tsx",
-      "content": "import { Badge } from '@/components/ui/badge';\nimport {\n  Card,\n  CardDescription,\n  CardFooter,\n  CardHeader,\n  CardTitle,\n} from '@/components/ui/card';\nimport { Icon } from '@/components/ui/icon';\nimport { Text } from '@/components/ui/text';\nimport { TrendingDown, TrendingUp } from 'lucide-react-native';\nimport * as React from 'react';\nimport { View } from 'react-native';\n\nexport type Stat = {\n  label: string;\n  value: string;\n  delta: string;\n  trend: 'up' | 'down';\n  caption: string;\n};\n\nconst SAMPLE_STATS: Stat[] = [\n  {\n    label: 'Total Revenue',\n    value: '$15,231.89',\n    delta: '+20.1%',\n    trend: 'up',\n    caption: 'Trending up this month',\n  },\n  {\n    label: 'New Customers',\n    value: '1,234',\n    delta: '-4.5%',\n    trend: 'down',\n    caption: 'Down 4.5% this period',\n  },\n  {\n    label: 'Active Accounts',\n    value: '45,678',\n    delta: '+12.5%',\n    trend: 'up',\n    caption: 'Strong user retention',\n  },\n];\n\nexport function Stats({ data = SAMPLE_STATS }: { data?: Stat[] }) {\n  return (\n    <View className=\"gap-4 p-4\">\n      {data.map((stat) => (\n        <Card key={stat.label}>\n          <CardHeader className=\"gap-1\">\n            <View className=\"flex-row items-center justify-between\">\n              <CardDescription>{stat.label}</CardDescription>\n              <Badge variant={stat.trend === 'up' ? 'secondary' : 'destructive'}>\n                <Icon as={stat.trend === 'up' ? TrendingUp : TrendingDown} className=\"size-3\" />\n                <Text>{stat.delta}</Text>\n              </Badge>\n            </View>\n            <CardTitle className=\"text-3xl\">{stat.value}</CardTitle>\n          </CardHeader>\n          <CardFooter>\n            <Text className=\"text-muted-foreground text-sm\">{stat.caption}</Text>\n          </CardFooter>\n        </Card>\n      ))}\n    </View>\n  );\n}\n",
+      "content": "import { Badge } from '@/components/ui/badge';\nimport {\n  Card,\n  CardDescription,\n  CardFooter,\n  CardHeader,\n  CardTitle,\n} from '@/components/ui/card';\nimport { Icon } from '@/components/ui/icon';\nimport { Text } from '@/components/ui/text';\nimport { TrendingDown, TrendingUp } from '@/components/ui/semantic-icon';\nimport * as React from 'react';\nimport { View } from 'react-native';\n\nexport type Stat = {\n  label: string;\n  value: string;\n  delta: string;\n  trend: 'up' | 'down';\n  caption: string;\n};\n\nconst SAMPLE_STATS: Stat[] = [\n  {\n    label: 'Total Revenue',\n    value: '$15,231.89',\n    delta: '+20.1%',\n    trend: 'up',\n    caption: 'Trending up this month',\n  },\n  {\n    label: 'New Customers',\n    value: '1,234',\n    delta: '-4.5%',\n    trend: 'down',\n    caption: 'Down 4.5% this period',\n  },\n  {\n    label: 'Active Accounts',\n    value: '45,678',\n    delta: '+12.5%',\n    trend: 'up',\n    caption: 'Strong user retention',\n  },\n];\n\nexport function Stats({ data = SAMPLE_STATS }: { data?: Stat[] }) {\n  return (\n    <View className=\"px-6 py-8 gap-4\">\n      {data.map((stat) => (\n        <Card key={stat.label}>\n          <CardHeader className=\"gap-1\">\n            <View className=\"flex-row items-center justify-between\">\n              <CardDescription>{stat.label}</CardDescription>\n              <Badge variant={stat.trend === 'up' ? 'secondary' : 'destructive'}>\n                <Icon as={stat.trend === 'up' ? TrendingUp : TrendingDown} className=\"size-3\" />\n                <Text>{stat.delta}</Text>\n              </Badge>\n            </View>\n            <CardTitle className=\"text-3xl\">{stat.value}</CardTitle>\n          </CardHeader>\n          <CardFooter>\n            <Text className=\"text-muted-foreground text-sm\">{stat.caption}</Text>\n          </CardFooter>\n        </Card>\n      ))}\n    </View>\n  );\n}\n",
       "type": "registry:component"
     }
-  ]
+  ],
+  "meta": {
+    "style": "vega",
+    "legacy": true
+  }
 }

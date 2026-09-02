@@ -16,7 +16,9 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "new-york"
+    "style": "new-york",
+    "recipeStyle": "vega",
+    "legacy": true
   },
   "type": "registry:ui"
 }

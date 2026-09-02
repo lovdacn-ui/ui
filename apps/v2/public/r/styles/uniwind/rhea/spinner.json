@@ -2,22 +2,24 @@
   "$schema": "https://lovdacn.vercel.app/schema/registry-item.json",
   "name": "spinner",
   "dependencies": [
-    "react-native-reanimated",
-    "lucide-react-native"
+    "react-native-reanimated"
   ],
   "registryDependencies": [
+    "semantic-icon",
+    "primitives",
     "utils"
   ],
   "files": [
     {
       "path": "components/ui/spinner.tsx",
-      "content": "import * as React from 'react';\nimport { ActivityIndicator, Platform, View } from 'react-native';\nimport { cn } from '@/lib/utils';\nimport { Loader2 } from 'lucide-react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n  Easing,\n} from 'react-native-reanimated';\n\ninterface SpinnerProps extends React.ComponentPropsWithoutRef<typeof View> {\n  size?: 'small' | 'large' | number;\n  color?: string;\n  nativeOnly?: boolean;\n}\n\nfunction Spinner({ className, size = 'small', color, nativeOnly = false, ref, ...props }: SpinnerProps & { ref?: React.Ref<View> }) {\n  const rotation = useSharedValue(0);\n\n  React.useEffect(() => {\n    rotation.value = withRepeat(\n      withTiming(360, {\n        duration: 1000,\n        easing: Easing.linear,\n      }),\n      -1,\n      false\n    );\n  }, [rotation]);\n\n  const animatedStyle = useAnimatedStyle(() => {\n    return {\n      transform: [{ rotate: `${rotation.value}deg` }],\n    };\n  });\n\n  const iconSize = typeof size === 'number' ? size : size === 'large' ? 36 : 24;\n\n  if (nativeOnly) {\n    return (\n      <View ref={ref} className={cn('items-center justify-center', className)} {...props}>\n        <ActivityIndicator size={typeof size === 'number' ? 'small' : size} color={color} />\n      </View>\n    );\n  }\n\n  return (\n    <View ref={ref} className={cn('items-center justify-center', className)} {...props}>\n      <Animated.View style={animatedStyle}>\n        <Loader2 size={iconSize} color={color} className=\"text-primary\" />\n      </Animated.View>\n    </View>\n  );\n}\n\nSpinner.displayName = 'Spinner';\n\nexport { Spinner };\nexport type { SpinnerProps };\n",
+      "content": "import * as React from 'react';\nimport { View } from '@/components/ui/primitives';\nimport { ActivityIndicator } from 'react-native';\nimport { cn } from '@/lib/utils';\nimport { Loader2 } from '@/components/ui/semantic-icon';\nimport Animated, {\n  cancelAnimation,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n  Easing,\n} from 'react-native-reanimated';\n\ninterface SpinnerProps extends React.ComponentPropsWithoutRef<typeof View> {\n  size?: 'small' | 'large' | number;\n  color?: string;\n  nativeOnly?: boolean;\n}\n\nfunction Spinner({ className, size = 'small', color, nativeOnly = false, ref, ...props }: SpinnerProps & { ref?: React.Ref<View> }) {\n  if (nativeOnly) {\n    return (\n      <View ref={ref} className={cn('items-center justify-center', className)} {...props}>\n        <ActivityIndicator size={typeof size === 'number' ? 'small' : size} color={color} />\n      </View>\n    );\n  }\n\n  const iconSize = typeof size === 'number' ? size : size === 'large' ? 36 : 24;\n\n  return (\n    <View ref={ref} className={cn('items-center justify-center', className)} {...props}>\n      <AnimatedSpinnerIcon size={iconSize} color={color} />\n    </View>\n  );\n}\n\nfunction AnimatedSpinnerIcon({ size, color }: { size: number; color?: string }) {\n  const rotation = useSharedValue(0);\n\n  React.useEffect(() => {\n    rotation.value = withRepeat(\n      withTiming(360, {\n        duration: 1000,\n        easing: Easing.linear,\n      }),\n      -1,\n      false\n    );\n\n    return () => {\n      cancelAnimation(rotation);\n      rotation.value = 0;\n    };\n  }, [rotation]);\n\n  const animatedStyle = useAnimatedStyle(() => ({\n    transform: [{ rotate: `${rotation.value}deg` }],\n  }), [rotation]);\n\n  return (\n    <Animated.View style={animatedStyle}>\n      <Loader2 size={size} color={color} className=\"text-primary\" />\n    </Animated.View>\n  );\n}\n\nSpinner.displayName = 'Spinner';\n\nexport { Spinner };\nexport type { SpinnerProps };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "rhea"
+    "style": "rhea",
+    "legacy": false
   },
   "type": "registry:ui"
 }

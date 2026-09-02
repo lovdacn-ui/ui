@@ -247,9 +247,13 @@ function createRegistryItem(comp, engine, style) {
 
 function buildExtraComponents() {
   let written = 0;
+  const isBeta = registryChannel.resolveChannel() === 'beta';
+  const componentsToBuild = isBeta
+    ? COMPONENTS
+    : COMPONENTS.filter((c) => c.name !== 'motion');
 
   for (const engine of ENGINES) {
-    for (const comp of COMPONENTS) {
+    for (const comp of componentsToBuild) {
       for (const style of STYLES) {
         let item;
         try {

@@ -9,5 +9,10 @@
     "utils"
   ],
   "files": [],
+  "meta": {
+    "style": "luma",
+    "recipeStyle": "luma",
+    "legacy": false
+  },
   "type": "registry:style"
 }

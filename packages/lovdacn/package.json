@@ -33,7 +33,7 @@
     "registry:build": "node scripts/generate-design-system.cjs && node scripts/build-registry.cjs",
     "blocks:build": "node scripts/build-blocks.cjs",
     "extra:build": "node scripts/build-extra-components.cjs",
-    "registry:build:all": "node scripts/generate-design-system.cjs && node scripts/build-registry.cjs && node scripts/build-blocks.cjs && node scripts/build-extra-components.cjs",
+    "registry:build:all": "node scripts/build-all-channels.cjs",
     "registry:validate": "node scripts/validate-registry-channel.cjs",
     "registry:check": "node scripts/check-native-invariants.cjs --strict && node scripts/check-registry-syntax.cjs",
     "version:beta": "npm version prerelease --preid=beta --no-git-tag-version",

@@ -656,16 +656,32 @@ async function fetchRegistryItem(
 
   if (registryUrl.startsWith("file://") || !registryUrl.startsWith("http")) {
     const cleanPath = registryUrl.replace("file://", "")
-    for (const candidate of candidates) {
-      const itemPath = path.resolve(cleanPath, candidate)
-      if (fs.existsSync(itemPath)) return await fs.readJson(itemPath)
+    const searchRoots = [cleanPath]
+    if (BETA_COMPONENTS.has(name) && !cleanPath.endsWith("beta")) {
+      searchRoots.unshift(path.join(cleanPath, "beta"))
+    }
+    for (const root of searchRoots) {
+      for (const candidate of candidates) {
+        const itemPath = path.resolve(root, candidate)
+        if (fs.existsSync(itemPath)) return await fs.readJson(itemPath)
+      }
     }
     return await fs.readJson(path.resolve(cleanPath, candidates[0]!))
   }
 
   let lastStatus = "not found"
+  const urlsToTry: string[] = []
+  if (BETA_COMPONENTS.has(name) && !registryUrl.endsWith("/beta")) {
+    for (const candidate of candidates) {
+      urlsToTry.push(`${registryUrl}/beta/${candidate}`)
+    }
+  }
   for (const candidate of candidates) {
-    const response = await fetch(`${registryUrl}/${candidate}`)
+    urlsToTry.push(`${registryUrl}/${candidate}`)
+  }
+
+  for (const url of urlsToTry) {
+    const response = await fetch(url)
     if (response.ok) return await response.json()
     lastStatus = response.statusText || String(response.status)
   }

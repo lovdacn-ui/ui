@@ -16,7 +16,9 @@
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "rhea"
+    "style": "rhea",
+    "recipeStyle": "rhea",
+    "legacy": false
   },
   "type": "registry:ui"
 }

@@ -9,5 +9,10 @@
     "utils"
   ],
   "files": [],
+  "meta": {
+    "style": "lyra",
+    "recipeStyle": "lyra",
+    "legacy": false
+  },
   "type": "registry:style"
 }
