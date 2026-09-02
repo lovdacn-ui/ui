@@ -16,9 +16,6 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "iconLibrary": "lucide",
-    "style": "mira",
-    "recipeStyle": "mira",
-    "legacy": false
+    "iconLibrary": "lucide"
   }
 }

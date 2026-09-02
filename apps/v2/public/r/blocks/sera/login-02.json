@@ -26,7 +26,7 @@
     },
     {
       "path": "app/(auth)/sign-in.tsx",
-      "content": "import { LoginForm } from \"@/components/login-form\";\nimport { KeyboardAvoidingView, Platform, ScrollView, View } from \"react-native\";\nimport { SafeAreaView } from \"react-native-safe-area-context\";\n\nexport default function SignInScreen() {\n  return (\n    <SafeAreaView className=\"bg-background flex-1\">\n      <KeyboardAvoidingView\n        className=\"flex-1\"\n        behavior={Platform.OS === \"ios\" ? \"padding\" : undefined}\n      >\n        <ScrollView\n          className=\"flex-1\"\n          contentContainerStyle={{ flexGrow: 1 }}\n          keyboardShouldPersistTaps=\"handled\"\n        >\n          <View className=\"flex-1 justify-center px-8 py-12\">\n            <LoginForm />\n          </View>\n        </ScrollView>\n      </KeyboardAvoidingView>\n    </SafeAreaView>\n  );\n}\n",
+      "content": "import { LoginForm } from '@/components/login-form';\nimport { SafeAreaView } from 'react-native-safe-area-context';\n\nexport default function SignInScreen() {\n  return (\n    <SafeAreaView className=\"bg-background flex-1 justify-center px-8 py-12\">\n      <LoginForm />\n    </SafeAreaView>\n  );\n}\n",
       "type": "registry:page",
       "target": "app/(auth)/sign-in.tsx"
     },

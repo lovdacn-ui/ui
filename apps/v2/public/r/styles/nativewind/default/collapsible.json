@@ -14,7 +14,9 @@
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "default"
+    "style": "default",
+    "recipeStyle": "vega",
+    "legacy": true
   },
   "type": "registry:ui"
 }

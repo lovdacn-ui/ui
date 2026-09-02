@@ -6,13 +6,15 @@
   "files": [
     {
       "path": "components/ui/native-only-animated-view.tsx",
-      "content": "import { Platform } from 'react-native';\nimport Animated from 'react-native-reanimated';\n\n/**\n * This component is used to wrap animated views that should only be animated on native.\n * @param props - The props for the animated view.\n * @returns The animated view if the platform is native, otherwise the children.\n * @example\n * <NativeOnlyAnimatedView entering={FadeIn} exiting={FadeOut}>\n *   <Text>I am only animated on native</Text>\n * </NativeOnlyAnimatedView>\n */\nfunction NativeOnlyAnimatedView(\n  props: React.ComponentProps<typeof Animated.View> & React.RefAttributes<typeof Animated.View>\n) {\n  if (Platform.OS === 'web') {\n    return <>{props.children as React.ReactNode}</>;\n  } else {\n    return <Animated.View {...props} />;\n  }\n}\n\nexport { NativeOnlyAnimatedView };\n",
+      "content": "import { Platform } from 'react-native';\nimport Animated from 'react-native-reanimated';\n\n/**\n * This component is used to wrap animated views that should only be animated on native.\n * @param props - The props for the animated view.\n * @returns The animated view if the platform is native, otherwise the children.\n * @example\n * <NativeOnlyAnimatedView entering={FadeIn} exiting={FadeOut}>\n *   <Text>I am only animated on native</Text>\n * </NativeOnlyAnimatedView>\n */\nfunction NativeOnlyAnimatedView(\n  // `RefAttributes<typeof Animated.View>` types the ref as the component CLASS.\n  // Animated.View wants a ref to the INSTANCE, so the two are incompatible.\n  // `ComponentPropsWithRef` carries the correctly typed ref already.\n  props: React.ComponentPropsWithRef<typeof Animated.View>\n) {\n  if (Platform.OS === 'web') {\n    return <>{props.children as React.ReactNode}</>;\n  } else {\n    return <Animated.View {...props} />;\n  }\n}\n\nexport { NativeOnlyAnimatedView };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "lyra"
+    "style": "lyra",
+    "recipeStyle": "lyra",
+    "legacy": false
   },
   "type": "registry:ui"
 }

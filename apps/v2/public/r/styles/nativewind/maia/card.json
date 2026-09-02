@@ -4,18 +4,21 @@
   "dependencies": [],
   "registryDependencies": [
     "text",
-    "utils"
+    "utils",
+    "primitives"
   ],
   "files": [
     {
       "path": "components/ui/card.tsx",
-      "content": "import { Text, TextClassContext } from '@/components/ui/text';\nimport { cn } from '@/lib/utils';\nimport { View } from 'react-native';\n\nfunction Card({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return (\n    <TextClassContext.Provider value=\"text-card-foreground\">\n      <View\n        className={cn(\n          'border-border flex flex-col gap-6 border py-6 shadow-sm shadow-black/5 ring-foreground/10 bg-card text-card-foreground overflow-hidden rounded-2xl text-sm ring-1',\n          className\n        )}\n        {...props}\n      />\n    </TextClassContext.Provider>\n  );\n}\n\nfunction CardHeader({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('flex flex-col px-6 gap-2 rounded-t-xl', className)} {...props} />;\n}\n\nfunction CardTitle({\n  className,\n  ref,\n  ...props\n}: React.ComponentProps<typeof Text> & React.RefAttributes<typeof Text>) {\n\n  return (\n    <Text\n      ref={ref}\n      role=\"heading\"\n      aria-level={3}\n      className={cn('text-base font-medium', className)}\n      {...props}\n    />\n  );\n}\n\nfunction CardDescription({\n  className,\n  ...props\n}: React.ComponentProps<typeof Text> & React.RefAttributes<typeof Text>) {\n  return <Text className={cn('text-muted-foreground text-sm', className)} {...props} />;\n}\n\nfunction CardContent({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('px-6', className)} {...props} />;\n}\n\nfunction CardFooter({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('flex flex-row items-center px-6 rounded-b-xl', className)} {...props} />;\n}\n\nexport { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };\n",
+      "content": "import { Text, TextClassContext } from '@/components/ui/text';\nimport { cn } from '@/lib/utils';\nimport { View } from '@/components/ui/primitives';\n\nfunction Card({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return (\n    <TextClassContext.Provider value={cn('text-card-foreground text-sm')}>\n      <View\n        className={cn(\n          'border-border flex flex-col gap-6 border py-6 shadow-sm shadow-black/5 bg-card rounded-2xl',\n          className\n        )}\n        {...props}\n      />\n    </TextClassContext.Provider>\n  );\n}\n\nfunction CardHeader({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('flex flex-col px-6 gap-2 rounded-t-xl', className)} {...props} />;\n}\n\nfunction CardTitle({\n  className,\n  ref,\n  ...props\n}: React.ComponentProps<typeof Text> & React.RefAttributes<typeof Text>) {\n\n  return (\n    <Text\n      ref={ref}\n      role=\"heading\"\n      aria-level={3}\n      className={cn('font-semibold leading-tight', className)}\n      {...props}\n    />\n  );\n}\n\nfunction CardDescription({\n  className,\n  ...props\n}: React.ComponentProps<typeof Text> & React.RefAttributes<typeof Text>) {\n  return <Text className={cn('text-muted-foreground text-sm', className)} {...props} />;\n}\n\nfunction CardContent({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('px-6', className)} {...props} />;\n}\n\nfunction CardFooter({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('flex flex-row items-center px-6 rounded-b-xl', className)} {...props} />;\n}\n\nexport { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "maia"
+    "style": "maia",
+    "recipeStyle": "maia",
+    "legacy": false
   },
   "type": "registry:ui"
 }

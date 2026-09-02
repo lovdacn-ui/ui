@@ -16,9 +16,6 @@
   ],
   "meta": {
     "engine": "nativewind",
-    "iconLibrary": "lucide",
-    "style": "sera",
-    "recipeStyle": "sera",
-    "legacy": false
+    "iconLibrary": "lucide"
   }
 }

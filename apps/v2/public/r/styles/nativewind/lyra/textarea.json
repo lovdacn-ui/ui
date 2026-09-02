@@ -3,18 +3,21 @@
   "name": "textarea",
   "dependencies": [],
   "registryDependencies": [
-    "utils"
+    "utils",
+    "primitives"
   ],
   "files": [
     {
       "path": "components/ui/textarea.tsx",
-      "content": "import { cn } from '@/lib/utils';\nimport { Platform, TextInput } from 'react-native';\n\nfunction Textarea({\n  className,\n  multiline = true,\n  numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.\n  placeholderClassName,\n  ...props\n}: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {\n  return (\n    <TextInput\n      className={cn('text-foreground flex min-h-16 w-full flex-row shadow-sm shadow-black/5 border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 disabled:bg-input/50 dark:disabled:bg-input/80 rounded-none border bg-transparent px-2.5 py-2 text-xs transition-colors focus-visible:ring-1 aria-invalid:ring-1 md:text-xs',\n        Platform.select({\n          web: 'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive field-sizing-content resize-y outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed',\n        }),\n        props.editable === false && 'opacity-50',\n        className\n      )}\n      placeholderClassName={cn('text-muted-foreground', placeholderClassName)}\n      multiline={multiline}\n      numberOfLines={numberOfLines}\n      textAlignVertical=\"top\"\n      {...props}\n    />\n  );\n}\n\nexport { Textarea };\n",
+      "content": "import { getLvcnFontStyle } from '@/lib/lvcn-fonts';\nimport { cn } from '@/lib/utils';\nimport { TextInput } from '@/components/ui/primitives';\nimport { Platform } from 'react-native';\n\nfunction Textarea({\n  className,\n  multiline = true,\n  numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.\n  placeholderClassName,\n  style,\n  ...props\n}: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {\n  return (\n    <TextInput\n      className={cn('text-foreground flex min-h-16 w-full flex-row shadow-sm shadow-black/5 border-input dark:bg-input/30 disabled:bg-input/50 dark:disabled:bg-input/80 rounded-none border bg-transparent px-2.5 py-2 text-xs transition-colors md:text-xs',\n        Platform.select({\n          web: 'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive field-sizing-content resize-y outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed',\n        }),\n        props.editable === false && 'opacity-50',\n        className\n      )}\n      placeholderClassName={cn('text-muted-foreground', placeholderClassName)}\n      multiline={multiline}\n      numberOfLines={numberOfLines}\n      textAlignVertical=\"top\"\n      style={[style, getLvcnFontStyle(className)]}\n      {...props}\n    />\n  );\n}\n\nexport { Textarea };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "lyra"
+    "style": "lyra",
+    "recipeStyle": "lyra",
+    "legacy": false
   },
   "type": "registry:ui"
 }

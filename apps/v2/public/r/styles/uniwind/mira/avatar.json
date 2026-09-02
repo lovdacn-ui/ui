@@ -16,7 +16,9 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "mira"
+    "style": "mira",
+    "recipeStyle": "mira",
+    "legacy": false
   },
   "type": "registry:ui"
 }

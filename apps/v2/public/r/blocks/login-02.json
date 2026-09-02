@@ -4,10 +4,10 @@
   "type": "registry:block",
   "description": "A sign-in screen with social providers and a divider, as an (auth) route.",
   "dependencies": [
-    "lucide-react-native",
     "react-native-safe-area-context"
   ],
   "registryDependencies": [
+    "semantic-icon",
     "card",
     "input",
     "label",
@@ -26,14 +26,18 @@
     },
     {
       "path": "app/(auth)/sign-in.tsx",
-      "content": "import { LoginForm } from '@/components/login-form';\nimport { SafeAreaView } from 'react-native-safe-area-context';\n\nexport default function SignInScreen() {\n  return (\n    <SafeAreaView className=\"bg-background flex-1 justify-center p-4\">\n      <LoginForm />\n    </SafeAreaView>\n  );\n}\n",
+      "content": "import { LoginForm } from '@/components/login-form';\nimport { SafeAreaView } from 'react-native-safe-area-context';\n\nexport default function SignInScreen() {\n  return (\n    <SafeAreaView className=\"bg-background flex-1 justify-center px-6 py-8\">\n      <LoginForm />\n    </SafeAreaView>\n  );\n}\n",
       "type": "registry:page",
       "target": "app/(auth)/sign-in.tsx"
     },
     {
       "path": "components/login-form.tsx",
-      "content": "import { Button } from '@/components/ui/button';\nimport {\n  Card,\n  CardContent,\n  CardDescription,\n  CardHeader,\n  CardTitle,\n} from '@/components/ui/card';\nimport { Icon } from '@/components/ui/icon';\nimport { Input } from '@/components/ui/input';\nimport { Label } from '@/components/ui/label';\nimport { Separator } from '@/components/ui/separator';\nimport { Text } from '@/components/ui/text';\nimport { Apple, Mail } from 'lucide-react-native';\nimport * as React from 'react';\nimport { View } from 'react-native';\n\nexport function LoginForm() {\n  const [email, setEmail] = React.useState('');\n  const [password, setPassword] = React.useState('');\n\n  return (\n    <Card className=\"mx-auto w-full max-w-sm\">\n      <CardHeader className=\"items-center gap-1\">\n        <CardTitle className=\"text-xl\">Welcome back</CardTitle>\n        <CardDescription>Sign in with a provider or your email</CardDescription>\n      </CardHeader>\n      <CardContent className=\"gap-4\">\n        <View className=\"gap-2\">\n          <Button variant=\"outline\" className=\"w-full\" onPress={() => {}}>\n            <Icon as={Apple} />\n            <Text>Continue with Apple</Text>\n          </Button>\n          <Button variant=\"outline\" className=\"w-full\" onPress={() => {}}>\n            <Icon as={Mail} />\n            <Text>Continue with Google</Text>\n          </Button>\n        </View>\n        <View className=\"flex-row items-center gap-3\">\n          <Separator className=\"flex-1\" />\n          <Text className=\"text-muted-foreground text-xs\">OR CONTINUE WITH</Text>\n          <Separator className=\"flex-1\" />\n        </View>\n        <View className=\"gap-2\">\n          <Label nativeID=\"email\">\n            <Text>Email</Text>\n          </Label>\n          <Input\n            aria-labelledby=\"email\"\n            value={email}\n            onChangeText={setEmail}\n            placeholder=\"m@example.com\"\n            autoCapitalize=\"none\"\n            autoComplete=\"email\"\n            keyboardType=\"email-address\"\n          />\n        </View>\n        <View className=\"gap-2\">\n          <Label nativeID=\"password\">\n            <Text>Password</Text>\n          </Label>\n          <Input\n            aria-labelledby=\"password\"\n            value={password}\n            onChangeText={setPassword}\n            placeholder=\"Enter your password\"\n            secureTextEntry\n            autoComplete=\"password\"\n          />\n        </View>\n        <Button className=\"w-full\" onPress={() => {}}>\n          <Text>Sign in</Text>\n        </Button>\n      </CardContent>\n    </Card>\n  );\n}\n",
+      "content": "import { Button } from '@/components/ui/button';\nimport {\n  Card,\n  CardContent,\n  CardDescription,\n  CardHeader,\n  CardTitle,\n} from '@/components/ui/card';\nimport { Icon } from '@/components/ui/icon';\nimport { Input } from '@/components/ui/input';\nimport { Label } from '@/components/ui/label';\nimport { Separator } from '@/components/ui/separator';\nimport { Text } from '@/components/ui/text';\nimport { Apple, Mail } from '@/components/ui/semantic-icon';\nimport * as React from 'react';\nimport { View } from 'react-native';\n\nexport function LoginForm() {\n  const [email, setEmail] = React.useState('');\n  const [password, setPassword] = React.useState('');\n\n  return (\n    <Card className=\"mx-auto w-full max-w-sm\">\n      <CardHeader className=\"items-center gap-1\">\n        <CardTitle className=\"text-xl\">Welcome back</CardTitle>\n        <CardDescription>Sign in with a provider or your email</CardDescription>\n      </CardHeader>\n      <CardContent className=\"gap-4\">\n        <View className=\"gap-2\">\n          <Button variant=\"outline\" className=\"w-full\" onPress={() => {}}>\n            <Icon as={Apple} />\n            <Text>Continue with Apple</Text>\n          </Button>\n          <Button variant=\"outline\" className=\"w-full\" onPress={() => {}}>\n            <Icon as={Mail} />\n            <Text>Continue with Google</Text>\n          </Button>\n        </View>\n        <View className=\"flex-row items-center gap-4\">\n          <Separator className=\"flex-1\" />\n          <Text className=\"text-muted-foreground text-xs\">OR CONTINUE WITH</Text>\n          <Separator className=\"flex-1\" />\n        </View>\n        <View className=\"gap-2\">\n          <Label nativeID=\"email\">\n            <Text>Email</Text>\n          </Label>\n          <Input\n            aria-labelledby=\"email\"\n            value={email}\n            onChangeText={setEmail}\n            placeholder=\"m@example.com\"\n            autoCapitalize=\"none\"\n            autoComplete=\"email\"\n            keyboardType=\"email-address\"\n          />\n        </View>\n        <View className=\"gap-2\">\n          <Label nativeID=\"password\">\n            <Text>Password</Text>\n          </Label>\n          <Input\n            aria-labelledby=\"password\"\n            value={password}\n            onChangeText={setPassword}\n            placeholder=\"Enter your password\"\n            secureTextEntry\n            autoComplete=\"password\"\n          />\n        </View>\n        <Button className=\"w-full\" onPress={() => {}}>\n          <Text>Sign in</Text>\n        </Button>\n      </CardContent>\n    </Card>\n  );\n}\n",
       "type": "registry:component"
     }
-  ]
+  ],
+  "meta": {
+    "style": "vega",
+    "legacy": true
+  }
 }

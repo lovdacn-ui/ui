@@ -3,18 +3,21 @@
   "name": "skeleton",
   "dependencies": [],
   "registryDependencies": [
-    "utils"
+    "utils",
+    "primitives"
   ],
   "files": [
     {
       "path": "components/ui/skeleton.tsx",
-      "content": "import { cn } from '@/lib/utils';\nimport { View } from 'react-native';\n\nfunction Skeleton({\n  className,\n  ...props\n}: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('bg-accent animate-pulse rounded-md', className)} {...props} />;\n}\n\nexport { Skeleton };\n",
+      "content": "import { cn } from '@/lib/utils';\nimport { View } from '@/components/ui/primitives';\n\nfunction Skeleton({\n  className,\n  ...props\n}: React.ComponentProps<typeof View> & React.RefAttributes<View>) {\n  return <View className={cn('bg-accent animate-pulse rounded-md', className)} {...props} />;\n}\n\nexport { Skeleton };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "new-york"
+    "style": "new-york",
+    "recipeStyle": "vega",
+    "legacy": true
   },
   "type": "registry:ui"
 }

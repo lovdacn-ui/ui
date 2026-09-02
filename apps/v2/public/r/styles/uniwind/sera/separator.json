@@ -16,7 +16,9 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "sera"
+    "style": "sera",
+    "recipeStyle": "sera",
+    "legacy": false
   },
   "type": "registry:ui"
 }

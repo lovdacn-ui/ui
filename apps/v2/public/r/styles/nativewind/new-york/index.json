@@ -9,5 +9,10 @@
     "utils"
   ],
   "files": [],
+  "meta": {
+    "style": "new-york",
+    "recipeStyle": "vega",
+    "legacy": true
+  },
   "type": "registry:style"
 }

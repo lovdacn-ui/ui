@@ -3,18 +3,21 @@
   "name": "input",
   "dependencies": [],
   "registryDependencies": [
-    "utils"
+    "utils",
+    "primitives"
   ],
   "files": [
     {
       "path": "components/ui/input.tsx",
-      "content": "import { cn } from '@/lib/utils';\nimport { Platform, TextInput } from 'react-native';\n\nfunction Input({ className, ...props }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {\n  return (\n    <TextInput\n      className={cn('text-foreground flex w-full min-w-0 flex-row items-center shadow-sm shadow-black/5 sm:h-9 bg-input/20 dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 h-7 rounded-md border px-2 py-0.5 text-sm transition-colors file:h-6 file:text-xs/relaxed file:font-medium focus-visible:ring-2 aria-invalid:ring-2 md:text-xs/relaxed',\n        props.editable === false &&\n        cn(\n          'opacity-50',\n          Platform.select({ web: 'disabled:pointer-events-none disabled:cursor-not-allowed' })\n        ),\n        Platform.select({\n          web: cn(\n            'placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow] md:text-sm',\n            'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',\n            'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'\n          ),\n          native: 'placeholder:text-muted-foreground/50',\n        }),\n        className\n      )}\n      {...props}\n    />\n  );\n}\n\nexport { Input };\n",
+      "content": "import { getLvcnFontStyle } from '@/lib/lvcn-fonts';\nimport { cn } from '@/lib/utils';\nimport { TextInput } from '@/components/ui/primitives';\nimport { Platform } from 'react-native';\n\nfunction Input({ className, style, ...props }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {\n  return (\n    <TextInput\n      className={cn('text-foreground flex h-10 w-full min-w-0 flex-row items-center shadow-sm shadow-black/5 sm:h-9 bg-input/20 dark:bg-input/30 border-input min-h-7 rounded-md border px-2 py-0.5 text-sm transition-colors file:min-h-6 file:text-xs/relaxed file:font-medium md:text-xs/relaxed',\n        props.editable === false &&\n        cn(\n          'opacity-50',\n          Platform.select({ web: 'disabled:pointer-events-none disabled:cursor-not-allowed' })\n        ),\n        Platform.select({\n          web: cn(\n            'placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow] md:text-sm',\n            'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',\n            'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'\n          ),\n          native: 'placeholder:text-muted-foreground/50',\n        }),\n        className\n      )}\n      style={[style, getLvcnFontStyle(className)]}\n      {...props}\n    />\n  );\n}\n\nexport { Input };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "nativewind",
-    "style": "mira"
+    "style": "mira",
+    "recipeStyle": "mira",
+    "legacy": false
   },
   "type": "registry:ui"
 }

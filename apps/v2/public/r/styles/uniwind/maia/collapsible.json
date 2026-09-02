@@ -14,7 +14,9 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "maia"
+    "style": "maia",
+    "recipeStyle": "maia",
+    "legacy": false
   },
   "type": "registry:ui"
 }

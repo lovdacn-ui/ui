@@ -4,10 +4,10 @@
     "type": "registry:block",
     "description": "A full application dashboard built around the sidebar — a navigation sidebar, a top bar, KPI cards, an overview chart, and a recent-activity list.",
     "dependencies": [
-      "lucide-react-native",
       "react-native-safe-area-context"
     ],
     "registryDependencies": [
+      "semantic-icon",
       "sidebar",
       "card",
       "button",
@@ -18,6 +18,16 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
@@ -25,10 +35,10 @@
     "type": "registry:block",
     "description": "A dashboard application shell built around the sidebar — a branded header with search, a collapsible nav item with a sub-menu, a project list with row actions, a user footer, and a bottom tab bar overridden by the sidebar drawer.",
     "dependencies": [
-      "lucide-react-native",
       "react-native-safe-area-context"
     ],
     "registryDependencies": [
+      "semantic-icon",
       "sidebar",
       "avatar",
       "input",
@@ -36,6 +46,16 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
@@ -52,6 +72,16 @@
       "button",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
@@ -59,10 +89,10 @@
     "type": "registry:block",
     "description": "A sign-in screen with social providers and a divider, as an (auth) route.",
     "dependencies": [
-      "lucide-react-native",
       "react-native-safe-area-context"
     ],
     "registryDependencies": [
+      "semantic-icon",
       "card",
       "input",
       "label",
@@ -71,16 +101,25 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
     "name": "login-03",
     "type": "registry:block",
     "description": "A branded sign-in card with social providers, email login, account links, and a mobile-safe route.",
-    "dependencies": [
-      "lucide-react-native"
-    ],
+    "dependencies": [],
     "registryDependencies": [
+      "semantic-icon",
       "card",
       "input",
       "label",
@@ -89,16 +128,25 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
     "name": "login-04",
     "type": "registry:block",
     "description": "A responsive split-panel sign-in screen with social providers and a decorative panel hidden on compact devices.",
-    "dependencies": [
-      "lucide-react-native"
-    ],
+    "dependencies": [],
     "registryDependencies": [
+      "semantic-icon",
       "card",
       "input",
       "label",
@@ -107,6 +155,16 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
@@ -125,16 +183,25 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
     "name": "signup-02",
     "type": "registry:block",
     "description": "A detailed responsive registration screen with confirmation, GitHub signup, and a decorative panel hidden on compact devices.",
-    "dependencies": [
-      "lucide-react-native"
-    ],
+    "dependencies": [],
     "registryDependencies": [
+      "semantic-icon",
       "input",
       "label",
       "button",
@@ -142,16 +209,25 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
     "name": "signup-03",
     "type": "registry:block",
     "description": "A compact branded registration card with responsive password fields and a mobile-safe route.",
-    "dependencies": [
-      "lucide-react-native"
-    ],
+    "dependencies": [],
     "registryDependencies": [
+      "semantic-icon",
       "card",
       "input",
       "label",
@@ -159,6 +235,16 @@
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   },
   {
@@ -166,15 +252,25 @@
     "type": "registry:block",
     "description": "A dashboard route with a stack of KPI stat cards and trend badges.",
     "dependencies": [
-      "lucide-react-native",
       "react-native-safe-area-context"
     ],
     "registryDependencies": [
+      "semantic-icon",
       "card",
       "badge",
       "icon",
       "text",
       "utils"
+    ],
+    "styles": [
+      "nova",
+      "vega",
+      "maia",
+      "lyra",
+      "mira",
+      "luma",
+      "sera",
+      "rhea"
     ]
   }
 ]

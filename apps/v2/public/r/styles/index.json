@@ -1,42 +1,42 @@
 [
   {
-    "name": "default",
-    "label": "Default"
-  },
-  {
-    "name": "new-york",
-    "label": "New York"
-  },
-  {
-    "name": "luma",
-    "label": "Luma"
-  },
-  {
-    "name": "lyra",
-    "label": "Lyra"
-  },
-  {
-    "name": "maia",
-    "label": "Maia"
-  },
-  {
-    "name": "mira",
-    "label": "Mira"
-  },
-  {
     "name": "nova",
-    "label": "Nova"
-  },
-  {
-    "name": "rhea",
-    "label": "Rhea"
-  },
-  {
-    "name": "sera",
-    "label": "Sera"
+    "label": "Nova",
+    "description": "Compact, restrained, tight cards"
   },
   {
     "name": "vega",
-    "label": "Vega"
+    "label": "Vega",
+    "description": "Balanced, classic default"
+  },
+  {
+    "name": "maia",
+    "label": "Maia",
+    "description": "Spacious and strongly rounded"
+  },
+  {
+    "name": "lyra",
+    "label": "Lyra",
+    "description": "Technical, compact, square"
+  },
+  {
+    "name": "mira",
+    "label": "Mira",
+    "description": "Dense, compact controls and type"
+  },
+  {
+    "name": "luma",
+    "label": "Luma",
+    "description": "Soft, rounded, comfortable"
+  },
+  {
+    "name": "sera",
+    "label": "Sera",
+    "description": "Editorial, square, uppercase accents"
+  },
+  {
+    "name": "rhea",
+    "label": "Rhea",
+    "description": "Soft, pill-oriented, approachable"
   }
 ]

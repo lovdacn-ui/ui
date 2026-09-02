@@ -14,7 +14,9 @@
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "luma"
+    "style": "luma",
+    "recipeStyle": "luma",
+    "legacy": false
   },
   "type": "registry:ui"
 }

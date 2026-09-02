@@ -1,24 +1,26 @@
 {
   "$schema": "https://lovdacn.vercel.app/schema/registry-item.json",
   "name": "alert",
-  "dependencies": [
-    "lucide-react-native"
-  ],
+  "dependencies": [],
   "registryDependencies": [
     "icon",
     "text",
-    "utils"
+    "utils",
+    "semantic-icon",
+    "primitives"
   ],
   "files": [
     {
       "path": "components/ui/alert.tsx",
-      "content": "import { Icon } from '@/components/ui/icon';\nimport { Text, TextClassContext } from '@/components/ui/text';\nimport { cn } from '@/lib/utils';\nimport type { LucideIcon } from 'lucide-react-native';\nimport * as React from 'react';\nimport { View } from 'react-native';\n\nfunction Alert({\n  className,\n  variant,\n  children,\n  icon,\n  iconClassName,\n  ...props\n}: React.ComponentProps<typeof View> &\n  React.RefAttributes<View> & {\n    icon: LucideIcon;\n    variant?: 'default' | 'destructive';\n    iconClassName?: string;\n  }) {\n  return (\n    <TextClassContext.Provider\n      value={cn(\n        'text-sm text-foreground',\n        variant === 'destructive' && 'text-destructive',\n        className\n      )}>\n      <View\n        role=\"alert\"\n        className={cn(\n          'bg-card border-border relative w-full gap-0.5 rounded-none border px-2.5 py-2 text-left text-xs',\n          className\n        )}\n        {...props}>\n        <View className=\"absolute left-3.5 top-3\">\n          <Icon\n            as={icon}\n            className={cn('size-4', variant === 'destructive' && 'text-destructive', iconClassName)}\n          />\n        </View>\n        {children}\n      </View>\n    </TextClassContext.Provider>\n  );\n}\n\nfunction AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) {\n  return (\n    <Text\n      className={cn('mb-1 ml-0.5 min-h-4 pl-6 leading-none tracking-tight font-medium', className)}\n      {...props}\n    />\n  );\n}\n\nfunction AlertDescription({ className, ...props }: React.ComponentProps<typeof Text>) {\n  const textClass = React.useContext(TextClassContext);\n  return (\n    <Text\n      className={cn(\n        'ml-0.5 pb-1.5 pl-6 text-muted-foreground text-xs/relaxed',\n        textClass?.includes('text-destructive') && 'text-destructive/90',\n        className\n      )}\n      {...props}\n    />\n  );\n}\n\nexport { Alert, AlertDescription, AlertTitle };\n",
+      "content": "import { Icon } from '@/components/ui/icon';\nimport { Text, TextClassContext } from '@/components/ui/text';\nimport { cn } from '@/lib/utils';\nimport type { SemanticIconComponent } from '@/components/ui/semantic-icon';\nimport * as React from 'react';\nimport { View } from '@/components/ui/primitives';\n\nfunction Alert({\n  className,\n  variant,\n  children,\n  icon,\n  iconClassName,\n  ...props\n}: React.ComponentProps<typeof View> &\n  React.RefAttributes<View> & {\n    icon: SemanticIconComponent;\n    variant?: 'default' | 'destructive';\n    iconClassName?: string;\n  }) {\n  return (\n    <TextClassContext.Provider\n      value={cn(\n        'text-sm text-foreground',\n        variant === 'destructive' && 'text-destructive',\n        className\n      )}>\n      <View\n        role=\"alert\"\n        className={cn(\n          'bg-card border-border relative w-full gap-0.5 rounded-none border px-2.5 py-2',\n          className\n        )}\n        {...props}>\n        <View className=\"absolute left-3.5 top-3\">\n          <Icon\n            as={icon}\n            className={cn('size-4', variant === 'destructive' && 'text-destructive', iconClassName)}\n          />\n        </View>\n        {children}\n      </View>\n    </TextClassContext.Provider>\n  );\n}\n\nfunction AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) {\n  return (\n    <Text\n      className={cn('mb-1 ml-0.5 min-h-4 pl-6 font-medium leading-tight tracking-tight', className)}\n      {...props}\n    />\n  );\n}\n\nfunction AlertDescription({ className, ...props }: React.ComponentProps<typeof Text>) {\n  const textClass = React.useContext(TextClassContext);\n  return (\n    <Text\n      className={cn(\n        'text-muted-foreground ml-0.5 pb-1.5 pl-6 text-sm leading-relaxed',\n        textClass?.includes('text-destructive') && 'text-destructive/90',\n        className\n      )}\n      {...props}\n    />\n  );\n}\n\nexport { Alert, AlertDescription, AlertTitle };\n",
       "type": "registry:ui"
     }
   ],
   "meta": {
     "engine": "uniwind",
-    "style": "lyra"
+    "style": "lyra",
+    "recipeStyle": "lyra",
+    "legacy": false
   },
   "type": "registry:ui"
 }
