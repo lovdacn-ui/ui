@@ -49,7 +49,11 @@ export const WIRE_PRESET_THEMES = [
   "purple",
   "fuchsia",
   "pink",
-  "rose"
+  "rose",
+  "mauve",
+  "olive",
+  "mist",
+  "taupe"
 ] as const
 export const WIRE_PRESET_CHART_COLORS = [
   "zinc",
@@ -73,7 +77,11 @@ export const WIRE_PRESET_CHART_COLORS = [
   "purple",
   "fuchsia",
   "pink",
-  "rose"
+  "rose",
+  "mauve",
+  "olive",
+  "mist",
+  "taupe"
 ] as const
 export const WIRE_PRESET_FONTS = [
   "inter",
@@ -159,7 +167,11 @@ export const PRESET_THEMES = [
   "purple",
   "fuchsia",
   "pink",
-  "rose"
+  "rose",
+  "mauve",
+  "olive",
+  "mist",
+  "taupe"
 ] as const
 export const PRESET_CHART_COLORS = PRESET_THEMES
 export const PRESET_FONTS = [
@@ -293,6 +305,223 @@ export type WirePresetConfigV1 = {
 export type PresetField = keyof PresetConfig
 export type PresetNormalization = { config: PresetConfig; warnings: string[] }
 
+// The 17 accent themes (every catalog theme that is not a base color). A base
+// color pairs cleanly with its own monochrome theme plus any accent.
+export const ACCENT_PRESET_THEMES = [
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose"
+] as const
+export type AccentPresetTheme = (typeof ACCENT_PRESET_THEMES)[number]
+
+// Theme/chart compatibility per base color: the base's own theme + 17 accents.
+// Mixing two distinct neutral families is intentionally excluded. Old presets
+// that encode such a mix still decode — this only scopes the offered choices.
+export const THEME_COMPATIBILITY: Record<PresetBaseColor, readonly PresetTheme[]> = {
+  "zinc": [
+    "zinc",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "slate": [
+    "slate",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "stone": [
+    "stone",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "gray": [
+    "gray",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "neutral": [
+    "neutral",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "taupe": [
+    "taupe",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "mauve": [
+    "mauve",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "olive": [
+    "olive",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ],
+  "mist": [
+    "mist",
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose"
+  ]
+}
+
+export function getCompatibleThemes(base: PresetBaseColor): readonly PresetTheme[] {
+  return THEME_COMPATIBILITY[base] ?? PRESET_THEMES
+}
+
+export function isThemeCompatible(base: PresetBaseColor, theme: PresetTheme): boolean {
+  return getCompatibleThemes(base).indexOf(theme) !== -1
+}
+
 export const DEFAULT_PRESET_CONFIG: PresetConfig = {
   "style": "vega",
   "baseColor": "neutral",
@@ -378,11 +607,11 @@ export const ICON_IMPORTS: Record<PresetIconLibrary, string> = {
   "heroicons": "react-native-heroicons"
 }
 export const RADIUS_VALUES: Record<PresetRadius, string> = {
-  "default": "0.5rem",
+  "default": "0.625rem",
   "none": "0rem",
-  "small": "0.125rem",
+  "small": "0.45rem",
   "medium": "0.625rem",
-  "large": "0.75rem",
+  "large": "0.875rem",
   "full": "1.5rem"
 }
 export const FONT_MANIFEST = {
@@ -1422,11 +1651,16 @@ export function randomizeConfig(
   locked: Partial<Record<PresetField, boolean>> = {}
 ): PresetConfig {
   const pick = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)]!
+  // Choose the base color first so an unlocked theme/chart can be drawn from
+  // that base's compatible set (its own monochrome theme plus the 17 accents).
+  // Locked fields keep their current value untouched for backward compatibility.
+  const baseColor = locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS)
+  const compatible = getCompatibleThemes(baseColor)
   return {
     style: locked.style ? current.style : pick(PRESET_STYLES),
-    baseColor: locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS),
-    theme: locked.theme ? current.theme : pick(PRESET_THEMES),
-    chartColor: locked.chartColor ? current.chartColor : pick(PRESET_CHART_COLORS),
+    baseColor,
+    theme: locked.theme ? current.theme : pick(compatible),
+    chartColor: locked.chartColor ? current.chartColor : pick(compatible),
     font: locked.font ? current.font : pick(PRESET_FONTS),
     iconLibrary: locked.iconLibrary ? current.iconLibrary : pick(PRESET_ICON_LIBRARIES),
     radius: locked.radius ? current.radius : pick(PRESET_RADII),

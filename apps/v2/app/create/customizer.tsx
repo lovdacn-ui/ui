@@ -63,54 +63,44 @@ import { Picker } from "./picker"
 import {
   PRESET_STYLES,
   PRESET_BASE_COLORS,
-  PRESET_THEMES,
-  PRESET_CHART_COLORS,
   PRESET_FONTS,
   PRESET_ICON_LIBRARIES,
   PRESET_RADII,
   encodePreset,
   randomizeConfig,
+  getCompatibleThemes,
   DEFAULT_CONFIG,
   FONT_FAMILIES,
   ICON_PACKAGES,
   RADIUS_VALUES,
   STYLE_LABELS,
-  COLOR_SWATCHES,
+  BASE_COLOR_SWATCHES,
   THEME_SWATCHES,
   type PresetConfig,
   type PresetField,
+  type PresetBaseColor,
+  type PresetTheme,
 } from "./preset-data"
 
 type PackageManager = "npm" | "pnpm" | "yarn" | "bun"
 type ExpoVersion = "54" | "57"
 
-// Build picker options
+const titleCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+
+// Build picker options that never depend on the active base/scheme.
 const STYLE_OPTIONS = PRESET_STYLES.map((s) => ({ value: s, label: STYLE_LABELS[s] }))
-const COLOR_OPTIONS = PRESET_BASE_COLORS.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: COLOR_SWATCHES[c],
-}))
-const THEME_OPTIONS = PRESET_THEMES.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: THEME_SWATCHES[c],
-}))
-const CHART_OPTIONS = PRESET_CHART_COLORS.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: THEME_SWATCHES[c],
-}))
 const FONT_OPTIONS = PRESET_FONTS.map((f) => ({ value: f, label: FONT_FAMILIES[f] }))
 const ICON_OPTIONS = PRESET_ICON_LIBRARIES.map((i) => ({
   value: i,
-  label: i.charAt(0).toUpperCase() + i.slice(1),
+  label: titleCase(i),
   hint: ICON_PACKAGES[i],
 }))
 const RADIUS_OPTIONS = PRESET_RADII.map((r) => ({
   value: r,
-  label: r.charAt(0).toUpperCase() + r.slice(1),
-  hint: RADIUS_VALUES[r],
+  label: titleCase(r),
+  // "Full" is a bounded React-Native pill radius rather than a shadcn web value —
+  // call that out so it reads clearly in the picker.
+  hint: r === "full" ? `${RADIUS_VALUES[r]} · React Native` : RADIUS_VALUES[r],
 }))
 
 function PreviewLoadingSkeleton() {
@@ -160,6 +150,44 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
     }
     return "light"
   }, [resolvedTheme])
+
+  // Base color options — every catalog base color, swatch resolved for the active
+  // scheme from the canonical tokens.
+  const colorOptions = React.useMemo(
+    () =>
+      PRESET_BASE_COLORS.map((c) => ({
+        value: c,
+        label: titleCase(c),
+        swatch: BASE_COLOR_SWATCHES[c][colorScheme],
+      })),
+    [colorScheme]
+  )
+
+  // Theme + chart options are scoped to the base's compatible set (its own theme
+  // + 17 accents). The current value is always kept selectable so a preset that
+  // encodes a legacy neutral-on-neutral mix still displays and stays editable.
+  const buildThemeOptions = React.useCallback(
+    (current: PresetTheme) => {
+      const compatible = getCompatibleThemes(config.baseColor)
+      const values = compatible.includes(current)
+        ? compatible
+        : [current, ...compatible]
+      return values.map((c) => ({
+        value: c,
+        label: titleCase(c),
+        swatch: THEME_SWATCHES[c][colorScheme],
+      }))
+    },
+    [config.baseColor, colorScheme]
+  )
+  const themeOptions = React.useMemo(
+    () => buildThemeOptions(config.theme),
+    [buildThemeOptions, config.theme]
+  )
+  const chartOptions = React.useMemo(
+    () => buildThemeOptions(config.chartColor),
+    [buildThemeOptions, config.chartColor]
+  )
 
   // Keep the first URL fully configured, like shadcn's preview route, but never
   // change it after mount. Live changes travel over postMessage so shuffle does
@@ -225,7 +253,23 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   }, [presetCode])
 
   const update = <K extends PresetField>(key: K, value: PresetConfig[K]) => {
-    setConfig((c) => ({ ...c, [key]: value }))
+    setConfig((c) => {
+      if (key !== "baseColor") return { ...c, [key]: value }
+      // Base changed: keep compatible theme/chart selections (accents pair with
+      // every base), but normalize an incompatible neutral — a base-color theme
+      // that isn't the new base — to the new base so two neutral families never
+      // mix. Old presets that encode such a mix still decode elsewhere.
+      const nextBase = value as PresetBaseColor
+      const compatible = getCompatibleThemes(nextBase)
+      const normalize = (theme: PresetTheme): PresetTheme =>
+        compatible.includes(theme) ? theme : nextBase
+      return {
+        ...c,
+        baseColor: nextBase,
+        theme: normalize(c.theme),
+        chartColor: normalize(c.chartColor),
+      }
+    })
   }
 
   const toggleLock = (key: PresetField) => {
@@ -300,7 +344,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
           <Picker
             label="Base Color"
             value={config.baseColor}
-            options={COLOR_OPTIONS}
+            options={colorOptions}
             onChange={(v) => update("baseColor", v)}
             locked={locks.baseColor}
             onToggleLock={() => toggleLock("baseColor")}
@@ -310,7 +354,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
           <Picker
             label="Theme"
             value={config.theme}
-            options={THEME_OPTIONS}
+            options={themeOptions}
             onChange={(v) => update("theme", v)}
             locked={locks.theme}
             onToggleLock={() => toggleLock("theme")}
@@ -320,7 +364,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
           <Picker
             label="Chart Color"
             value={config.chartColor}
-            options={CHART_OPTIONS}
+            options={chartOptions}
             onChange={(v) => update("chartColor", v)}
             locked={locks.chartColor}
             onToggleLock={() => toggleLock("chartColor")}

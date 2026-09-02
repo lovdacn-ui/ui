@@ -31,6 +31,7 @@ const styleMetadata = readJson("style-metadata.json");
 const blockRecipes = readJson("block-recipes.json");
 const iconManifest = readJson("icon-manifest.json");
 const fontManifest = readJson("font-manifest.json");
+const themeTokens = readJson("theme-tokens.json");
 
 function literal(value) {
   return JSON.stringify(value, null, 2);
@@ -123,6 +124,8 @@ function validateSources() {
         throw new Error(`Font "${font}" is missing ${face}`);
     }
   }
+
+  validateThemeTokens();
 }
 
 const activeStyles = catalog.styles.map((style) => style.name);
@@ -224,6 +227,24 @@ export type WirePresetConfigV1 = {
 
 export type PresetField = keyof PresetConfig
 export type PresetNormalization = { config: PresetConfig; warnings: string[] }
+
+// The 17 accent themes (every catalog theme that is not a base color). A base
+// color pairs cleanly with its own monochrome theme plus any accent.
+export const ACCENT_PRESET_THEMES = ${literal(accentThemeNames())} as const
+export type AccentPresetTheme = (typeof ACCENT_PRESET_THEMES)[number]
+
+// Theme/chart compatibility per base color: the base's own theme + 17 accents.
+// Mixing two distinct neutral families is intentionally excluded. Old presets
+// that encode such a mix still decode — this only scopes the offered choices.
+export const THEME_COMPATIBILITY: Record<PresetBaseColor, readonly PresetTheme[]> = ${literal(themeCompatibility())}
+
+export function getCompatibleThemes(base: PresetBaseColor): readonly PresetTheme[] {
+  return THEME_COMPATIBILITY[base] ?? PRESET_THEMES
+}
+
+export function isThemeCompatible(base: PresetBaseColor, theme: PresetTheme): boolean {
+  return getCompatibleThemes(base).indexOf(theme) !== -1
+}
 
 export const DEFAULT_PRESET_CONFIG: PresetConfig = ${literal(catalog.defaultPreset)}
 export const DEFAULT_CONFIG = DEFAULT_PRESET_CONFIG
@@ -366,11 +387,16 @@ export function randomizeConfig(
   locked: Partial<Record<PresetField, boolean>> = {}
 ): PresetConfig {
   const pick = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)]!
+  // Choose the base color first so an unlocked theme/chart can be drawn from
+  // that base's compatible set (its own monochrome theme plus the 17 accents).
+  // Locked fields keep their current value untouched for backward compatibility.
+  const baseColor = locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS)
+  const compatible = getCompatibleThemes(baseColor)
   return {
     style: locked.style ? current.style : pick(PRESET_STYLES),
-    baseColor: locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS),
-    theme: locked.theme ? current.theme : pick(PRESET_THEMES),
-    chartColor: locked.chartColor ? current.chartColor : pick(PRESET_CHART_COLORS),
+    baseColor,
+    theme: locked.theme ? current.theme : pick(compatible),
+    chartColor: locked.chartColor ? current.chartColor : pick(compatible),
     font: locked.font ? current.font : pick(PRESET_FONTS),
     iconLibrary: locked.iconLibrary ? current.iconLibrary : pick(PRESET_ICON_LIBRARIES),
     radius: locked.radius ? current.radius : pick(PRESET_RADII),
@@ -838,6 +864,365 @@ function createSchema() {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Canonical theme tokens (design-system/theme-tokens.json)
+// ---------------------------------------------------------------------------
+
+const THEME_TOKEN_ENTRIES = themeTokens.themes || {};
+const themeCatalogNames = catalog.themes;
+const baseColorNames = catalog.baseColors;
+const CHART_KEYS = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
+
+// The full, ordered color-token key set every fully-resolved theme carries.
+// Derived from the first base color so the list is never hand-maintained.
+// `radius` is applied separately by the resolver and is excluded here.
+function deriveThemeTokenKeys() {
+  const referenceBase = baseColorNames[0];
+  const entry = THEME_TOKEN_ENTRIES[referenceBase];
+  if (!entry || !entry.cssVars || !entry.cssVars.light) {
+    throw new Error(
+      `theme-tokens.json is missing the reference base color "${referenceBase}"`,
+    );
+  }
+  return Object.keys(entry.cssVars.light).filter((key) => key !== "radius");
+}
+
+const THEME_TOKEN_KEYS = deriveThemeTokenKeys();
+
+function accentThemeNames() {
+  return themeCatalogNames.filter(
+    (name) =>
+      THEME_TOKEN_ENTRIES[name] && THEME_TOKEN_ENTRIES[name].kind === "accent",
+  );
+}
+
+// Compatibility per base color: the base's own monochrome theme (it is itself a
+// catalog theme) plus every accent theme. Mixing two distinct neutral families is
+// intentionally excluded; every base pairs cleanly with itself and any accent.
+function themeCompatibility() {
+  const accents = accentThemeNames();
+  const map = {};
+  for (const base of baseColorNames) {
+    const own = themeCatalogNames.includes(base) ? [base] : [];
+    map[base] = [...own, ...accents];
+  }
+  return map;
+}
+
+function validateThemeTokens() {
+  if (!THEME_TOKEN_ENTRIES || typeof THEME_TOKEN_ENTRIES !== "object") {
+    throw new Error("theme-tokens.json is missing its `themes` map");
+  }
+  if (THEME_TOKEN_KEYS.length === 0) {
+    throw new Error("theme-tokens.json produced an empty token key set");
+  }
+
+  // Every catalog theme (and therefore every chart color) resolves to a vendored
+  // entry that supplies chart-1..5 in both schemes with canonical OKLCH values.
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    if (!entry) {
+      throw new Error(`theme-tokens.json is missing catalog theme "${name}"`);
+    }
+    for (const scheme of ["light", "dark"]) {
+      const vars = entry.cssVars && entry.cssVars[scheme];
+      if (!vars) {
+        throw new Error(`theme "${name}" is missing its ${scheme} tokens`);
+      }
+      for (const chartKey of CHART_KEYS) {
+        if (!vars[chartKey]) {
+          throw new Error(`theme "${name}" (${scheme}) is missing ${chartKey}`);
+        }
+      }
+      for (const [key, value] of Object.entries(vars)) {
+        if (key === "radius") continue;
+        if (typeof value !== "string" || !value.startsWith("oklch(")) {
+          throw new Error(
+            `theme "${name}" (${scheme}) token "${key}" is not an OKLCH value: ${value}`,
+          );
+        }
+      }
+    }
+  }
+
+  // Every catalog base color is a full base-kind entry carrying every token key
+  // (including the sidebar tokens) in both schemes.
+  for (const base of baseColorNames) {
+    const entry = THEME_TOKEN_ENTRIES[base];
+    if (!entry) {
+      throw new Error(`theme-tokens.json is missing base color "${base}"`);
+    }
+    if (entry.kind !== "base") {
+      throw new Error(
+        `base color "${base}" must be a full base theme, but its kind is "${entry.kind}"`,
+      );
+    }
+    for (const scheme of ["light", "dark"]) {
+      for (const key of THEME_TOKEN_KEYS) {
+        if (!entry.cssVars[scheme][key]) {
+          throw new Error(
+            `base color "${base}" (${scheme}) is missing token "${key}"`,
+          );
+        }
+      }
+    }
+  }
+
+  // Catalog themes stay in lock-step with the immutable wire table.
+  for (const field of ["theme", "chartColor"]) {
+    const values = wireValues(field);
+    for (const name of themeCatalogNames) {
+      if (!values.includes(name)) {
+        throw new Error(
+          `wire-v1.json ${field} is missing catalog theme "${name}"`,
+        );
+      }
+    }
+  }
+
+  // The radius map covers every catalog radius.
+  for (const radius of catalog.radii) {
+    if (!catalog.radiusValues[radius]) {
+      throw new Error(`catalog radiusValues is missing "${radius}"`);
+    }
+  }
+}
+
+function buildThemeTokensLiteral() {
+  const out = {};
+  const stripRadius = (vars) => {
+    const copy = {};
+    for (const [key, value] of Object.entries(vars)) {
+      if (key !== "radius") copy[key] = value;
+    }
+    return copy;
+  };
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    out[name] = {
+      kind: entry.kind,
+      light: stripRadius(entry.cssVars.light),
+      dark: stripRadius(entry.cssVars.dark),
+    };
+  }
+  return out;
+}
+
+function createThemeTokensSource() {
+  const themeTokensLiteral = buildThemeTokensLiteral();
+  const compatibility = themeCompatibility();
+  return `${GENERATED_HEADER}
+// Canonical OKLCH theme tokens resolved from design-system/theme-tokens.json.
+// This module is self-contained and browser-safe: no imports, no Node APIs, and
+// no side effects. The copies emitted into the preset package and the preview app
+// are byte-identical.
+
+export const THEME_TOKEN_NAMES = ${literal(themeCatalogNames)} as const
+export const BASE_COLOR_NAMES = ${literal(baseColorNames)} as const
+export const RADIUS_NAMES = ${literal(catalog.radii)} as const
+export const COLOR_SCHEMES = ['light', 'dark'] as const
+
+export type ThemeTokenName = (typeof THEME_TOKEN_NAMES)[number]
+export type BaseColorName = (typeof BASE_COLOR_NAMES)[number]
+export type RadiusName = (typeof RADIUS_NAMES)[number]
+export type ColorScheme = (typeof COLOR_SCHEMES)[number]
+export type ThemeKind = 'base' | 'accent'
+
+export const THEME_TOKEN_KEYS = ${literal(THEME_TOKEN_KEYS)} as const
+export type ThemeTokenKey = (typeof THEME_TOKEN_KEYS)[number]
+
+export const RADIUS_VALUES: Record<RadiusName, string> = ${literal(catalog.radiusValues)}
+
+export type ThemeTokenScheme = Partial<Record<ThemeTokenKey, string>>
+export type ThemeTokenEntry = {
+  kind: ThemeKind
+  light: ThemeTokenScheme
+  dark: ThemeTokenScheme
+}
+
+// Base themes carry the full token set; accent themes carry the partial
+// primary/secondary/chart/sidebar-primary overrides exactly as shadcn ships them.
+export const THEME_TOKENS: Record<ThemeTokenName, ThemeTokenEntry> = ${literal(themeTokensLiteral)}
+
+export const THEME_COMPATIBILITY: Record<BaseColorName, readonly ThemeTokenName[]> = ${literal(compatibility)}
+
+export function getCompatibleThemes(base: BaseColorName): readonly ThemeTokenName[] {
+  return THEME_COMPATIBILITY[base]
+}
+
+export function isThemeCompatible(base: BaseColorName, theme: ThemeTokenName): boolean {
+  return THEME_COMPATIBILITY[base].indexOf(theme) !== -1
+}
+
+const CHART_TOKEN_KEYS: ThemeTokenKey[] = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5']
+
+// Deterministic, browser-safe OKLCH -> HSL triplet conversion. OKLCH alpha is
+// preserved (e.g. 'oklch(1 0 0 / 10%)' -> '0 0% 100% / 10%') instead of collapsing
+// to black, and any unparseable input is returned unchanged.
+export function oklchToHsl(value: string): string {
+  if (typeof value !== 'string') return value
+  const open = value.indexOf('(')
+  const close = value.lastIndexOf(')')
+  if (open < 0 || close < 0 || close < open) return value
+  if (value.slice(0, open).trim() !== 'oklch') return value
+  let inner = value.slice(open + 1, close).trim()
+  let alpha = ''
+  const slash = inner.indexOf('/')
+  if (slash !== -1) {
+    alpha = inner.slice(slash + 1).trim()
+    inner = inner.slice(0, slash).trim()
+  }
+  const parts = inner.split(' ').filter((part) => part.length > 0)
+  const rawL = parts[0]
+  const rawC = parts[1]
+  const rawH = parts[2]
+  if (rawL === undefined || rawC === undefined || rawH === undefined) return value
+  const L = parseFloat(rawL)
+  const C = parseFloat(rawC)
+  const H = parseFloat(rawH)
+  if (Number.isNaN(L) || Number.isNaN(C) || Number.isNaN(H)) return value
+
+  const hRad = (H * Math.PI) / 180
+  const a = C * Math.cos(hRad)
+  const b = C * Math.sin(hRad)
+  const lPrime = L + 0.3963377774 * a + 0.2158037573 * b
+  const mPrime = L - 0.1055613458 * a - 0.0638541728 * b
+  const sPrime = L - 0.0894841775 * a - 1.291485548 * b
+  const lLinear = lPrime * lPrime * lPrime
+  const mLinear = mPrime * mPrime * mPrime
+  const sLinear = sPrime * sPrime * sPrime
+  let r = 4.0767416621 * lLinear - 3.3077115913 * mLinear + 0.2309699292 * sLinear
+  let g = -1.2684380046 * lLinear + 2.6097574011 * mLinear - 0.3413193965 * sLinear
+  let bl = -0.0041960863 * lLinear - 0.7034186147 * mLinear + 1.707614701 * sLinear
+  const toGamma = (channel: number): number => {
+    const encoded =
+      channel <= 0.0031308 ? 12.92 * channel : 1.055 * Math.pow(channel, 1 / 2.4) - 0.055
+    return Math.min(1, Math.max(0, encoded))
+  }
+  r = toGamma(r)
+  g = toGamma(g)
+  bl = toGamma(bl)
+
+  const max = Math.max(r, g, bl)
+  const min = Math.min(r, g, bl)
+  const lightness = (max + min) / 2
+  const delta = max - min
+  let hue = 0
+  let saturation = 0
+  if (delta > 1e-9) {
+    const denominator = 1 - Math.abs(2 * lightness - 1)
+    saturation = denominator > 1e-9 ? delta / denominator : 0
+    if (max === r) hue = ((g - bl) / delta) % 6
+    else if (max === g) hue = (bl - r) / delta + 2
+    else hue = (r - g) / delta + 4
+    hue = hue * 60
+    if (hue < 0) hue = hue + 360
+  }
+  const round = (input: number): number => Math.round(input * 10) / 10
+  const triplet =
+    String(round(hue)) + ' ' + String(round(saturation * 100)) + '% ' + String(round(lightness * 100)) + '%'
+  return alpha ? triplet + ' / ' + alpha : triplet
+}
+
+export type ThemeTokenFormat = 'oklch' | 'hsl'
+export type ResolvedScheme = Record<ThemeTokenKey, string>
+export type ResolvedTheme = { light: ResolvedScheme; dark: ResolvedScheme; radius: string }
+export type ThemeResolutionInput = {
+  baseColor: BaseColorName
+  theme: ThemeTokenName
+  chartColor: ThemeTokenName
+  radius: RadiusName
+}
+export type ResolveThemeOptions = { format?: ThemeTokenFormat }
+
+function convertScheme(scheme: ResolvedScheme, format: ThemeTokenFormat): ResolvedScheme {
+  if (format !== 'hsl') return scheme
+  const out = {} as ResolvedScheme
+  for (const key of THEME_TOKEN_KEYS) {
+    out[key] = oklchToHsl(scheme[key])
+  }
+  return out
+}
+
+// Resolve one color scheme following shadcn's merge order:
+//   1. base map          - the full token set for the base color
+//   2. theme overrides   - every key the theme provides (partial for accents)
+//   3. chart replacement - chart-1..5 taken independently from the chart color
+export function resolveThemeScheme(
+  input: ThemeResolutionInput,
+  scheme: ColorScheme,
+  format: ThemeTokenFormat = 'oklch'
+): ResolvedScheme {
+  const base = THEME_TOKENS[input.baseColor][scheme]
+  const theme = THEME_TOKENS[input.theme][scheme]
+  const chart = THEME_TOKENS[input.chartColor][scheme]
+  const out = {} as ResolvedScheme
+  for (const key of THEME_TOKEN_KEYS) {
+    const themed = theme[key]
+    const based = base[key]
+    out[key] = themed !== undefined ? themed : based !== undefined ? based : ''
+  }
+  for (const key of CHART_TOKEN_KEYS) {
+    const chartValue = chart[key]
+    if (chartValue !== undefined) out[key] = chartValue
+  }
+  return convertScheme(out, format)
+}
+
+// Resolve both schemes plus the requested radius, which is applied last.
+export function resolveThemeTokens(
+  input: ThemeResolutionInput,
+  options: ResolveThemeOptions = {}
+): ResolvedTheme {
+  const format: ThemeTokenFormat = options.format === 'hsl' ? 'hsl' : 'oklch'
+  return {
+    light: resolveThemeScheme(input, 'light', format),
+    dark: resolveThemeScheme(input, 'dark', format),
+    radius: RADIUS_VALUES[input.radius],
+  }
+}
+`;
+}
+
+function createThemeSwatchesSource() {
+  const baseSwatches = {};
+  for (const base of baseColorNames) {
+    const entry = THEME_TOKEN_ENTRIES[base];
+    baseSwatches[base] = {
+      light: entry.cssVars.light["muted-foreground"],
+      dark: entry.cssVars.dark["muted-foreground"],
+    };
+  }
+  const themeSwatches = {};
+  const chartSwatches = {};
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    themeSwatches[name] = {
+      light: entry.cssVars.light.primary,
+      dark: entry.cssVars.dark.primary,
+    };
+    chartSwatches[name] = {
+      light: CHART_KEYS.map((key) => entry.cssVars.light[key]),
+      dark: CHART_KEYS.map((key) => entry.cssVars.dark[key]),
+    };
+  }
+  return `${GENERATED_HEADER}
+// v2 theme swatches derived from the canonical OKLCH theme tokens. Swatch values are
+// CSS OKLCH strings. Base swatches use each base color's mid-tone (muted-foreground);
+// theme swatches use each theme's primary; chart swatches use chart-1..5.
+import type { PresetBaseColor, PresetTheme } from './preset-catalog'
+
+export type ThemeSwatch = { light: string; dark: string }
+export type ChartSwatch = { light: string[]; dark: string[] }
+
+export const BASE_COLOR_SWATCHES: Record<PresetBaseColor, ThemeSwatch> = ${literal(baseSwatches)}
+
+export const THEME_SWATCHES: Record<PresetTheme, ThemeSwatch> = ${literal(themeSwatches)}
+
+export const THEME_CHART_SWATCHES: Record<PresetTheme, ChartSwatch> = ${literal(chartSwatches)}
+`;
+}
+
 const stale = [];
 function emit(relativePath, content) {
   const target = path.join(WORKSPACE_ROOT, relativePath);
@@ -865,6 +1250,22 @@ function generate() {
   emit("packages/lovdacn/src/preset/generated-catalog.ts", catalogSource);
   emit("apps/v2/app/create/generated/preset-catalog.ts", catalogSource);
   emit("apps/preview/src/lib/generated/preset-catalog.ts", catalogSource);
+
+  // Canonical theme token modules are emitted identically to the preset package
+  // and the preview app; the v2 swatch module consumes the same canonical tokens.
+  const themeTokensSource = createThemeTokensSource();
+  emit(
+    "packages/lovdacn/src/preset/generated-theme-tokens.ts",
+    themeTokensSource,
+  );
+  emit(
+    "apps/preview/src/lib/generated/theme-tokens.ts",
+    themeTokensSource,
+  );
+  emit(
+    "apps/v2/app/create/generated/theme-swatches.ts",
+    createThemeSwatchesSource(),
+  );
   emit(
     "apps/preview/src/lib/generated/customizer-recipes.ts",
     createCustomizerRecipesSource(),

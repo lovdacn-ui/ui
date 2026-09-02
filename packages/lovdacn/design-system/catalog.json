@@ -60,14 +60,14 @@
     }
   ],
   "baseColors": ["zinc", "slate", "stone", "gray", "neutral", "taupe", "mauve", "olive", "mist"],
-  "themes": ["zinc", "slate", "stone", "gray", "neutral", "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose"],
+  "themes": ["zinc", "slate", "stone", "gray", "neutral", "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose", "mauve", "olive", "mist", "taupe"],
   "radii": ["default", "none", "small", "medium", "large", "full"],
   "radiusValues": {
-    "default": "0.5rem",
+    "default": "0.625rem",
     "none": "0rem",
-    "small": "0.125rem",
+    "small": "0.45rem",
     "medium": "0.625rem",
-    "large": "0.75rem",
+    "large": "0.875rem",
     "full": "1.5rem"
   },
   "engines": ["nativewind", "uniwind"]

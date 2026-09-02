@@ -125,7 +125,11 @@
         "purple",
         "fuchsia",
         "pink",
-        "rose"
+        "rose",
+        "mauve",
+        "olive",
+        "mist",
+        "taupe"
       ]
     },
     "chartColor": {
@@ -152,7 +156,11 @@
         "purple",
         "fuchsia",
         "pink",
-        "rose"
+        "rose",
+        "mauve",
+        "olive",
+        "mist",
+        "taupe"
       ]
     },
     "font": {

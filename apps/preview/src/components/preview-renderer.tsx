@@ -229,18 +229,6 @@ const TRAFFIC = [
   { label: "Email", pct: 6 },
 ];
 
-// Build a 5-stop ramp from one "H S% L%" triplet: same hue/saturation, five
-// distinct lightness stops. This keeps multi-series charts readable for any
-// chart color (dark hues no longer collapse to identical shades).
-export function chartRampFromHsl(hsl: string, isDark: boolean): string[] {
-  const m = hsl.trim().match(/^([\d.]+)\s+([\d.]+)%\s+([\d.]+)%$/);
-  if (!m) return [hsl, hsl, hsl, hsl, hsl];
-  const h = m[1];
-  const s = m[2];
-  const stops = isDark ? [58, 68, 48, 76, 40] : [52, 62, 42, 72, 34];
-  return stops.map((l) => `${h} ${s}% ${l}%`);
-}
-
 // Smooth-ish area + line chart. Inherits the active chart color through
 // `currentColor`, so it lives inside a `text-chart-1` container. It measures its
 // own width so the stroke stays crisp instead of being stretched by a viewBox.

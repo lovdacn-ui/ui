@@ -46,8 +46,11 @@ describe("regenerateProjectCss — font + radius are first-class", () => {
     })
 
     const css = await readFile(path.join(cwd, "global.css"), "utf8")
+    // Style fallbacks are derived from the generated default preset: nova ->
+    // font "inter" (Inter) + radius "small" (0.45rem), so the fallback stays in
+    // lock step with the catalog instead of a stale hand-authored rem value.
     expect(css).toContain("--font-sans: Inter,")
-    expect(css).toContain("--radius: 0.125rem;")
+    expect(css).toContain("--radius: 0.45rem;")
   })
 })
 

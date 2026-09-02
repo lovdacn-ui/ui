@@ -617,6 +617,12 @@ module.exports = {
     expect(tw).toContain('primary: {')
     expect(tw).toContain('DEFAULT: "hsl(var(--primary))"')
     expect(tw).toContain('background: "hsl(var(--background))"')
+    // Sidebar color scale is mapped for NativeWind consumers via the generated
+    // Tailwind extend path (config only — no component changes yet).
+    expect(tw).toContain('sidebar: {')
+    expect(tw).toContain('DEFAULT: "hsl(var(--sidebar))"')
+    expect(tw).toContain('"primary-foreground": "hsl(var(--sidebar-primary-foreground))"')
+    expect(tw).toContain('ring: "hsl(var(--sidebar-ring))"')
     // Border radius wired to theme --radius with shadcn multiplicative scale +
     // px-capped container tokens so large-radius styles (mira/rhea) can't oval out.
     expect(tw).toContain('lg: "min(var(--radius), 20px)"')
