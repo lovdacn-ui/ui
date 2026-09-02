@@ -25,12 +25,14 @@ function readJson(name) {
 }
 
 const catalog = readJson("catalog.json");
-const wire = readJson("wire-v1.json");
+const wireV1 = readJson("wire-v1.json");
+const wireV2 = readJson("wire-v2.json");
 const aliases = readJson("aliases.json");
 const styleMetadata = readJson("style-metadata.json");
 const blockRecipes = readJson("block-recipes.json");
 const iconManifest = readJson("icon-manifest.json");
 const fontManifest = readJson("font-manifest.json");
+const themeTokens = readJson("theme-tokens.json");
 
 function literal(value) {
   return JSON.stringify(value, null, 2);
@@ -42,53 +44,86 @@ function bareAliasMap(group) {
   );
 }
 
-function wireValues(key) {
+const WIRE_V1_SHA256 = "15e0bfef8ab2ba940de3ef086c2fbc3aeabd3412d9968ded02f5d283bd0fc8c4";
+
+function wireValues(wire, key) {
   const field = wire.fields.find((candidate) => candidate.key === key);
-  if (!field) throw new Error(`wire-v1.json is missing field "${key}"`);
+  if (!field) throw new Error(`wire-${wire.version}.json is missing field "${key}"`);
   return field.values;
 }
 
 function validateSources() {
-  if (wire.version !== "a")
-    throw new Error('The immutable v1 prefix must remain "a"');
-  const expectedFields = [
-    "style",
-    "baseColor",
-    "theme",
-    "chartColor",
-    "font",
-    "iconLibrary",
-    "radius",
-  ];
-  if (
-    wire.fields.map((field) => field.key).join(",") !== expectedFields.join(",")
-  ) {
+  const wireV1Bytes = fs.readFileSync(path.join(DESIGN_ROOT, "wire-v1.json"));
+  const wireV1Hash = crypto.createHash("sha256").update(wireV1Bytes).digest("hex");
+  if (wireV1Hash !== WIRE_V1_SHA256) {
+    throw new Error(`wire-v1.json is immutable (expected SHA-256 ${WIRE_V1_SHA256}, received ${wireV1Hash})`);
+  }
+  if (wireV1.version !== "a") throw new Error('The immutable v1 prefix must remain "a"');
+  const expectedV1Fields = ["style", "baseColor", "theme", "chartColor", "font", "iconLibrary", "radius"];
+  if (wireV1.fields.map((field) => field.key).join(",") !== expectedV1Fields.join(",")) {
     throw new Error("wire-v1.json field order changed");
   }
 
+  if (wireV2.version !== "b" || wireV2.base62 !== wireV1.base62) {
+    throw new Error('wire-v2.json must use prefix "b" and the frozen base62 alphabet');
+  }
+  const expectedV2Fields = [
+    ["menuColor", 3], ["menuAccent", 3], ["radius", 4], ["font", 6],
+    ["iconLibrary", 6], ["theme", 6], ["baseColor", 6], ["style", 6],
+    ["chartColor", 6], ["fontHeading", 5],
+  ];
+  if (wireV2.fields.length !== expectedV2Fields.length) throw new Error("wire-v2.json field count changed");
+  let totalBits = 0;
+  for (let index = 0; index < expectedV2Fields.length; index += 1) {
+    const [key, bits] = expectedV2Fields[index];
+    const field = wireV2.fields[index];
+    if (field.key !== key || field.bits !== bits) throw new Error(`wire-v2.json field ${index} must remain ${key}(${bits})`);
+    if (field.values.length === 0 || new Set(field.values).size !== field.values.length) throw new Error(`wire-v2.json ${key} values must be non-empty and unique`);
+    if (field.values.length > 2 ** field.bits) throw new Error(`wire-v2.json ${key} exceeds its ${field.bits}-bit capacity`);
+    totalBits += field.bits;
+  }
+  if (totalBits > 53) throw new Error(`wire-v2.json uses ${totalBits} bits; JavaScript safe integers allow 53`);
+
   const activeStyles = catalog.styles.map((style) => style.name);
   const activeIcons = Object.keys(iconManifest.libraries);
-  const activeFonts = Object.keys(fontManifest);
+  const activeFonts = wireValues(wireV2, "font");
   for (const [label, values, expected] of [
-    [
-      "style",
-      activeStyles,
-      ["luma", "lyra", "maia", "mira", "nova", "rhea", "sera", "vega"],
-    ],
-    [
-      "icon library",
-      activeIcons,
-      ["lucide", "phosphor", "tabler", "expo", "heroicons"],
-    ],
-    // Every historical v1 font is directly supported, so the active catalog must match
-    // the immutable wire order exactly — no font may be aliased away.
-    ["font", activeFonts, wireValues("font")],
+    ["style", activeStyles, wireValues(wireV2, "style")],
+    ["icon library", activeIcons, wireValues(wireV2, "iconLibrary")],
+    ["font", activeFonts, wireValues(wireV2, "font")],
+    ["base color", catalog.baseColors, wireValues(wireV2, "baseColor")],
+    ["theme", catalog.themes, wireValues(wireV2, "theme")],
+    ["radius", catalog.radii, wireValues(wireV2, "radius")],
+    ["menu accent", catalog.menuAccents, wireValues(wireV2, "menuAccent")],
+    ["menu color", catalog.menuColors, wireValues(wireV2, "menuColor")],
   ]) {
     if (values.join(",") !== expected.join(",")) {
-      throw new Error(
-        `Active ${label} catalog differs from the approved order: ${values.join(", ")}`,
-      );
+      throw new Error(`Active ${label} catalog differs from the approved v2 order: ${values.join(", ")}`);
     }
+  }
+  const expectedHeadings = ["inherit", ...activeFonts];
+  if (wireValues(wireV2, "fontHeading").join(",") !== expectedHeadings.join(",")) {
+    throw new Error("wire-v2.json fontHeading must be inherit followed by every active font");
+  }
+  if (Object.keys(fontManifest).length !== activeFonts.length || activeFonts.some((font) => !fontManifest[font])) {
+    throw new Error("font-manifest.json must cover every active v2 font exactly");
+  }
+  for (const field of wireV2.fields) {
+    if (catalog.defaultPreset[field.key] !== field.values[0]) {
+      throw new Error(`The v2 default for ${field.key} must remain index 0 (${field.values[0]})`);
+    }
+  }
+  for (const [name, preset] of Object.entries(catalog.namedPresets)) {
+    if (preset.style !== name) throw new Error(`Named preset ${name} has mismatched style ${preset.style}`);
+    for (const field of wireV2.fields) {
+      if (!field.values.includes(preset[field.key])) throw new Error(`Named preset ${name} has invalid ${field.key}`);
+    }
+  }
+  if (Object.keys(catalog.namedPresets).join(",") !== wireValues(wireV2, "style").join(",")) {
+    throw new Error("catalog namedPresets must contain the eight canonical styles in wire-v2 order");
+  }
+  if (Object.keys(catalog.legacyNamedPresets).sort().join(",") !== [...activeStyles].sort().join(",")) {
+    throw new Error("catalog legacyNamedPresets must retain every lvcn-v1 named profile");
   }
 
   for (const style of activeStyles) {
@@ -123,10 +158,12 @@ function validateSources() {
         throw new Error(`Font "${font}" is missing ${face}`);
     }
   }
+
+  validateThemeTokens();
 }
 
 const activeStyles = catalog.styles.map((style) => style.name);
-const activeFonts = Object.keys(fontManifest);
+const activeFonts = wireValues(wireV2, "font");
 const activeIcons = Object.keys(iconManifest.libraries);
 const styleAliases = bareAliasMap(aliases.styles);
 const iconAliases = bareAliasMap(aliases.iconLibraries);
@@ -146,51 +183,62 @@ const fontPackages = Object.fromEntries(
 const iconPackages = Object.fromEntries(
   Object.entries(iconManifest.libraries).map(([key, value]) => [
     key,
-    `${value.package}@${value.version}`,
+    value.packages.map((dependency) => `${dependency.package}@${dependency.version}`),
   ]),
 );
 const iconImports = Object.fromEntries(
-  Object.entries(iconManifest.libraries).map(([key, value]) => [
-    key,
-    value.package,
-  ]),
+  Object.entries(iconManifest.libraries).map(([key, value]) => [key, value.import]),
 );
-const namedPresets = Object.fromEntries(
-  catalog.styles.map((style) => [
-    style.name,
-    {
-      title: style.label,
-      description: `${iconManifest.libraries[style.defaults.iconLibrary].label} / ${fontManifest[style.defaults.font].label} / ${style.description}`,
-      style: style.name,
-      ...style.defaults,
-    },
-  ]),
-);
+function enrichNamedPresets(source) {
+  return Object.fromEntries(
+    Object.entries(source).map(([name, preset]) => {
+      const style = catalog.styles.find((candidate) => candidate.name === name);
+      const heading = preset.fontHeading === "inherit" ? "" : ` + ${fontManifest[preset.fontHeading].label}`;
+      return [name, {
+        title: style.label,
+        description: `${iconManifest.libraries[preset.iconLibrary].label} / ${fontManifest[preset.font].label}${heading} / ${style.description}`,
+        ...preset,
+      }];
+    }),
+  );
+}
+const shadcnNamedPresets = enrichNamedPresets(catalog.namedPresets);
+const legacyNamedPresets = enrichNamedPresets(catalog.legacyNamedPresets);
 
 function createPresetCatalogSource() {
-  const fields = Object.fromEntries(
-    wire.fields.map((field) => [field.key, field]),
+  const fieldsV1 = Object.fromEntries(wireV1.fields.map((field) => [field.key, field]));
+  const fieldsV2 = Object.fromEntries(wireV2.fields.map((field) => [field.key, field]));
+  const capabilities = Object.fromEntries(
+    Object.entries(iconManifest.libraries).map(([key, value]) => [
+      key,
+      value.capability || { status: "supported" },
+    ]),
   );
   return `${GENERATED_HEADER}
 export const CATALOG_VERSION = ${JSON.stringify(catalog.catalogVersion)} as const
-export const WIRE_VERSION = ${JSON.stringify(wire.version)} as const
-export const BASE62 = ${JSON.stringify(wire.base62)} as const
+export const WIRE_VERSION_V1 = ${JSON.stringify(wireV1.version)} as const
+export const WIRE_VERSION_V2 = ${JSON.stringify(wireV2.version)} as const
+export const WIRE_VERSION = WIRE_VERSION_V2
+export const BASE62 = ${JSON.stringify(wireV2.base62)} as const
 
-export const WIRE_PRESET_STYLES = ${literal(fields.style.values)} as const
-export const WIRE_PRESET_BASE_COLORS = ${literal(fields.baseColor.values)} as const
-export const WIRE_PRESET_THEMES = ${literal(fields.theme.values)} as const
-export const WIRE_PRESET_CHART_COLORS = ${literal(fields.chartColor.values)} as const
-export const WIRE_PRESET_FONTS = ${literal(fields.font.values)} as const
-export const WIRE_PRESET_ICON_LIBRARIES = ${literal(fields.iconLibrary.values)} as const
-export const WIRE_PRESET_RADII = ${literal(fields.radius.values)} as const
+export const WIRE_PRESET_STYLES = ${literal(fieldsV1.style.values)} as const
+export const WIRE_PRESET_BASE_COLORS = ${literal(fieldsV1.baseColor.values)} as const
+export const WIRE_PRESET_THEMES = ${literal(fieldsV1.theme.values)} as const
+export const WIRE_PRESET_CHART_COLORS = ${literal(fieldsV1.chartColor.values)} as const
+export const WIRE_PRESET_FONTS = ${literal(fieldsV1.font.values)} as const
+export const WIRE_PRESET_ICON_LIBRARIES = ${literal(fieldsV1.iconLibrary.values)} as const
+export const WIRE_PRESET_RADII = ${literal(fieldsV1.radius.values)} as const
 
-export const PRESET_STYLES = ${literal(activeStyles)} as const
-export const PRESET_BASE_COLORS = ${literal(catalog.baseColors)} as const
-export const PRESET_THEMES = ${literal(catalog.themes)} as const
-export const PRESET_CHART_COLORS = PRESET_THEMES
-export const PRESET_FONTS = ${literal(activeFonts)} as const
-export const PRESET_ICON_LIBRARIES = ${literal(activeIcons)} as const
-export const PRESET_RADII = ${literal(catalog.radii)} as const
+export const PRESET_STYLES = ${literal(fieldsV2.style.values)} as const
+export const PRESET_BASE_COLORS = ${literal(fieldsV2.baseColor.values)} as const
+export const PRESET_THEMES = ${literal(fieldsV2.theme.values)} as const
+export const PRESET_CHART_COLORS = ${literal(fieldsV2.chartColor.values)} as const
+export const PRESET_FONTS = ${literal(fieldsV2.font.values)} as const
+export const PRESET_FONT_HEADINGS = ${literal(fieldsV2.fontHeading.values)} as const
+export const PRESET_ICON_LIBRARIES = ${literal(fieldsV2.iconLibrary.values)} as const
+export const PRESET_RADII = ${literal(fieldsV2.radius.values)} as const
+export const PRESET_MENU_ACCENTS = ${literal(fieldsV2.menuAccent.values)} as const
+export const PRESET_MENU_COLORS = ${literal(fieldsV2.menuColor.values)} as const
 export const PRESET_ENGINES = ${literal(catalog.engines)} as const
 export const SEMANTIC_ICON_NAMES = ${literal(Object.keys(iconManifest.icons))} as const
 
@@ -198,8 +246,11 @@ export type PresetStyle = (typeof PRESET_STYLES)[number]
 export type PresetBaseColor = (typeof PRESET_BASE_COLORS)[number]
 export type PresetTheme = (typeof PRESET_THEMES)[number]
 export type PresetFont = (typeof PRESET_FONTS)[number]
+export type PresetFontHeading = (typeof PRESET_FONT_HEADINGS)[number]
 export type PresetIconLibrary = (typeof PRESET_ICON_LIBRARIES)[number]
 export type PresetRadius = (typeof PRESET_RADII)[number]
+export type PresetMenuAccent = (typeof PRESET_MENU_ACCENTS)[number]
+export type PresetMenuColor = (typeof PRESET_MENU_COLORS)[number]
 export type SemanticIconName = (typeof SEMANTIC_ICON_NAMES)[number]
 
 export type PresetConfig = {
@@ -208,8 +259,11 @@ export type PresetConfig = {
   theme: PresetTheme
   chartColor: PresetTheme
   font: PresetFont
+  fontHeading: PresetFontHeading
   iconLibrary: PresetIconLibrary
   radius: PresetRadius
+  menuAccent: PresetMenuAccent
+  menuColor: PresetMenuColor
 }
 
 export type WirePresetConfigV1 = {
@@ -221,38 +275,70 @@ export type WirePresetConfigV1 = {
   iconLibrary: (typeof WIRE_PRESET_ICON_LIBRARIES)[number]
   radius: (typeof WIRE_PRESET_RADII)[number]
 }
-
+export type WirePresetConfigV2 = PresetConfig
 export type PresetField = keyof PresetConfig
 export type PresetNormalization = { config: PresetConfig; warnings: string[] }
+
+export const ACCENT_PRESET_THEMES = ${literal(accentThemeNames())} as const
+export type AccentPresetTheme = (typeof ACCENT_PRESET_THEMES)[number]
+export const THEME_COMPATIBILITY: Record<PresetBaseColor, readonly PresetTheme[]> = ${literal(themeCompatibility())}
+export function getCompatibleThemes(base: PresetBaseColor): readonly PresetTheme[] {
+  return THEME_COMPATIBILITY[base] ?? PRESET_THEMES
+}
+export function isThemeCompatible(base: PresetBaseColor, theme: PresetTheme): boolean {
+  return getCompatibleThemes(base).indexOf(theme) !== -1
+}
 
 export const DEFAULT_PRESET_CONFIG: PresetConfig = ${literal(catalog.defaultPreset)}
 export const DEFAULT_CONFIG = DEFAULT_PRESET_CONFIG
 export const STYLE_LABELS: Record<PresetStyle, string> = ${literal(styleLabels)}
 export const FONT_FAMILIES: Record<PresetFont, string> = ${literal(fontFamilies)}
 export const FONT_PACKAGES: Record<PresetFont, string> = ${literal(fontPackages)}
-export const ICON_PACKAGES: Record<PresetIconLibrary, string> = ${literal(iconPackages)}
+export const ICON_PACKAGE_DEPENDENCIES: Record<PresetIconLibrary, readonly string[]> = ${literal(iconPackages)}
+export const ICON_PACKAGES: Record<PresetIconLibrary, string> = Object.fromEntries(
+  Object.entries(ICON_PACKAGE_DEPENDENCIES).map(([library, dependencies]) => [library, dependencies[0]])
+) as Record<PresetIconLibrary, string>
 export const ICON_IMPORTS: Record<PresetIconLibrary, string> = ${literal(iconImports)}
+export type IconLibraryCapability =
+  | { readonly status: 'supported' }
+  | { readonly status: 'provisional'; readonly blocker: string }
+export const ICON_LIBRARY_CAPABILITIES: Record<PresetIconLibrary, IconLibraryCapability> = ${literal(capabilities)}
 export const RADIUS_VALUES: Record<PresetRadius, string> = ${literal(catalog.radiusValues)}
+export const EFFECTIVE_RADIUS_DEFAULTS: Readonly<Partial<Record<PresetStyle, PresetRadius>>> = ${literal(catalog.effectiveRadiusDefaults)}
 export const FONT_MANIFEST = ${literal(fontManifest)} as const
 export const ICON_LIBRARY_MANIFEST = ${literal(iconManifest.libraries)} as const
 export const STYLE_METADATA = ${literal(styleMetadata)} as const
 export const BLOCK_RECIPES = ${literal(blockRecipes)} as const
 
 export type NamedPreset = PresetConfig & { title: string; description: string }
-export const DEFAULT_PRESETS: Record<PresetStyle, NamedPreset> = ${literal(namedPresets)}
+export const SHADCN_DEFAULT_PRESETS: Record<PresetStyle, NamedPreset> = ${literal(shadcnNamedPresets)}
+export const LVCN_LEGACY_PRESETS: Record<PresetStyle, NamedPreset> = ${literal(legacyNamedPresets)}
+export const DEFAULT_PRESETS = SHADCN_DEFAULT_PRESETS
 
 export const STYLE_ALIASES: Readonly<Record<string, PresetStyle>> = ${literal(styleAliases)}
 export const ICON_LIBRARY_ALIASES: Readonly<Record<string, PresetIconLibrary>> = ${literal(iconAliases)}
 export const FONT_ALIASES: Readonly<Record<string, PresetFont>> = ${literal(fontAliases)}
 
 const PRESET_FIELDS_V1 = [
-  { key: 'style', values: WIRE_PRESET_STYLES, bits: ${fields.style.bits} },
-  { key: 'baseColor', values: WIRE_PRESET_BASE_COLORS, bits: ${fields.baseColor.bits} },
-  { key: 'theme', values: WIRE_PRESET_THEMES, bits: ${fields.theme.bits} },
-  { key: 'chartColor', values: WIRE_PRESET_CHART_COLORS, bits: ${fields.chartColor.bits} },
-  { key: 'font', values: WIRE_PRESET_FONTS, bits: ${fields.font.bits} },
-  { key: 'iconLibrary', values: WIRE_PRESET_ICON_LIBRARIES, bits: ${fields.iconLibrary.bits} },
-  { key: 'radius', values: WIRE_PRESET_RADII, bits: ${fields.radius.bits} },
+  { key: 'style', values: WIRE_PRESET_STYLES, bits: ${fieldsV1.style.bits} },
+  { key: 'baseColor', values: WIRE_PRESET_BASE_COLORS, bits: ${fieldsV1.baseColor.bits} },
+  { key: 'theme', values: WIRE_PRESET_THEMES, bits: ${fieldsV1.theme.bits} },
+  { key: 'chartColor', values: WIRE_PRESET_CHART_COLORS, bits: ${fieldsV1.chartColor.bits} },
+  { key: 'font', values: WIRE_PRESET_FONTS, bits: ${fieldsV1.font.bits} },
+  { key: 'iconLibrary', values: WIRE_PRESET_ICON_LIBRARIES, bits: ${fieldsV1.iconLibrary.bits} },
+  { key: 'radius', values: WIRE_PRESET_RADII, bits: ${fieldsV1.radius.bits} },
+] as const
+const PRESET_FIELDS_V2 = [
+  { key: 'menuColor', values: PRESET_MENU_COLORS, bits: ${fieldsV2.menuColor.bits} },
+  { key: 'menuAccent', values: PRESET_MENU_ACCENTS, bits: ${fieldsV2.menuAccent.bits} },
+  { key: 'radius', values: PRESET_RADII, bits: ${fieldsV2.radius.bits} },
+  { key: 'font', values: PRESET_FONTS, bits: ${fieldsV2.font.bits} },
+  { key: 'iconLibrary', values: PRESET_ICON_LIBRARIES, bits: ${fieldsV2.iconLibrary.bits} },
+  { key: 'theme', values: PRESET_THEMES, bits: ${fieldsV2.theme.bits} },
+  { key: 'baseColor', values: PRESET_BASE_COLORS, bits: ${fieldsV2.baseColor.bits} },
+  { key: 'style', values: PRESET_STYLES, bits: ${fieldsV2.style.bits} },
+  { key: 'chartColor', values: PRESET_CHART_COLORS, bits: ${fieldsV2.chartColor.bits} },
+  { key: 'fontHeading', values: PRESET_FONT_HEADINGS, bits: ${fieldsV2.fontHeading.bits} },
 ] as const
 
 function normalizeValue<T extends readonly string[]>(
@@ -274,23 +360,41 @@ function normalizeValue<T extends readonly string[]>(
   return fallback
 }
 
+export function isTranslucentMenuColor(value: PresetMenuColor): boolean {
+  return value === 'default-translucent' || value === 'inverted-translucent'
+}
+
 export function normalizePreset(input: Partial<Record<PresetField, unknown>>): PresetNormalization {
   const warnings: string[] = []
+  const font = normalizeValue(input.font, PRESET_FONTS, FONT_ALIASES, DEFAULT_PRESET_CONFIG.font, 'font', warnings)
+  const fontHeading = normalizeValue(input.fontHeading, PRESET_FONT_HEADINGS, FONT_ALIASES, DEFAULT_PRESET_CONFIG.fontHeading, 'heading font', warnings)
+  const menuColor = normalizeValue(input.menuColor, PRESET_MENU_COLORS, {}, DEFAULT_PRESET_CONFIG.menuColor, 'menu color', warnings)
+  let menuAccent = normalizeValue(input.menuAccent, PRESET_MENU_ACCENTS, {}, DEFAULT_PRESET_CONFIG.menuAccent, 'menu accent', warnings)
+  if (menuAccent === 'bold' && isTranslucentMenuColor(menuColor)) {
+    menuAccent = 'subtle'
+    warnings.push('Translucent menu colors require the "subtle" menu accent')
+  }
   return {
     config: {
       style: normalizeValue(input.style, PRESET_STYLES, STYLE_ALIASES, DEFAULT_PRESET_CONFIG.style, 'style', warnings),
       baseColor: normalizeValue(input.baseColor, PRESET_BASE_COLORS, {}, DEFAULT_PRESET_CONFIG.baseColor, 'base color', warnings),
       theme: normalizeValue(input.theme, PRESET_THEMES, {}, DEFAULT_PRESET_CONFIG.theme, 'theme', warnings),
       chartColor: normalizeValue(input.chartColor, PRESET_CHART_COLORS, {}, DEFAULT_PRESET_CONFIG.chartColor, 'chart color', warnings),
-      font: normalizeValue(input.font, PRESET_FONTS, FONT_ALIASES, DEFAULT_PRESET_CONFIG.font, 'font', warnings),
+      font,
+      fontHeading,
       iconLibrary: normalizeValue(input.iconLibrary, PRESET_ICON_LIBRARIES, ICON_LIBRARY_ALIASES, DEFAULT_PRESET_CONFIG.iconLibrary, 'icon library', warnings),
       radius: normalizeValue(input.radius, PRESET_RADII, {}, DEFAULT_PRESET_CONFIG.radius, 'radius', warnings),
+      menuAccent,
+      menuColor,
     },
     warnings,
   }
 }
-
 export const normalizePresetConfig = (input: Partial<Record<PresetField, unknown>>) => normalizePreset(input).config
+
+export function resolveEffectiveRadius(config: Pick<PresetConfig, 'style' | 'radius'>): PresetRadius {
+  return EFFECTIVE_RADIUS_DEFAULTS[config.style] ?? config.radius
+}
 
 export function toBase62(num: number): string {
   if (num === 0) return '0'
@@ -302,7 +406,6 @@ export function toBase62(num: number): string {
   }
   return result
 }
-
 export function fromBase62(value: string): number {
   let result = 0
   for (const character of value) {
@@ -317,16 +420,16 @@ export function encodePreset(config: Partial<PresetConfig>): string {
   const merged = normalizePreset({ ...DEFAULT_PRESET_CONFIG, ...config }).config
   let bits = 0
   let offset = 0
-  for (const field of PRESET_FIELDS_V1) {
+  for (const field of PRESET_FIELDS_V2) {
     const index = (field.values as readonly string[]).indexOf(merged[field.key] as string)
     bits += (index === -1 ? 0 : index) * 2 ** offset
     offset += field.bits
   }
-  return WIRE_VERSION + toBase62(bits)
+  return WIRE_VERSION_V2 + toBase62(bits)
 }
 
 export function decodeWirePresetV1(code: string): WirePresetConfigV1 | null {
-  if (!code || code.length < 2 || code.charAt(0) !== WIRE_VERSION) return null
+  if (!code || code.length < 2 || code.charAt(0) !== WIRE_VERSION_V1) return null
   const bits = fromBase62(code.slice(1))
   if (bits < 0) return null
   const result: Record<string, string> = {}
@@ -339,26 +442,36 @@ export function decodeWirePresetV1(code: string): WirePresetConfigV1 | null {
   }
   return result as WirePresetConfigV1
 }
-
+export function decodeWirePresetV2(code: string): WirePresetConfigV2 | null {
+  if (!code || code.length < 2 || code.charAt(0) !== WIRE_VERSION_V2) return null
+  const bits = fromBase62(code.slice(1))
+  if (bits < 0) return null
+  const result: Record<string, string> = {}
+  let offset = 0
+  for (const field of PRESET_FIELDS_V2) {
+    const index = Math.floor(bits / 2 ** offset) % 2 ** field.bits
+    const values = field.values as readonly string[]
+    result[field.key] = index < values.length ? values[index]! : values[0]!
+    offset += field.bits
+  }
+  return result as WirePresetConfigV2
+}
 export function decodePresetWithWarnings(code: string): PresetNormalization | null {
-  const wireConfig = decodeWirePresetV1(code)
+  const wireConfig = code.charAt(0) === WIRE_VERSION_V1 ? decodeWirePresetV1(code) : decodeWirePresetV2(code)
   return wireConfig ? normalizePreset(wireConfig) : null
 }
-
 export function decodePreset(code: string): PresetConfig | null {
   return decodePresetWithWarnings(code)?.config ?? null
 }
-
 export function isPresetCode(value: string): boolean {
-  if (!value || value.length < 2 || value.length > 8 || value.charAt(0) !== WIRE_VERSION) return false
+  if (!value || value.length < 2 || value.length > 10 || (value.charAt(0) !== WIRE_VERSION_V1 && value.charAt(0) !== WIRE_VERSION_V2)) return false
   for (let index = 1; index < value.length; index += 1) {
     if (BASE62.indexOf(value.charAt(index)) === -1) return false
   }
   return true
 }
-
 export function isValidPreset(value: string): boolean {
-  return decodeWirePresetV1(value) !== null
+  return value.charAt(0) === WIRE_VERSION_V1 ? decodeWirePresetV1(value) !== null : decodeWirePresetV2(value) !== null
 }
 
 export function randomizeConfig(
@@ -366,17 +479,24 @@ export function randomizeConfig(
   locked: Partial<Record<PresetField, boolean>> = {}
 ): PresetConfig {
   const pick = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)]!
-  return {
+  const baseColor = locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS)
+  const compatible = getCompatibleThemes(baseColor)
+  const menuColor = locked.menuColor ? current.menuColor : pick(PRESET_MENU_COLORS)
+  const availableAccents = isTranslucentMenuColor(menuColor) ? (['subtle'] as const) : PRESET_MENU_ACCENTS
+  const menuAccent = locked.menuAccent ? current.menuAccent : pick(availableAccents)
+  return normalizePreset({
     style: locked.style ? current.style : pick(PRESET_STYLES),
-    baseColor: locked.baseColor ? current.baseColor : pick(PRESET_BASE_COLORS),
-    theme: locked.theme ? current.theme : pick(PRESET_THEMES),
-    chartColor: locked.chartColor ? current.chartColor : pick(PRESET_CHART_COLORS),
+    baseColor,
+    theme: locked.theme ? current.theme : pick(compatible),
+    chartColor: locked.chartColor ? current.chartColor : pick(compatible),
     font: locked.font ? current.font : pick(PRESET_FONTS),
+    fontHeading: locked.fontHeading ? current.fontHeading : pick(PRESET_FONT_HEADINGS),
     iconLibrary: locked.iconLibrary ? current.iconLibrary : pick(PRESET_ICON_LIBRARIES),
     radius: locked.radius ? current.radius : pick(PRESET_RADII),
-  }
+    menuAccent,
+    menuColor,
+  }).config
 }
-
 export const generateRandomConfig = () => randomizeConfig()
 export const generateRandomPreset = () => encodePreset(generateRandomConfig())
 
@@ -486,7 +606,74 @@ export function getCustomizerRecipe(style: PresetStyle): CustomizerRecipe {
 }
 
 function createPreviewIconAdapterSource(library) {
-  const packageName = iconManifest.libraries[library].package;
+  const packageName = iconManifest.libraries[library].import;
+  if (library === "hugeicons") {
+    const glyphs = [...new Set(Object.values(iconManifest.icons).map((icon) => icon.hugeicons))];
+    const imports = glyphs.map((glyph) => `import Glyph${glyph} from ${JSON.stringify(iconManifest.libraries.hugeicons.glyphImport + "/" + glyph)}`).join("\n");
+    const mapLines = Object.entries(iconManifest.icons).map(([key, icon]) => `  ${JSON.stringify(key)}: Glyph${icon.hugeicons},`).join("\n");
+    return `${GENERATED_HEADER}
+import { HugeiconsIcon } from '@hugeicons/react-native'
+${imports}
+import * as React from 'react'
+
+import type { IconAdapter } from '../semantic-icon-types'
+
+const GLYPHS = {
+${mapLines}
+} as const
+
+export const hugeiconsIconAdapter: IconAdapter = ({ name, size, color, className, strokeWidth, accessibilityLabel, decorative }) => (
+  <HugeiconsIcon
+    icon={GLYPHS[name]}
+    size={size}
+    color={color}
+    strokeWidth={strokeWidth}
+    className={className}
+    accessibilityLabel={decorative ? undefined : accessibilityLabel}
+    aria-hidden={decorative}
+  />
+)
+`;
+  }
+  if (library === "remixicon") {
+    const toComponentName = (glyph) => glyph
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("");
+    const glyphs = [...new Set(Object.values(iconManifest.icons).map((icon) => icon.remixicon))];
+    const imports = glyphs
+      .map((glyph) => `import Glyph${toComponentName(glyph)} from ${JSON.stringify(`react-native-remix-icon/src/icons/${toComponentName(glyph)}`)}`)
+      .join("\n");
+    const mapLines = Object.entries(iconManifest.icons)
+      .map(([key, icon]) => `  ${JSON.stringify(key)}: Glyph${toComponentName(icon.remixicon)},`)
+      .join("\n");
+    return `${GENERATED_HEADER}
+/// <reference path="../../../types/react-native-remix-icon.d.ts" />
+
+${imports}
+import * as React from 'react'
+
+import type { IconAdapter } from '../semantic-icon-types'
+
+const GLYPHS = {
+${mapLines}
+} as const
+
+export const remixiconIconAdapter: IconAdapter = ({ name, size, color, className, accessibilityLabel, decorative }) => {
+  const Component = GLYPHS[name]
+  return (
+    <Component
+      width={size}
+      height={size}
+      fill={color}
+      className={className}
+      accessibilityLabel={decorative ? undefined : accessibilityLabel}
+      aria-hidden={decorative}
+    />
+  )
+}
+`;
+  }
   if (library === "expo") {
     const families = [
       ...new Set(
@@ -653,9 +840,58 @@ export function loadPreviewFont(font: PresetFont): Promise<LoadedFontFaces> {
 }
 
 function createRegistryIconSource(library) {
-  const packageName = iconManifest.libraries[library].package;
+  const packageName = iconManifest.libraries[library].import;
   const accessibility =
     "accessibilityLabel={decorative ? undefined : accessibilityLabel} aria-hidden={decorative}";
+
+  if (library === "hugeicons") {
+    const glyphs = [...new Set(Object.values(iconManifest.icons).map((icon) => icon.hugeicons))];
+    const imports = glyphs.map((glyph) => `import Glyph${glyph} from ${JSON.stringify(iconManifest.libraries.hugeicons.glyphImport + "/" + glyph)};`).join("\n");
+    const exports = Object.values(iconManifest.icons).map((icon) => `export const ${icon.export} = createHugeSemanticIcon(Glyph${icon.hugeicons}, ${JSON.stringify(icon.export)});`).join("\n");
+    return `import { HugeiconsIcon } from '@hugeicons/react-native';
+${imports}
+import * as React from 'react';
+
+export type SemanticIconProps = {
+  size?: number; color?: string; className?: string; strokeWidth?: number;
+  weight?: 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
+  accessibilityLabel?: string; decorative?: boolean; [key: string]: unknown;
+};
+export type SemanticIconComponent = React.ComponentType<SemanticIconProps>;
+function createHugeSemanticIcon(icon: any, displayName: string): SemanticIconComponent {
+  const Component = React.forwardRef<any, SemanticIconProps>(function SemanticIcon(
+    { size = 16, color = 'currentColor', className, strokeWidth = 2, accessibilityLabel, decorative = !accessibilityLabel, ...props }, ref
+  ) {
+    return <HugeiconsIcon ref={ref} icon={icon} size={size} color={color} className={className} strokeWidth={strokeWidth} ${accessibility} {...props} />;
+  });
+  Component.displayName = displayName;
+  return Component;
+}
+${exports}
+`;
+  }
+
+  if (library === "remixicon") {
+    const exports = Object.values(iconManifest.icons).map((icon) => `export const ${icon.export} = createRemixSemanticIcon(${JSON.stringify(icon.remixicon)}, ${JSON.stringify(icon.export)});`).join("\n");
+    return `import RemixIcon from 'react-native-remix-icon';
+import * as React from 'react';
+
+export type SemanticIconProps = {
+  size?: number; color?: string; className?: string; strokeWidth?: number;
+  weight?: 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
+  accessibilityLabel?: string; decorative?: boolean; [key: string]: unknown;
+};
+export type SemanticIconComponent = React.ComponentType<SemanticIconProps>;
+function createRemixSemanticIcon(name: any, displayName: string): SemanticIconComponent {
+  const Component = function SemanticIcon({ size = 16, color = 'currentColor', className, accessibilityLabel, decorative = !accessibilityLabel, ...props }: SemanticIconProps) {
+    return <RemixIcon name={name} size={size} color={color} fallback={null} className={className} ${accessibility} {...props} />;
+  };
+  Component.displayName = displayName;
+  return Component;
+}
+${exports}
+`;
+  }
 
   if (library === "expo") {
     const families = [
@@ -831,11 +1067,373 @@ function createSchema() {
       theme: { type: "string", enum: catalog.themes },
       chartColor: { type: "string", enum: catalog.themes },
       font: { type: "string", enum: activeFonts },
+      fontHeading: { type: "string", enum: wireValues(wireV2, "fontHeading") },
       iconLibrary: { type: "string", enum: activeIcons },
       radius: { type: "string", enum: catalog.radii },
+      menuAccent: { type: "string", enum: catalog.menuAccents },
+      menuColor: { type: "string", enum: catalog.menuColors },
     },
     required: ["style", "tailwind", "aliases"],
   };
+}
+
+// ---------------------------------------------------------------------------
+// Canonical theme tokens (design-system/theme-tokens.json)
+// ---------------------------------------------------------------------------
+
+const THEME_TOKEN_ENTRIES = themeTokens.themes || {};
+const themeCatalogNames = catalog.themes;
+const baseColorNames = catalog.baseColors;
+const CHART_KEYS = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
+
+// The full, ordered color-token key set every fully-resolved theme carries.
+// Derived from the first base color so the list is never hand-maintained.
+// `radius` is applied separately by the resolver and is excluded here.
+function deriveThemeTokenKeys() {
+  const referenceBase = baseColorNames[0];
+  const entry = THEME_TOKEN_ENTRIES[referenceBase];
+  if (!entry || !entry.cssVars || !entry.cssVars.light) {
+    throw new Error(
+      `theme-tokens.json is missing the reference base color "${referenceBase}"`,
+    );
+  }
+  return Object.keys(entry.cssVars.light).filter((key) => key !== "radius");
+}
+
+const THEME_TOKEN_KEYS = deriveThemeTokenKeys();
+
+function accentThemeNames() {
+  return themeCatalogNames.filter(
+    (name) =>
+      THEME_TOKEN_ENTRIES[name] && THEME_TOKEN_ENTRIES[name].kind === "accent",
+  );
+}
+
+// Compatibility per base color: the base's own monochrome theme (it is itself a
+// catalog theme) plus every accent theme. Mixing two distinct neutral families is
+// intentionally excluded; every base pairs cleanly with itself and any accent.
+function themeCompatibility() {
+  const accents = accentThemeNames();
+  const map = {};
+  for (const base of baseColorNames) {
+    const own = themeCatalogNames.includes(base) ? [base] : [];
+    map[base] = [...own, ...accents];
+  }
+  return map;
+}
+
+function validateThemeTokens() {
+  if (!THEME_TOKEN_ENTRIES || typeof THEME_TOKEN_ENTRIES !== "object") {
+    throw new Error("theme-tokens.json is missing its `themes` map");
+  }
+  if (THEME_TOKEN_KEYS.length === 0) {
+    throw new Error("theme-tokens.json produced an empty token key set");
+  }
+
+  // Every catalog theme (and therefore every chart color) resolves to a vendored
+  // entry that supplies chart-1..5 in both schemes with canonical OKLCH values.
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    if (!entry) {
+      throw new Error(`theme-tokens.json is missing catalog theme "${name}"`);
+    }
+    for (const scheme of ["light", "dark"]) {
+      const vars = entry.cssVars && entry.cssVars[scheme];
+      if (!vars) {
+        throw new Error(`theme "${name}" is missing its ${scheme} tokens`);
+      }
+      for (const chartKey of CHART_KEYS) {
+        if (!vars[chartKey]) {
+          throw new Error(`theme "${name}" (${scheme}) is missing ${chartKey}`);
+        }
+      }
+      for (const [key, value] of Object.entries(vars)) {
+        if (key === "radius") continue;
+        if (typeof value !== "string" || !value.startsWith("oklch(")) {
+          throw new Error(
+            `theme "${name}" (${scheme}) token "${key}" is not an OKLCH value: ${value}`,
+          );
+        }
+      }
+    }
+  }
+
+  // Every catalog base color is a full base-kind entry carrying every token key
+  // (including the sidebar tokens) in both schemes.
+  for (const base of baseColorNames) {
+    const entry = THEME_TOKEN_ENTRIES[base];
+    if (!entry) {
+      throw new Error(`theme-tokens.json is missing base color "${base}"`);
+    }
+    if (entry.kind !== "base") {
+      throw new Error(
+        `base color "${base}" must be a full base theme, but its kind is "${entry.kind}"`,
+      );
+    }
+    for (const scheme of ["light", "dark"]) {
+      for (const key of THEME_TOKEN_KEYS) {
+        if (!entry.cssVars[scheme][key]) {
+          throw new Error(
+            `base color "${base}" (${scheme}) is missing token "${key}"`,
+          );
+        }
+      }
+    }
+  }
+
+  // Catalog themes stay in lock-step with the immutable wire table.
+  for (const field of ["theme", "chartColor"]) {
+    const values = wireValues(wireV2, field);
+    for (const name of themeCatalogNames) {
+      if (!values.includes(name)) {
+        throw new Error(
+          `wire-v1.json ${field} is missing catalog theme "${name}"`,
+        );
+      }
+    }
+  }
+
+  // The radius map covers every catalog radius.
+  for (const radius of catalog.radii) {
+    if (!catalog.radiusValues[radius]) {
+      throw new Error(`catalog radiusValues is missing "${radius}"`);
+    }
+  }
+}
+
+function buildThemeTokensLiteral() {
+  const out = {};
+  const stripRadius = (vars) => {
+    const copy = {};
+    for (const [key, value] of Object.entries(vars)) {
+      if (key !== "radius") copy[key] = value;
+    }
+    return copy;
+  };
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    out[name] = {
+      kind: entry.kind,
+      light: stripRadius(entry.cssVars.light),
+      dark: stripRadius(entry.cssVars.dark),
+    };
+  }
+  return out;
+}
+
+function createThemeTokensSource() {
+  const themeTokensLiteral = buildThemeTokensLiteral();
+  const compatibility = themeCompatibility();
+  return `${GENERATED_HEADER}
+// Canonical OKLCH theme tokens resolved from design-system/theme-tokens.json.
+// This module is self-contained and browser-safe: no imports, no Node APIs, and
+// no side effects. The copies emitted into the preset package and the preview app
+// are byte-identical.
+
+export const THEME_TOKEN_NAMES = ${literal(themeCatalogNames)} as const
+export const BASE_COLOR_NAMES = ${literal(baseColorNames)} as const
+export const RADIUS_NAMES = ${literal(catalog.radii)} as const
+export const COLOR_SCHEMES = ['light', 'dark'] as const
+
+export type ThemeTokenName = (typeof THEME_TOKEN_NAMES)[number]
+export type BaseColorName = (typeof BASE_COLOR_NAMES)[number]
+export type RadiusName = (typeof RADIUS_NAMES)[number]
+export type ColorScheme = (typeof COLOR_SCHEMES)[number]
+export type ThemeKind = 'base' | 'accent'
+
+export const THEME_TOKEN_KEYS = ${literal(THEME_TOKEN_KEYS)} as const
+export type ThemeTokenKey = (typeof THEME_TOKEN_KEYS)[number]
+
+export const RADIUS_VALUES: Record<RadiusName, string> = ${literal(catalog.radiusValues)}
+
+export type ThemeTokenScheme = Partial<Record<ThemeTokenKey, string>>
+export type ThemeTokenEntry = {
+  kind: ThemeKind
+  light: ThemeTokenScheme
+  dark: ThemeTokenScheme
+}
+
+// Base themes carry the full token set; accent themes carry the partial
+// primary/secondary/chart/sidebar-primary overrides exactly as shadcn ships them.
+export const THEME_TOKENS: Record<ThemeTokenName, ThemeTokenEntry> = ${literal(themeTokensLiteral)}
+
+export const THEME_COMPATIBILITY: Record<BaseColorName, readonly ThemeTokenName[]> = ${literal(compatibility)}
+
+export function getCompatibleThemes(base: BaseColorName): readonly ThemeTokenName[] {
+  return THEME_COMPATIBILITY[base]
+}
+
+export function isThemeCompatible(base: BaseColorName, theme: ThemeTokenName): boolean {
+  return THEME_COMPATIBILITY[base].indexOf(theme) !== -1
+}
+
+const CHART_TOKEN_KEYS: ThemeTokenKey[] = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5']
+
+// Deterministic, browser-safe OKLCH -> HSL triplet conversion. OKLCH alpha is
+// preserved (e.g. 'oklch(1 0 0 / 10%)' -> '0 0% 100% / 10%') instead of collapsing
+// to black, and any unparseable input is returned unchanged.
+export function oklchToHsl(value: string): string {
+  if (typeof value !== 'string') return value
+  const open = value.indexOf('(')
+  const close = value.lastIndexOf(')')
+  if (open < 0 || close < 0 || close < open) return value
+  if (value.slice(0, open).trim() !== 'oklch') return value
+  let inner = value.slice(open + 1, close).trim()
+  let alpha = ''
+  const slash = inner.indexOf('/')
+  if (slash !== -1) {
+    alpha = inner.slice(slash + 1).trim()
+    inner = inner.slice(0, slash).trim()
+  }
+  const parts = inner.split(' ').filter((part) => part.length > 0)
+  const rawL = parts[0]
+  const rawC = parts[1]
+  const rawH = parts[2]
+  if (rawL === undefined || rawC === undefined || rawH === undefined) return value
+  const L = parseFloat(rawL)
+  const C = parseFloat(rawC)
+  const H = parseFloat(rawH)
+  if (Number.isNaN(L) || Number.isNaN(C) || Number.isNaN(H)) return value
+
+  const hRad = (H * Math.PI) / 180
+  const a = C * Math.cos(hRad)
+  const b = C * Math.sin(hRad)
+  const lPrime = L + 0.3963377774 * a + 0.2158037573 * b
+  const mPrime = L - 0.1055613458 * a - 0.0638541728 * b
+  const sPrime = L - 0.0894841775 * a - 1.291485548 * b
+  const lLinear = lPrime * lPrime * lPrime
+  const mLinear = mPrime * mPrime * mPrime
+  const sLinear = sPrime * sPrime * sPrime
+  let r = 4.0767416621 * lLinear - 3.3077115913 * mLinear + 0.2309699292 * sLinear
+  let g = -1.2684380046 * lLinear + 2.6097574011 * mLinear - 0.3413193965 * sLinear
+  let bl = -0.0041960863 * lLinear - 0.7034186147 * mLinear + 1.707614701 * sLinear
+  const toGamma = (channel: number): number => {
+    const encoded =
+      channel <= 0.0031308 ? 12.92 * channel : 1.055 * Math.pow(channel, 1 / 2.4) - 0.055
+    return Math.min(1, Math.max(0, encoded))
+  }
+  r = toGamma(r)
+  g = toGamma(g)
+  bl = toGamma(bl)
+
+  const max = Math.max(r, g, bl)
+  const min = Math.min(r, g, bl)
+  const lightness = (max + min) / 2
+  const delta = max - min
+  let hue = 0
+  let saturation = 0
+  if (delta > 1e-9) {
+    const denominator = 1 - Math.abs(2 * lightness - 1)
+    saturation = denominator > 1e-9 ? delta / denominator : 0
+    if (max === r) hue = ((g - bl) / delta) % 6
+    else if (max === g) hue = (bl - r) / delta + 2
+    else hue = (r - g) / delta + 4
+    hue = hue * 60
+    if (hue < 0) hue = hue + 360
+  }
+  const round = (input: number): number => Math.round(input * 10) / 10
+  const triplet =
+    String(round(hue)) + ' ' + String(round(saturation * 100)) + '% ' + String(round(lightness * 100)) + '%'
+  return alpha ? triplet + ' / ' + alpha : triplet
+}
+
+export type ThemeTokenFormat = 'oklch' | 'hsl'
+export type ResolvedScheme = Record<ThemeTokenKey, string>
+export type ResolvedTheme = { light: ResolvedScheme; dark: ResolvedScheme; radius: string }
+export type ThemeResolutionInput = {
+  baseColor: BaseColorName
+  theme: ThemeTokenName
+  chartColor: ThemeTokenName
+  radius: RadiusName
+}
+export type ResolveThemeOptions = { format?: ThemeTokenFormat }
+
+function convertScheme(scheme: ResolvedScheme, format: ThemeTokenFormat): ResolvedScheme {
+  if (format !== 'hsl') return scheme
+  const out = {} as ResolvedScheme
+  for (const key of THEME_TOKEN_KEYS) {
+    out[key] = oklchToHsl(scheme[key])
+  }
+  return out
+}
+
+// Resolve one color scheme following shadcn's merge order:
+//   1. base map          - the full token set for the base color
+//   2. theme overrides   - every key the theme provides (partial for accents)
+//   3. chart replacement - chart-1..5 taken independently from the chart color
+export function resolveThemeScheme(
+  input: ThemeResolutionInput,
+  scheme: ColorScheme,
+  format: ThemeTokenFormat = 'oklch'
+): ResolvedScheme {
+  const base = THEME_TOKENS[input.baseColor][scheme]
+  const theme = THEME_TOKENS[input.theme][scheme]
+  const chart = THEME_TOKENS[input.chartColor][scheme]
+  const out = {} as ResolvedScheme
+  for (const key of THEME_TOKEN_KEYS) {
+    const themed = theme[key]
+    const based = base[key]
+    out[key] = themed !== undefined ? themed : based !== undefined ? based : ''
+  }
+  for (const key of CHART_TOKEN_KEYS) {
+    const chartValue = chart[key]
+    if (chartValue !== undefined) out[key] = chartValue
+  }
+  return convertScheme(out, format)
+}
+
+// Resolve both schemes plus the requested radius, which is applied last.
+export function resolveThemeTokens(
+  input: ThemeResolutionInput,
+  options: ResolveThemeOptions = {}
+): ResolvedTheme {
+  const format: ThemeTokenFormat = options.format === 'hsl' ? 'hsl' : 'oklch'
+  return {
+    light: resolveThemeScheme(input, 'light', format),
+    dark: resolveThemeScheme(input, 'dark', format),
+    radius: RADIUS_VALUES[input.radius],
+  }
+}
+`;
+}
+
+function createThemeSwatchesSource() {
+  const baseSwatches = {};
+  for (const base of baseColorNames) {
+    const entry = THEME_TOKEN_ENTRIES[base];
+    baseSwatches[base] = {
+      light: entry.cssVars.light["muted-foreground"],
+      dark: entry.cssVars.dark["muted-foreground"],
+    };
+  }
+  const themeSwatches = {};
+  const chartSwatches = {};
+  for (const name of themeCatalogNames) {
+    const entry = THEME_TOKEN_ENTRIES[name];
+    themeSwatches[name] = {
+      light: entry.cssVars.light.primary,
+      dark: entry.cssVars.dark.primary,
+    };
+    chartSwatches[name] = {
+      light: CHART_KEYS.map((key) => entry.cssVars.light[key]),
+      dark: CHART_KEYS.map((key) => entry.cssVars.dark[key]),
+    };
+  }
+  return `${GENERATED_HEADER}
+// v2 theme swatches derived from the canonical OKLCH theme tokens. Swatch values are
+// CSS OKLCH strings. Base swatches use each base color's mid-tone (muted-foreground);
+// theme swatches use each theme's primary; chart swatches use chart-1..5.
+import type { PresetBaseColor, PresetTheme } from './preset-catalog'
+
+export type ThemeSwatch = { light: string; dark: string }
+export type ChartSwatch = { light: string[]; dark: string[] }
+
+export const BASE_COLOR_SWATCHES: Record<PresetBaseColor, ThemeSwatch> = ${literal(baseSwatches)}
+
+export const THEME_SWATCHES: Record<PresetTheme, ThemeSwatch> = ${literal(themeSwatches)}
+
+export const THEME_CHART_SWATCHES: Record<PresetTheme, ChartSwatch> = ${literal(chartSwatches)}
+`;
 }
 
 const stale = [];
@@ -865,6 +1463,22 @@ function generate() {
   emit("packages/lovdacn/src/preset/generated-catalog.ts", catalogSource);
   emit("apps/v2/app/create/generated/preset-catalog.ts", catalogSource);
   emit("apps/preview/src/lib/generated/preset-catalog.ts", catalogSource);
+
+  // Canonical theme token modules are emitted identically to the preset package
+  // and the preview app; the v2 swatch module consumes the same canonical tokens.
+  const themeTokensSource = createThemeTokensSource();
+  emit(
+    "packages/lovdacn/src/preset/generated-theme-tokens.ts",
+    themeTokensSource,
+  );
+  emit(
+    "apps/preview/src/lib/generated/theme-tokens.ts",
+    themeTokensSource,
+  );
+  emit(
+    "apps/v2/app/create/generated/theme-swatches.ts",
+    createThemeSwatchesSource(),
+  );
   emit(
     "apps/preview/src/lib/generated/customizer-recipes.ts",
     createCustomizerRecipesSource(),
@@ -909,7 +1523,7 @@ function generate() {
         $schema: "https://lovdacn.vercel.app/schema/registry-item.json",
         name: "semantic-icon",
         type: "registry:ui",
-        dependencies: [iconPackages[library], "react-native-svg"],
+        dependencies: [...iconPackages[library], "react-native-svg"],
         registryDependencies: [],
         files: [
           {

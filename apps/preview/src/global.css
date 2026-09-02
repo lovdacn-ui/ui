@@ -63,6 +63,7 @@
   --font-sans:
     DM Sans, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
     Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  --font-heading: var(--font-sans);
   --font-display:
     Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
     Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
@@ -101,4 +102,38 @@
   .animate-ping {
     animation: none !important;
   }
+}
+
+.lvcn-create-preview-stage {
+  background-color: #f6f6f7;
+  background-image:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 96%), transparent 46%),
+    linear-gradient(rgb(24 24 27 / 2.2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(24 24 27 / 2.2%) 1px, transparent 1px);
+  background-position: center top, center, center;
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+.dark .lvcn-create-preview-stage,
+html.dark .lvcn-create-preview-stage,
+[data-theme="dark"] .lvcn-create-preview-stage {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 4%), transparent 46%),
+    linear-gradient(rgb(255 255 255 / 3.5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3.5%) 1px, transparent 1px);
+  background-position: center top, center, center;
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+/* Hide all scrollbar UI while preserving scrollability */
+::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+  display: none !important;
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }

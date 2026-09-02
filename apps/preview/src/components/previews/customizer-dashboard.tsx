@@ -19,12 +19,18 @@ const TextClassContext = React.createContext('');
 
 function Text({ className, style, ...props }: React.ComponentProps<typeof NativeText>) {
   const inheritedClassName = React.useContext(TextClassContext);
-  const { fontFaces, recipe } = usePreviewDesignSystem();
-  const resolvedClassName = cn(recipe.typography.body, inheritedClassName, className);
+  const { fontFaces, headingFontFaces, recipe } = usePreviewDesignSystem();
+  const resolvedClassName = cn(
+    'transition-colors duration-300 ease-out',
+    recipe.typography.body,
+    inheritedClassName,
+    className
+  );
+  const faces = props.role === 'heading' ? headingFontFaces : fontFaces;
   return (
     <NativeText
       className={resolvedClassName}
-      style={[style, { fontFamily: getFontFace(resolvedClassName, fontFaces), fontWeight: 'normal' }]}
+      style={[style, { fontFamily: getFontFace(resolvedClassName, faces), fontWeight: 'normal' }]}
       {...props}
     />
   );
@@ -50,7 +56,7 @@ function Button({ className, variant = 'default', size = 'default', children, ..
         role="button"
         hitSlop={10}
         className={cn(
-          'flex-row items-center justify-center border shadow-sm shadow-black/5 transition-colors',
+          'flex-row items-center justify-center border shadow-sm shadow-black/5 transition-colors duration-300 ease-out',
           className,
           recipe.components.button.container,
           variant === 'outline'
@@ -72,7 +78,7 @@ function Card({ className, ...props }: React.ComponentProps<typeof View>) {
   return (
     <View
       className={cn(
-        'border-border flex flex-col overflow-hidden border bg-card py-6 text-card-foreground shadow-sm shadow-black/5',
+        'border-border flex flex-col overflow-hidden border bg-card py-6 text-card-foreground shadow-sm shadow-black/5 transition-[background-color,border-color,box-shadow] duration-500 ease-out',
         className,
         recipe.layout.stackLg,
         recipe.components.card.shell
@@ -141,7 +147,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<typeof Te
 function Input({ id, className, style, ...props }: React.ComponentProps<typeof TextInput> & { id?: string }) {
   const { fontFaces, recipe } = usePreviewDesignSystem();
   const resolvedClassName = cn(
-    'text-foreground w-full min-w-0 shadow-sm shadow-black/5 outline-none placeholder:text-muted-foreground',
+    'text-foreground w-full min-w-0 shadow-sm shadow-black/5 outline-none placeholder:text-muted-foreground transition-colors duration-300 ease-out',
     recipe.typography.body,
     recipe.components.input,
     className
@@ -174,7 +180,7 @@ function Badge({ className, ...props }: React.ComponentProps<typeof View> & { va
     >
       <View
         className={cn(
-          'border-border flex-row items-center border',
+          'border-border flex-row items-center border transition-colors duration-300 ease-out',
           className,
           recipe.components.badge.shell
         )}
@@ -199,7 +205,7 @@ function Checkbox({
       hitSlop={14}
       onPress={() => onCheckedChange(!checked)}
       className={cn(
-        'shrink-0 items-center justify-center shadow-sm shadow-black/5',
+        'shrink-0 items-center justify-center shadow-sm shadow-black/5 transition-colors duration-300 ease-out',
         recipe.components.checkbox,
         checked && 'border-primary bg-primary'
       )}
@@ -225,7 +231,7 @@ function Progress({ value }: { value: number }) {
 
 function Separator() {
   const { recipe } = usePreviewDesignSystem();
-  return <View className={cn('h-px w-full shrink-0', recipe.components.separator)} />;
+  return <View className={cn('h-px w-full shrink-0 transition-colors duration-300 ease-out', recipe.components.separator)} />;
 }
 
 function Alert({
@@ -241,7 +247,7 @@ function Alert({
   return (
     <View
       className={cn(
-        'border flex-row items-start p-3.5 shadow-sm shadow-black/5',
+        'border flex-row items-start p-3.5 shadow-sm shadow-black/5 transition-colors duration-300 ease-out',
         recipe.components.card.shell,
         recipe.layout.inline,
         variant === 'destructive'
@@ -280,7 +286,7 @@ function Switch({
       hitSlop={12}
       onPress={() => onCheckedChange(!checked)}
       className={cn(
-        'h-5 w-9 rounded-full p-0.5 transition-colors',
+        'h-5 w-9 rounded-full p-0.5 transition-colors duration-300 ease-out',
         checked ? 'bg-primary' : 'bg-muted/80',
         recipe.components.checkbox
       )}
@@ -306,23 +312,27 @@ function Tabs({
 }) {
   const { recipe } = usePreviewDesignSystem();
   return (
-    <View className={cn('flex-row p-1 bg-muted/30 border border-border/50', recipe.layout.inline, recipe.components.card.shell)}>
+    <View className={cn('flex-row p-1 bg-muted/30 border border-border/50 transition-colors duration-300 ease-out', recipe.layout.inline, recipe.components.card.shell)}>
       {tabs.map((tab) => {
         const isActive = tab === activeTab;
         return (
-          <Pressable
+          <TextClassContext.Provider
             key={tab}
-            onPress={() => onTabChange(tab)}
-            className={cn(
-              'flex-1 items-center justify-center py-1.5 px-3 transition-colors',
-              recipe.components.button.container,
-              isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            )}
+            value={isActive ? 'text-primary-foreground font-semibold' : 'text-muted-foreground'}
           >
-            <Text className={cn('text-xs font-medium', isActive ? 'text-foreground font-semibold' : 'text-muted-foreground')}>
-              {tab}
-            </Text>
-          </Pressable>
+            <Pressable
+              onPress={() => onTabChange(tab)}
+              className={cn(
+                'flex-1 items-center justify-center py-1.5 px-3 transition-colors',
+                recipe.components.button.container,
+                isActive ? 'bg-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Text className={cn('text-xs font-medium', isActive ? 'text-primary-foreground font-semibold' : 'text-muted-foreground')}>
+                {tab}
+              </Text>
+            </Pressable>
+          </TextClassContext.Provider>
         );
       })}
     </View>
@@ -554,7 +564,9 @@ export function CustomizerDashboard({ topPad = 24 }: { topPad?: number }) {
 
   return (
     <ScrollView
-      className="flex-1 bg-background w-full"
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+      className="flex-1 w-full bg-transparent"
       contentContainerStyle={{
         paddingTop: topPad,
         paddingBottom: recipe.layout.pagePaddingBottom,

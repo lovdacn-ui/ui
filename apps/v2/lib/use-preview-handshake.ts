@@ -104,6 +104,18 @@ export function usePreviewHandshake({
     if (requireConfirmation && posted) setApplyingRevision(revision)
   }, [requireConfirmation])
 
+  // Initial reveal already has a protocol timeout. Apply the same fail-open
+  // budget to later resource swaps so a promise that never settles cannot leave
+  // the host's Shuffle treatment active forever.
+  React.useEffect(() => {
+    if (applyingRevision === null) return
+    const revision = applyingRevision
+    const timeout = window.setTimeout(() => {
+      setApplyingRevision((current) => current === revision ? null : current)
+    }, 5_000)
+    return () => window.clearTimeout(timeout)
+  }, [applyingRevision])
+
   React.useEffect(() => {
     if (typeof window === "undefined") return
     // Hosts that render a fallback instead of an iframe pass an empty src; there

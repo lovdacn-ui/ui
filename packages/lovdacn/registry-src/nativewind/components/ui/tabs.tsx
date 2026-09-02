@@ -68,7 +68,7 @@ function TabsTrigger({
     <TextClassContext.Provider
       value={cn(
         'text-foreground dark:text-muted-foreground text-sm font-medium leading-tight',
-        value === props.value && 'dark:text-foreground'
+        value === props.value && 'text-primary-foreground dark:text-primary-foreground'
       )}>
       <TabsPrimitive.Trigger
         className={cn(
@@ -78,7 +78,7 @@ function TabsTrigger({
             native: 'h-full py-0',
           }),
           props.disabled && 'opacity-50',
-          props.value === value && 'bg-background dark:border-foreground/10 dark:bg-input/30',
+          props.value === value && 'bg-primary text-primary-foreground shadow-xs',
           className
         )}
         {...props}

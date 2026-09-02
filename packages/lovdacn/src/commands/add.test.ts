@@ -139,7 +139,7 @@ describe("runAdd", () => {
     // Verify npm dependencies installation command was called with all collected packages
     expect(execa).toHaveBeenCalledWith(
       expect.any(String),
-      ["install", "class-variance-authority", "@rn-primitives/slot", "clsx", "tailwind-merge", "@expo-google-fonts/space-grotesk@0.4.1"],
+      ["install", "class-variance-authority", "@rn-primitives/slot", "clsx", "tailwind-merge", "@expo-google-fonts/inter@0.4.2"],
       {
         cwd: tempCwd,
         stdio: "inherit",
@@ -190,7 +190,7 @@ describe("runAdd", () => {
     // `npm install`, so native modules resolve to the SDK-compatible versions.
     expect(execa).toHaveBeenCalledWith(
       "npx",
-      ["expo", "install", "class-variance-authority", "@rn-primitives/slot", "clsx", "tailwind-merge", "@expo-google-fonts/space-grotesk@0.4.1"],
+      ["expo", "install", "class-variance-authority", "@rn-primitives/slot", "clsx", "tailwind-merge", "@expo-google-fonts/inter@0.4.2"],
       {
         cwd: tempCwd,
         stdio: "inherit",
@@ -245,7 +245,7 @@ export default function Layout() {
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "@expo-google-fonts/space-grotesk@0.4.1",
+        "@expo-google-fonts/inter@0.4.2",
         "react-native-gesture-handler",
       ],
       {

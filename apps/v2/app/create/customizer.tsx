@@ -59,89 +59,296 @@ import { useTheme } from "next-themes"
 import { packageSpec, useBeta } from "@/lib/beta"
 import { cn } from "@/lib/utils"
 import { usePreviewHandshake } from "@/lib/use-preview-handshake"
+import type { PreviewColorScheme } from "@/lib/preview-protocol"
 import { Picker } from "./picker"
 import {
   PRESET_STYLES,
   PRESET_BASE_COLORS,
-  PRESET_THEMES,
-  PRESET_CHART_COLORS,
   PRESET_FONTS,
+  PRESET_FONT_HEADINGS,
   PRESET_ICON_LIBRARIES,
   PRESET_RADII,
+  PRESET_MENU_ACCENTS,
+  PRESET_MENU_COLORS,
+  SHADCN_DEFAULT_PRESETS,
   encodePreset,
-  randomizeConfig,
-  DEFAULT_CONFIG,
+  decodePreset,
+  getCompatibleThemes,
+  isTranslucentMenuColor,
+  resolveEffectiveRadius,
   FONT_FAMILIES,
   ICON_PACKAGES,
   RADIUS_VALUES,
   STYLE_LABELS,
-  COLOR_SWATCHES,
+  BASE_COLOR_SWATCHES,
   THEME_SWATCHES,
+  THEME_CHART_SWATCHES,
   type PresetConfig,
   type PresetField,
+  type PresetBaseColor,
+  type PresetTheme,
+  type PresetStyle,
 } from "./preset-data"
 
 type PackageManager = "npm" | "pnpm" | "yarn" | "bun"
 type ExpoVersion = "54" | "57"
 
-// Build picker options
-const STYLE_OPTIONS = PRESET_STYLES.map((s) => ({ value: s, label: STYLE_LABELS[s] }))
-const COLOR_OPTIONS = PRESET_BASE_COLORS.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: COLOR_SWATCHES[c],
+const titleCase = (value: string) =>
+  value
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+
+const PRESET_OPTIONS = PRESET_STYLES.map((style) => ({
+  value: style,
+  label: STYLE_LABELS[style],
+  hint: SHADCN_DEFAULT_PRESETS[style].description,
 }))
-const THEME_OPTIONS = PRESET_THEMES.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: THEME_SWATCHES[c],
+const STYLE_OPTIONS = PRESET_STYLES.map((style) => ({ value: style, label: STYLE_LABELS[style] }))
+const FONT_OPTIONS = PRESET_FONTS.map((font) => ({ value: font, label: FONT_FAMILIES[font] }))
+const HEADING_FONT_OPTIONS = PRESET_FONT_HEADINGS.map((font) => ({
+  value: font,
+  label: font === "inherit" ? "Inherit body font" : FONT_FAMILIES[font],
 }))
-const CHART_OPTIONS = PRESET_CHART_COLORS.map((c) => ({
-  value: c,
-  label: c.charAt(0).toUpperCase() + c.slice(1),
-  swatch: THEME_SWATCHES[c],
+const ICON_OPTIONS = PRESET_ICON_LIBRARIES.map((library) => ({
+  value: library,
+  label: titleCase(library),
+  hint: ICON_PACKAGES[library],
 }))
-const FONT_OPTIONS = PRESET_FONTS.map((f) => ({ value: f, label: FONT_FAMILIES[f] }))
-const ICON_OPTIONS = PRESET_ICON_LIBRARIES.map((i) => ({
-  value: i,
-  label: i.charAt(0).toUpperCase() + i.slice(1),
-  hint: ICON_PACKAGES[i],
+const RADIUS_OPTIONS = PRESET_RADII.map((radius) => ({
+  value: radius,
+  label: titleCase(radius),
+  hint: radius === "full" ? `${RADIUS_VALUES[radius]} · React Native` : RADIUS_VALUES[radius],
 }))
-const RADIUS_OPTIONS = PRESET_RADII.map((r) => ({
-  value: r,
-  label: r.charAt(0).toUpperCase() + r.slice(1),
-  hint: RADIUS_VALUES[r],
-}))
+const MENU_ACCENT_OPTIONS = PRESET_MENU_ACCENTS.map((accent) => ({ value: accent, label: titleCase(accent) }))
+const MENU_COLOR_OPTIONS = PRESET_MENU_COLORS.map((color) => ({ value: color, label: titleCase(color) }))
+
+// Curated by shadcn for combinations that look intentionally designed. Because
+// lvcn v2 preserves shadcn's field order and indexes, these decode losslessly.
+const SHUFFLE_PRESET_CODES = [
+  "b6sUj34d9", "b2tqYzpa88", "b1W4tDrk", "b1aIuQ2XC", "b7jsW1RxJ5",
+  "b870VEw0in", "b3Zheoix4U", "b1x9M2c4aI", "b1W7jDEW", "b51GFh7y6",
+  "b2fms620zo", "b1Q5GC", "buKEvLs", "b5rR41Mtnc", "b6tOz2I0x",
+  "b2hNTREGRN", "bdIJ7Sq", "b6TqMNb5Wb", "bJIirQ", "b4aRK5K0fb",
+  "b5HCiD38LI", "bdHjvCi", "b7QDHijUjj", "b4ZVZIPi9h", "b1W4bcno",
+] as const
+
+const CONFIG_FIELDS = [
+  "style", "baseColor", "theme", "chartColor", "font", "fontHeading",
+  "iconLibrary", "radius", "menuAccent", "menuColor",
+] as const satisfies readonly PresetField[]
+
+function sameConfig(left: PresetConfig, right: PresetConfig) {
+  return CONFIG_FIELDS.every((field) => left[field] === right[field])
+}
+
+function transitionConfig<K extends PresetField>(
+  current: PresetConfig,
+  key: K,
+  value: PresetConfig[K]
+): PresetConfig {
+  if (key === "baseColor") {
+    const baseColor = value as PresetBaseColor
+    const compatible = getCompatibleThemes(baseColor)
+    const repair = (theme: PresetTheme): PresetTheme => compatible.includes(theme) ? theme : baseColor
+    return { ...current, baseColor, theme: repair(current.theme), chartColor: repair(current.chartColor) }
+  }
+  if (key === "font") {
+    const font = value as PresetConfig["font"]
+    return { ...current, font, fontHeading: current.fontHeading === font ? "inherit" : current.fontHeading }
+  }
+  if (key === "fontHeading") {
+    const fontHeading = value as PresetConfig["fontHeading"]
+    return { ...current, fontHeading: fontHeading === current.font ? "inherit" : fontHeading }
+  }
+  if (key === "menuColor") {
+    const menuColor = value as PresetConfig["menuColor"]
+    return {
+      ...current,
+      menuColor,
+      menuAccent: isTranslucentMenuColor(menuColor) ? "subtle" : current.menuAccent,
+    }
+  }
+  if (key === "menuAccent") {
+    const menuAccent = value as PresetConfig["menuAccent"]
+    return {
+      ...current,
+      menuAccent,
+      menuColor: menuAccent === "bold" && isTranslucentMenuColor(current.menuColor)
+        ? "default"
+        : current.menuColor,
+    }
+  }
+  return { ...current, [key]: value } as PresetConfig
+}
+
+function overlayLocks(
+  current: PresetConfig,
+  candidate: PresetConfig,
+  locks: Partial<Record<PresetField, boolean>>
+): PresetConfig {
+  const next: PresetConfig = {
+    style: locks.style ? current.style : candidate.style,
+    baseColor: locks.baseColor ? current.baseColor : candidate.baseColor,
+    theme: locks.theme ? current.theme : candidate.theme,
+    chartColor: locks.chartColor ? current.chartColor : candidate.chartColor,
+    font: locks.font ? current.font : candidate.font,
+    fontHeading: locks.fontHeading ? current.fontHeading : candidate.fontHeading,
+    iconLibrary: locks.iconLibrary ? current.iconLibrary : candidate.iconLibrary,
+    radius: locks.radius ? current.radius : candidate.radius,
+    menuAccent: locks.menuAccent ? current.menuAccent : candidate.menuAccent,
+    menuColor: locks.menuColor ? current.menuColor : candidate.menuColor,
+  }
+  const compatible = getCompatibleThemes(next.baseColor)
+  if (!locks.theme && !compatible.includes(next.theme)) next.theme = next.baseColor
+  if (!locks.chartColor && !compatible.includes(next.chartColor)) next.chartColor = next.baseColor
+  if (next.menuAccent === "bold" && isTranslucentMenuColor(next.menuColor)) {
+    if (!locks.menuAccent) next.menuAccent = "subtle"
+    else if (!locks.menuColor) next.menuColor = "default"
+  }
+  return next
+}
 
 function PreviewLoadingSkeleton() {
   return (
     <div
-      className="pointer-events-none absolute inset-0 grid grid-cols-1 gap-5 overflow-hidden bg-background p-6 md:grid-cols-3"
+      className="lvcn-create-preview-stage pointer-events-none absolute inset-0 overflow-y-auto p-5"
       role="status"
       aria-label="Loading preview"
     >
-      {[0, 1, 2].map((column) => (
-        <div key={column} className="space-y-5 animate-pulse" data-preview-skeleton="true">
-          {[0, 1, 2].map((card) => (
-            <div key={card} className="rounded-xl border border-border/70 bg-card p-5 shadow-sm">
-              <div className="h-4 w-2/5 rounded bg-muted" />
-              <div className="mt-2 h-3 w-3/4 rounded bg-muted/70" />
-              <div className="mt-5 space-y-3">
-                <div className="h-9 rounded-md bg-muted/60" />
-                <div className="h-9 rounded-md bg-muted/60" />
-                <div className="h-8 w-1/2 rounded-md bg-muted" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" data-preview-skeleton="true">
+        {/* Column 1: System Status & Account Access */}
+        <div className="space-y-4 animate-pulse">
+          {/* System Status card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-48 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2.5">
+              <div className="h-14 rounded-lg border border-border/40 bg-muted/30 p-3 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-3 w-28 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="mt-1.5 h-2.5 w-40 rounded bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+              <div className="h-14 rounded-lg border border-border/40 bg-muted/30 p-3 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-3 w-24 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="mt-1.5 h-2.5 w-36 rounded bg-muted/50 dark:bg-zinc-800/50" />
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Account Access card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-52 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="h-2.5 w-20 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div>
+                <div className="h-2.5 w-24 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div className="h-9 w-full rounded-lg bg-muted/70 dark:bg-zinc-800/80" />
+            </div>
+          </div>
         </div>
-      ))}
+
+        {/* Column 2: Navigation Tabs, Receiving Method, Power Usage */}
+        <div className="space-y-4 animate-pulse">
+          {/* Navigation Tabs card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-44 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2.5">
+              <div className="flex h-8 w-full items-center rounded-lg border border-border/40 bg-muted/30 p-1 gap-1 dark:border-zinc-800/50 dark:bg-zinc-900/40">
+                <div className="h-full flex-1 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="h-full flex-1 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="h-full flex-1 rounded bg-muted dark:bg-zinc-700" />
+              </div>
+              <div className="h-7 w-full rounded-lg border border-border/30 bg-muted/20 dark:border-zinc-800/40 dark:bg-zinc-900/30" />
+            </div>
+          </div>
+
+          {/* Receiving Method card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-48 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="h-2.5 w-28 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div>
+                <div className="h-2.5 w-32 rounded bg-muted/60 dark:bg-zinc-800/60" />
+                <div className="mt-1.5 h-8 w-full rounded-lg bg-muted/40 dark:bg-zinc-900/60" />
+              </div>
+              <div className="h-9 w-full rounded-lg bg-muted/70 dark:bg-zinc-800/80" />
+            </div>
+          </div>
+
+          {/* Power Usage card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-28 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-40 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-2">
+              <div className="h-2 w-full rounded-full bg-muted/50 dark:bg-zinc-800/60" />
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Team Members, Stock Performance, Traffic Sources */}
+        <div className="space-y-4 animate-pulse">
+          {/* Team Members card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-40 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="size-8 shrink-0 rounded-full bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-3 w-24 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                  <div className="h-2.5 w-16 rounded bg-muted/40 dark:bg-zinc-800/40" />
+                </div>
+                <div className="h-5 w-12 rounded-full bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="size-8 shrink-0 rounded-full bg-muted/70 dark:bg-zinc-800/70" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-3 w-20 rounded bg-muted/70 dark:bg-zinc-800/70" />
+                  <div className="h-2.5 w-14 rounded bg-muted/40 dark:bg-zinc-800/40" />
+                </div>
+                <div className="h-5 w-14 rounded-full bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+            </div>
+          </div>
+
+          {/* Stock Performance card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-36 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-36 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-4 space-y-3">
+              <div className="h-20 w-full rounded-lg border border-border/30 bg-muted/20 dark:border-zinc-800/40 dark:bg-zinc-900/30" />
+              <div className="flex items-baseline justify-between">
+                <div className="h-6 w-24 rounded bg-muted dark:bg-zinc-800" />
+                <div className="h-3.5 w-16 rounded bg-muted/50 dark:bg-zinc-800/50" />
+              </div>
+            </div>
+          </div>
+
+          {/* Traffic Sources card */}
+          <div className="rounded-xl border border-border/70 bg-card/90 p-4 shadow-xs backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="h-4 w-32 rounded bg-muted dark:bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-36 rounded bg-muted/60 dark:bg-zinc-800/60" />
+            <div className="mt-3 h-4 w-full rounded bg-muted/40 dark:bg-zinc-900/60" />
+          </div>
+        </div>
+      </div>
       <span className="sr-only">Loading preview</span>
     </div>
   )
 }
 
 export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfig }) {
-  const { resolvedTheme } = useTheme()
   const [config, setConfig] = React.useState<PresetConfig>(initialConfig)
   const [selectedEngine, setSelectedEngine] = React.useState<"nativewind" | "uniwind">("nativewind")
   const [expoVersion, setExpoVersion] = React.useState<ExpoVersion>("57")
@@ -150,24 +357,75 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   const [copied, setCopied] = React.useState(false)
   const [openDialog, setOpenDialog] = React.useState(false)
   const [target, setTarget] = React.useState<"new" | "existing">("new")
-  const [shuffleActive, setShuffleActive] = React.useState(false)
+  const [previewConfig, setPreviewConfig] = React.useState<PresetConfig | null>(null)
 
   const presetCode = React.useMemo(() => encodePreset(config), [config])
-  const colorScheme = React.useMemo<"light" | "dark">(() => {
-    if (resolvedTheme === "dark" || resolvedTheme === "light") return resolvedTheme
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    }
-    return "light"
-  }, [resolvedTheme])
+  const previewPresetCode = React.useMemo(
+    () => encodePreset(previewConfig ?? config),
+    [config, previewConfig]
+  )
+  const currentPreset = React.useMemo(
+    () => PRESET_STYLES.find((style) => sameConfig(config, SHADCN_DEFAULT_PRESETS[style])) ?? null,
+    [config]
+  )
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const { resolvedTheme } = useTheme()
+  const colorScheme: PreviewColorScheme = React.useMemo(() => {
+    if (!mounted) return "light"
+    return resolvedTheme === "dark" ? "dark" : "light"
+  }, [mounted, resolvedTheme])
+
+  // Base color options — every catalog base color, swatch resolved for the active
+  // scheme from the canonical tokens.
+  const colorOptions = React.useMemo(
+    () =>
+      PRESET_BASE_COLORS.map((c) => ({
+        value: c,
+        label: titleCase(c),
+        swatch: BASE_COLOR_SWATCHES[c][colorScheme],
+      })),
+    [colorScheme]
+  )
+
+  // Theme + chart options are scoped to the base's compatible set (its own theme
+  // + 17 accents). The current value is always kept selectable so a preset that
+  // encodes a legacy neutral-on-neutral mix still displays and stays editable.
+  const buildThemeOptions = React.useCallback(
+    (current: PresetTheme, charts = false) => {
+      const compatible = getCompatibleThemes(config.baseColor)
+      const values = compatible.includes(current) ? compatible : [current, ...compatible]
+      return values.map((theme) => ({
+        value: theme,
+        label: titleCase(theme),
+        swatch: charts
+          ? THEME_CHART_SWATCHES[theme][colorScheme]
+          : THEME_SWATCHES[theme][colorScheme],
+      }))
+    },
+    [config.baseColor, colorScheme]
+  )
+  const themeOptions = React.useMemo(
+    () => buildThemeOptions(config.theme),
+    [buildThemeOptions, config.theme]
+  )
+  const chartOptions = React.useMemo(
+    () => buildThemeOptions(config.chartColor, true),
+    [buildThemeOptions, config.chartColor]
+  )
 
   // Keep the first URL fully configured, like shadcn's preview route, but never
   // change it after mount. Live changes travel over postMessage so shuffle does
   // not reload the Expo application.
   const [initialPresetCode] = React.useState(() => encodePreset(initialConfig))
-  const webPreviewUrl = React.useMemo(
-    () => `/create/preview?${new URLSearchParams({ preset: initialPresetCode }).toString()}`,
-    [initialPresetCode]
+  const [webPreviewUrl] = React.useState(
+    () => `/create/preview?${new URLSearchParams({
+      preset: initialPresetCode,
+      colorScheme: "light",
+    }).toString()}`
   )
   const previewOrigin =
     typeof window === "undefined" ? "" : window.location.origin
@@ -182,23 +440,13 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
     src: webPreviewUrl,
     childOrigin: previewOrigin,
     colorScheme,
-    preset: presetCode,
+    preset: previewPresetCode,
     // The frame is revealed only after it echoes back the exact preset and color
     // scheme with `lvcn:applied`, so a default-theme frame is never shown. The
     // readiness timeout still reveals a recoverable state if that never happens.
     requireConfirmation: true,
   })
 
-  // Keep the shuffle treatment around just long enough for the completed design
-  // to settle. Slow font/icon loads keep it active until their exact revision is
-  // confirmed; fast cached changes still get a deliberate, non-jarring finish.
-  React.useEffect(() => {
-    if (!shuffleActive || previewApplying) return
-    const timeout = window.setTimeout(() => setShuffleActive(false), 260)
-    return () => window.clearTimeout(timeout)
-  }, [previewApplying, shuffleActive])
-
-  const previewTransitioning = previewVisible && (previewApplying || shuffleActive)
   const beta = useBeta()
 
   const command = React.useMemo(() => {
@@ -225,20 +473,40 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   }, [presetCode])
 
   const update = <K extends PresetField>(key: K, value: PresetConfig[K]) => {
-    setConfig((c) => ({ ...c, [key]: value }))
+    setPreviewConfig(null)
+    setConfig((current) => transitionConfig(current, key, value))
+  }
+
+  const preview = <K extends PresetField>(key: K, value: PresetConfig[K] | null) => {
+    setPreviewConfig(value === null ? null : transitionConfig(config, key, value))
+  }
+
+  const selectPreset = (style: PresetStyle) => {
+    setPreviewConfig(null)
+    setConfig({ ...SHADCN_DEFAULT_PRESETS[style] })
   }
 
   const toggleLock = (key: PresetField) => {
-    setLocks((l) => ({ ...l, [key]: !l[key] }))
+    setLocks((current) => ({ ...current, [key]: !current[key] }))
   }
 
   const shuffle = () => {
-    setShuffleActive(true)
-    setConfig((c) => randomizeConfig(c, locks))
+    setPreviewConfig(null)
+    setConfig((current) => {
+      const candidates = SHUFFLE_PRESET_CODES
+        .map((code) => decodePreset(code))
+        .filter((candidate): candidate is PresetConfig => candidate !== null)
+        .filter((candidate) => encodePreset(candidate) !== encodePreset(current))
+        .map((candidate) => overlayLocks(current, candidate, locks))
+        .filter((candidate) => !sameConfig(candidate, current))
+      const candidate = candidates[Math.floor(Math.random() * candidates.length)]
+      return candidate ?? current
+    })
   }
 
   const reset = () => {
-    setConfig(DEFAULT_CONFIG)
+    setPreviewConfig(null)
+    setConfig((current) => ({ ...SHADCN_DEFAULT_PRESETS[current.style] }))
     setLocks({})
   }
 
@@ -275,9 +543,9 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
   }, [locks])
 
   return (
-    <div className="flex flex-1 flex-col w-full overflow-hidden bg-background md:h-[calc(100dvh-var(--header-height))] md:flex-none md:flex-row">
-      {/* Left Sidebar Panel - Flush to the left edge of the page */}
-      <aside className="relative z-20 w-full md:w-80 h-full border-r border-border bg-card/60 backdrop-blur-xl flex flex-col shrink-0 min-h-0 overflow-visible">
+    <div className="flex flex-1 flex-col w-full overflow-hidden bg-zinc-100 dark:bg-black p-2.5 md:p-3.5 gap-2.5 md:gap-3.5 md:h-[calc(100dvh-var(--header-height))] md:flex-none md:flex-row">
+      {/* Left Sidebar Panel - Standalone rounded box */}
+      <aside className="relative z-20 w-full md:w-80 h-full rounded-2xl border border-border/80 dark:border-zinc-800 bg-card/95 dark:bg-zinc-950/90 backdrop-blur-xl shadow-xs flex flex-col shrink-0 min-h-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3.5 pt-4.5 pb-2 shrink-0 bg-transparent">
           <span className="text-sm font-bold tracking-tight text-foreground">Customize</span>
@@ -287,12 +555,23 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
         </div>
 
         {/* Pickers list */}
-        <div className="flex-1 flex flex-col gap-1.5 px-3 py-2.5 overflow-visible">
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <Picker
+            label="Preset"
+            value={currentPreset ?? config.style}
+            selectedValue={currentPreset}
+            options={PRESET_OPTIONS}
+            onChange={selectPreset}
+            onPreview={(style) => setPreviewConfig(style ? { ...SHADCN_DEFAULT_PRESETS[style] } : null)}
+            renderValue={() => currentPreset ? SHADCN_DEFAULT_PRESETS[currentPreset].description : "Custom"}
+            icon={StyleIcon}
+          />
           <Picker
             label="Style"
             value={config.style}
             options={STYLE_OPTIONS}
-            onChange={(v) => update("style", v)}
+            onChange={(value) => update("style", value)}
+            onPreview={(value) => preview("style", value)}
             locked={locks.style}
             onToggleLock={() => toggleLock("style")}
             icon={StyleIcon}
@@ -300,62 +579,103 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
           <Picker
             label="Base Color"
             value={config.baseColor}
-            options={COLOR_OPTIONS}
-            onChange={(v) => update("baseColor", v)}
+            options={colorOptions}
+            onChange={(value) => update("baseColor", value)}
+            onPreview={(value) => preview("baseColor", value)}
             locked={locks.baseColor}
             onToggleLock={() => toggleLock("baseColor")}
-            renderValue={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
+            renderValue={titleCase}
             icon={ColorIcon}
           />
           <Picker
             label="Theme"
             value={config.theme}
-            options={THEME_OPTIONS}
-            onChange={(v) => update("theme", v)}
+            options={themeOptions}
+            onChange={(value) => update("theme", value)}
+            onPreview={(value) => preview("theme", value)}
             locked={locks.theme}
             onToggleLock={() => toggleLock("theme")}
-            renderValue={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
+            renderValue={titleCase}
             icon={ThemeIcon}
           />
           <Picker
             label="Chart Color"
             value={config.chartColor}
-            options={CHART_OPTIONS}
-            onChange={(v) => update("chartColor", v)}
+            options={chartOptions}
+            onChange={(value) => update("chartColor", value)}
+            onPreview={(value) => preview("chartColor", value)}
             locked={locks.chartColor}
             onToggleLock={() => toggleLock("chartColor")}
-            renderValue={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
+            renderValue={titleCase}
             icon={ChartIcon}
           />
           <Picker
-            label="Font"
+            label="Body Font"
             value={config.font}
             options={FONT_OPTIONS}
-            onChange={(v) => update("font", v)}
+            onChange={(value) => update("font", value)}
+            onPreview={(value) => preview("font", value)}
             locked={locks.font}
             onToggleLock={() => toggleLock("font")}
-            renderValue={(v) => FONT_FAMILIES[v]}
+            renderValue={(value) => FONT_FAMILIES[value]}
+            icon={FontIcon}
+          />
+          <Picker
+            label="Heading Font"
+            value={config.fontHeading}
+            options={HEADING_FONT_OPTIONS}
+            onChange={(value) => update("fontHeading", value)}
+            onPreview={(value) => preview("fontHeading", value)}
+            locked={locks.fontHeading}
+            onToggleLock={() => toggleLock("fontHeading")}
+            renderValue={(value) => value === "inherit" ? `Inherit (${FONT_FAMILIES[config.font]})` : FONT_FAMILIES[value]}
             icon={FontIcon}
           />
           <Picker
             label="Icon Library"
             value={config.iconLibrary}
             options={ICON_OPTIONS}
-            onChange={(v) => update("iconLibrary", v)}
+            onChange={(value) => update("iconLibrary", value)}
+            onPreview={(value) => preview("iconLibrary", value)}
             locked={locks.iconLibrary}
             onToggleLock={() => toggleLock("iconLibrary")}
-            renderValue={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
+            renderValue={titleCase}
             icon={IconLibIcon}
           />
           <Picker
             label="Radius"
-            value={config.radius}
+            value={resolveEffectiveRadius(config)}
             options={RADIUS_OPTIONS}
-            onChange={(v) => update("radius", v)}
+            onChange={(value) => update("radius", value)}
+            onPreview={(value) => preview("radius", value)}
             locked={locks.radius}
             onToggleLock={() => toggleLock("radius")}
-            renderValue={(v) => `${v.charAt(0).toUpperCase() + v.slice(1)} (${RADIUS_VALUES[v]})`}
+            disabled={config.style === "lyra" || config.style === "sera"}
+            disabledHint={`${STYLE_LABELS[config.style]} uses square controls`}
+            renderValue={(value) => `${titleCase(value)} (${RADIUS_VALUES[value]})`}
             icon={RadiusIcon}
+          />
+          <Picker
+            label="Menu Accent"
+            value={config.menuAccent}
+            options={MENU_ACCENT_OPTIONS}
+            onChange={(value) => update("menuAccent", value)}
+            onPreview={(value) => preview("menuAccent", value)}
+            locked={locks.menuAccent}
+            onToggleLock={() => toggleLock("menuAccent")}
+            renderValue={titleCase}
+            icon={ThemeIcon}
+          />
+          <Picker
+            label="Menu Color"
+            value={config.menuColor}
+            options={MENU_COLOR_OPTIONS}
+            onChange={(value) => update("menuColor", value)}
+            onPreview={(value) => preview("menuColor", value)}
+            locked={locks.menuColor}
+            onToggleLock={() => toggleLock("menuColor")}
+            renderValue={titleCase}
+            icon={ColorIcon}
           />
         </div>
 
@@ -398,7 +718,7 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
               onClick={shuffle}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-zinc-100/70 hover:bg-zinc-200/70 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/80 px-3 py-1.5 text-sm font-medium transition-all active:scale-[0.99]"
               title="Shuffle (press R)"
-              aria-busy={shuffleActive}
+              aria-busy={previewApplying}
             >
               <DicesIcon className="size-4" />
               Shuffle
@@ -415,8 +735,8 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
         </div>
       </aside>
 
-      {/* Right Preview area */}
-      <div className="flex-1 h-full flex flex-col overflow-hidden bg-background relative">
+      {/* Right Preview area - Standalone rounded box */}
+      <div className="lvcn-create-preview-stage relative flex h-full flex-1 flex-col rounded-2xl border border-border/80 dark:border-zinc-800 shadow-xs overflow-hidden">
         {/* Desktop web preview - iframe pinned to fill container */}
         <div className="relative isolate z-10 flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
           {!previewVisible && <PreviewLoadingSkeleton />}
@@ -425,24 +745,13 @@ export function CreateCustomizer({ initialConfig }: { initialConfig: PresetConfi
             ref={previewFrameRef}
             src={webPreviewUrl}
             onLoad={onPreviewLoad}
-            data-preview-frame="true"
+            data-preview-frame="create"
             className={cn(
-              "absolute inset-0 h-full w-full border-0 select-none bg-background transition-opacity duration-300 motion-reduce:transition-none",
+              "absolute inset-0 h-full w-full origin-center select-none border-0 bg-transparent transition-opacity duration-300 motion-reduce:transition-none",
               previewVisible ? "opacity-100" : "opacity-0"
             )}
             title="Expo Web Preview"
           />
-
-          <div
-            aria-hidden="true"
-            data-preview-transition={previewTransitioning ? "active" : "idle"}
-            className={cn(
-              "pointer-events-none absolute inset-0 z-20 overflow-hidden transition-opacity duration-300 motion-reduce:hidden",
-              previewTransitioning ? "opacity-100" : "opacity-0"
-            )}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--color-foreground),transparent_42%)] opacity-[0.07] dark:opacity-[0.09]" />
-          </div>
         </div>
       </div>
 

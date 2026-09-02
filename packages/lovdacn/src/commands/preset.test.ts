@@ -46,9 +46,37 @@ describe("regenerateProjectCss — font + radius are first-class", () => {
     })
 
     const css = await readFile(path.join(cwd, "global.css"), "utf8")
-    expect(css).toContain("--font-sans: Inter,")
-    expect(css).toContain("--radius: 0.125rem;")
+    // Style fallbacks are derived from the canonical Nova preset.
+    expect(css).toContain("--font-sans: Geist,")
+    expect(css).toContain("--radius: 0.625rem;")
   })
+
+  it("applies heading/menu fields and style-effective square radius", async () => {
+    await regenerateProjectCss({
+      projectPath: cwd,
+      styleEngine: "nativewind",
+      cssRelativePath: "global.css",
+      style: "lyra",
+      baseColor: "neutral",
+      theme: "blue",
+      chartColor: "blue",
+      font: "inter",
+      fontHeading: "playfair-display",
+      radius: "full",
+      menuAccent: "bold",
+      menuColor: "inverted",
+    })
+
+    const css = await readFile(path.join(cwd, "global.css"), "utf8")
+    expect(css).toContain("--font-heading: Playfair Display,")
+    expect(css).toContain("--radius: 0rem;")
+    expect(css).toContain("--lvcn-menu-accent: bold;")
+    expect(css).toContain("--lvcn-menu-color: inverted;")
+    const primary = css.match(/--primary: ([^;]+);/)?.[1]
+    const accent = css.match(/--accent: ([^;]+);/)?.[1]
+    expect(accent).toBe(primary)
+  })
+
 })
 
 describe("getInstalledComponents — filesystem + tracked reconciliation", () => {
@@ -119,10 +147,26 @@ describe("immutable v1 preset decoding + active normalization", () => {
       font: "instrument-serif",
       iconLibrary: "heroicons",
       radius: "full",
+      fontHeading: "inherit",
+      menuAccent: "subtle",
+      menuColor: "default",
     })
     expect(result?.warnings).toHaveLength(1)
     expect(result?.warnings.join("\n")).toContain('style "default"')
     expect(result?.warnings.join("\n")).not.toContain("icon library")
     expect(result?.warnings.join("\n")).not.toContain("font")
+  })
+})
+
+
+describe("named CLI preset profiles", () => {
+  it("uses canonical shadcn defaults and preserves explicit lvcn-v1 aliases", async () => {
+    const { DEFAULT_PRESETS } = await import("../preset/defaults")
+    const { SHADCN_DEFAULT_PRESETS, LVCN_LEGACY_PRESETS } = await import("../preset/index")
+
+    expect(DEFAULT_PRESETS.nova).toEqual(SHADCN_DEFAULT_PRESETS.nova)
+    expect(DEFAULT_PRESETS.sera).toEqual(SHADCN_DEFAULT_PRESETS.sera)
+    expect(DEFAULT_PRESETS["lvcn-v1-nova"]).toEqual(LVCN_LEGACY_PRESETS.nova)
+    expect(DEFAULT_PRESETS["lvcn-v1-sera"]).toEqual(LVCN_LEGACY_PRESETS.sera)
   })
 })

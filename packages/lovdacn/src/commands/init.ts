@@ -18,20 +18,28 @@ import {
   isPresetCode,
   normalizePreset,
   FONT_FAMILIES,
-  FONT_PACKAGES,
-  ICON_PACKAGES,
+  ICON_PACKAGE_DEPENDENCIES,
   RADIUS_VALUES,
+  RADIUS_NAMES,
   STYLE_LABELS,
   PRESET_STYLES,
+  PRESET_MENU_COLORS,
   getFontCategory,
   PRESET_CHART_COLORS,
   DEFAULT_PRESET_CONFIG,
+  resolveThemeTokens,
+  resolveEffectiveRadius,
+  THEME_TOKEN_KEYS,
+  THEME_TOKEN_NAMES,
+  BASE_COLOR_NAMES,
   type PresetConfig,
+  type BaseColorName,
+  type ThemeTokenName,
+  type RadiusName,
 } from "../preset/index.js"
 import { DEFAULT_PRESETS } from "../preset/defaults.js"
-import { getThemePrimary, getChartRamp } from "../preset/colors.js"
 import { normalizeLvcnConfig } from "../utils/normalize-config.js"
-import { configureProjectFont } from "../utils/project-fonts.js"
+import { configureProjectFonts } from "../utils/project-fonts.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -48,7 +56,7 @@ type TemplateExpoVersion = (typeof TEMPLATE_EXPO_VERSIONS)[number]
 const DEFAULT_TEMPLATE_EXPO_VERSION: TemplateExpoVersion = "57"
 
 // Interactive chart-color choices — mirrors the create page's chart color
-// picker by offering every PRESET_CHART_COLORS value (all 22).
+// picker by offering every PRESET_CHART_COLORS value (all 26).
 const CHART_COLOR_CHOICES = PRESET_CHART_COLORS.map((c) => ({
   title: c.charAt(0).toUpperCase() + c.slice(1),
   value: c,
@@ -263,7 +271,7 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     chartColor = presetConfig.chartColor
     console.log(pc.blue(`Using preset: ${pc.cyan(options.preset)}`))
     for (const warning of warnings) console.log(pc.yellow(`⚠ ${warning}`))
-    console.log(pc.dim(`  style: ${style}, base: ${baseColor}, theme: ${presetConfig.theme}, chart: ${presetConfig.chartColor}, font: ${FONT_FAMILIES[presetConfig.font]}, icons: ${presetConfig.iconLibrary}, radius: ${RADIUS_VALUES[presetConfig.radius]}`))
+    console.log(pc.dim(`  style: ${style}, base: ${baseColor}, theme: ${presetConfig.theme}, chart: ${presetConfig.chartColor}, font: ${FONT_FAMILIES[presetConfig.font]}, heading: ${presetConfig.fontHeading === "inherit" ? "inherit" : FONT_FAMILIES[presetConfig.fontHeading]}, icons: ${presetConfig.iconLibrary}, radius: ${RADIUS_VALUES[resolveEffectiveRadius(presetConfig)]}, menu accent: ${presetConfig.menuAccent}, menu color: ${presetConfig.menuColor}`))
   }
 
   if (hasPackageJson) {
@@ -637,8 +645,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     )
 
     // 2. Setup global.css file
-    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius)
-    configureThemeTs(projectPath, baseColor)
+    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius, presetConfig?.fontHeading, presetConfig?.menuAccent, presetConfig?.menuColor)
+    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius, presetConfig?.menuAccent)
 
     // 3. Configure tailwind.config.js (only for nativewind - uniwind uses @theme in CSS)
     if (styleEngine === "nativewind") {
@@ -688,8 +696,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     adaptScaffoldedProject(projectPath, packageManager!)
 
     // Setup global.css file with style-specific styles
-    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius)
-    configureThemeTs(projectPath, baseColor)
+    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius, presetConfig?.fontHeading, presetConfig?.menuAccent, presetConfig?.menuColor)
+    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius, presetConfig?.menuAccent)
   }
 
   // Template files are no longer needed once scaffolding/config is done.
@@ -701,9 +709,9 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     const templateLvcn = fs.readJsonSync(lvcnJsonPath)
     const mergedConfig = {
       ...templateLvcn,
-      style: style,
       styleEngine: styleEngine,
       ...(existingLvcnConfig || {}),
+      style: style,
       // Preset fields
       baseColor: baseColor,
       chartColor: chartColor,
@@ -713,6 +721,9 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
         font: presetConfig.font,
         iconLibrary: presetConfig.iconLibrary,
         radius: presetConfig.radius,
+        fontHeading: presetConfig.fontHeading,
+        menuAccent: presetConfig.menuAccent,
+        menuColor: presetConfig.menuColor,
       } : {}),
       aliases: {
         ...templateLvcn.aliases,
@@ -720,8 +731,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
       },
       tailwind: {
         ...templateLvcn.tailwind,
-        baseColor: baseColor,
         ...((existingLvcnConfig && existingLvcnConfig.tailwind) || {}),
+        baseColor: baseColor,
       },
       components: Array.from(
         new Set([
@@ -733,9 +744,12 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     fs.writeJsonSync(lvcnJsonPath, mergedConfig, { spaces: 2 })
   }
 
-  const fontResource = configureProjectFont(projectPath, presetConfig.font)
+  const fontResource = configureProjectFonts(projectPath, presetConfig.font, presetConfig.fontHeading)
+  const headingLabel = presetConfig.fontHeading === "inherit"
+    ? FONT_FAMILIES[presetConfig.font]
+    : FONT_FAMILIES[presetConfig.fontHeading]
   console.log(
-    pc.green(`✔ Configured ${pc.cyan(path.relative(projectPath, fontResource.loaderPath))} for ${FONT_FAMILIES[presetConfig.font]}`)
+    pc.green(`✔ Configured ${pc.cyan(path.relative(projectPath, fontResource.loaderPath))} for ${FONT_FAMILIES[presetConfig.font]} (heading: ${headingLabel})`)
   )
 
   console.log(pc.blue(`Installing dependencies using ${pc.cyan(packageManager!)}...`))
@@ -758,11 +772,11 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
   }
 
   // Install exact selected font + icon packages for every initialization path.
-  const presetDeps = [
-    FONT_PACKAGES[presetConfig.font],
-    ICON_PACKAGES[presetConfig.iconLibrary],
+  const presetDeps = Array.from(new Set([
+    ...fontResource.packageSpecifiers,
+    ...ICON_PACKAGE_DEPENDENCIES[presetConfig.iconLibrary],
     "react-native-svg",
-  ]
+  ]))
   console.log(pc.blue(`Installing design-system packages: ${pc.cyan(presetDeps.join(", "))}...`))
   try {
     await execa(packageManager!, ["install", ...presetDeps], {
@@ -821,861 +835,15 @@ function getPackageManager(cwd: string): "npm" | "yarn" | "pnpm" | "bun" {
   return "npm"
 }
 
-type ThemeColorMap = Record<
-  | "background"
-  | "foreground"
-  | "card"
-  | "card-foreground"
-  | "popover"
-  | "popover-foreground"
-  | "primary"
-  | "primary-foreground"
-  | "secondary"
-  | "secondary-foreground"
-  | "muted"
-  | "muted-foreground"
-  | "accent"
-  | "accent-foreground"
-  | "destructive"
-  | "destructive-foreground"
-  | "border"
-  | "input"
-  | "ring",
-  string
->;
-
-const THEME_COLORS: Record<
-  "zinc" | "slate" | "stone" | "gray" | "neutral" | "taupe" | "mauve" | "olive" | "mist",
-  {
-    hsl: {
-      light: ThemeColorMap;
-      dark: ThemeColorMap;
-    };
-    oklch: {
-      light: ThemeColorMap;
-      dark: ThemeColorMap;
-    };
-  }
-> = {
-  zinc: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "240 10% 3.9%",
-        card: "0 0% 100%",
-        "card-foreground": "240 10% 3.9%",
-        popover: "0 0% 100%",
-        "popover-foreground": "240 10% 3.9%",
-        primary: "240 5.9% 10%",
-        "primary-foreground": "0 0% 98%",
-        secondary: "240 4.8% 95.9%",
-        "secondary-foreground": "240 5.9% 10%",
-        muted: "240 4.8% 95.9%",
-        "muted-foreground": "240 3.8% 46.1%",
-        accent: "240 4.8% 95.9%",
-        "accent-foreground": "240 5.9% 10%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "0 0% 98%",
-        border: "240 5.9% 90%",
-        input: "240 5.9% 90%",
-        ring: "240 5.9% 10%",
-      },
-      dark: {
-        background: "240 10% 3.9%",
-        foreground: "0 0% 98%",
-        card: "240 10% 3.9%",
-        "card-foreground": "0 0% 98%",
-        popover: "240 10% 3.9%",
-        "popover-foreground": "0 0% 98%",
-        primary: "0 0% 98%",
-        "primary-foreground": "240 5.9% 10%",
-        secondary: "240 3.7% 15.9%",
-        "secondary-foreground": "0 0% 98%",
-        muted: "240 3.7% 15.9%",
-        "muted-foreground": "240 5% 64.9%",
-        accent: "240 3.7% 15.9%",
-        "accent-foreground": "0 0% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "0 0% 98%",
-        border: "240 3.7% 15.9%",
-        input: "240 3.7% 15.9%",
-        ring: "240 4.9% 83.9%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.145 0 0)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.145 0 0)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.145 0 0)",
-        primary: "oklch(0.205 0 0)",
-        "primary-foreground": "oklch(0.985 0 0)",
-        secondary: "oklch(0.97 0 0)",
-        "secondary-foreground": "oklch(0.205 0 0)",
-        muted: "oklch(0.97 0 0)",
-        "muted-foreground": "oklch(0.556 0 0)",
-        accent: "oklch(0.97 0 0)",
-        "accent-foreground": "oklch(0.205 0 0)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.97 0 0)",
-        border: "oklch(0.922 0 0)",
-        input: "oklch(0.922 0 0)",
-        ring: "oklch(0.205 0 0)",
-      },
-      dark: {
-        background: "oklch(0.145 0 0)",
-        foreground: "oklch(0.985 0 0)",
-        card: "oklch(0.145 0 0)",
-        "card-foreground": "oklch(0.985 0 0)",
-        popover: "oklch(0.145 0 0)",
-        "popover-foreground": "oklch(0.985 0 0)",
-        primary: "oklch(0.985 0 0)",
-        "primary-foreground": "oklch(0.205 0 0)",
-        secondary: "oklch(0.269 0 0)",
-        "secondary-foreground": "oklch(0.985 0 0)",
-        muted: "oklch(0.269 0 0)",
-        "muted-foreground": "oklch(0.708 0 0)",
-        accent: "oklch(0.269 0 0)",
-        "accent-foreground": "oklch(0.985 0 0)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.985 0 0)",
-        border: "oklch(0.269 0 0)",
-        input: "oklch(0.269 0 0)",
-        ring: "oklch(0.87 0 0)",
-      },
-    },
-  },
-  neutral: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "0 0% 3.9%",
-        card: "0 0% 100%",
-        "card-foreground": "0 0% 3.9%",
-        popover: "0 0% 100%",
-        "popover-foreground": "0 0% 3.9%",
-        primary: "0 0% 9%",
-        "primary-foreground": "0 0% 98%",
-        secondary: "0 0% 96.1%",
-        "secondary-foreground": "0 0% 9%",
-        muted: "0 0% 96.1%",
-        "muted-foreground": "0 0% 45.1%",
-        accent: "0 0% 96.1%",
-        "accent-foreground": "0 0% 9%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "0 0% 98%",
-        border: "0 0% 89.8%",
-        input: "0 0% 89.8%",
-        ring: "0 0% 3.9%",
-      },
-      dark: {
-        background: "0 0% 3.9%",
-        foreground: "0 0% 98%",
-        card: "0 0% 3.9%",
-        "card-foreground": "0 0% 98%",
-        popover: "0 0% 3.9%",
-        "popover-foreground": "0 0% 98%",
-        primary: "0 0% 98%",
-        "primary-foreground": "0 0% 9%",
-        secondary: "0 0% 14.9%",
-        "secondary-foreground": "0 0% 98%",
-        muted: "0 0% 14.9%",
-        "muted-foreground": "0 0% 63.9%",
-        accent: "0 0% 14.9%",
-        "accent-foreground": "0 0% 98%",
-        destructive: "0 70.9% 59.4%",
-        "destructive-foreground": "0 0% 98%",
-        border: "0 0% 14.9%",
-        input: "0 0% 14.9%",
-        ring: "0 0% 83.1%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.145 0 0)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.145 0 0)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.145 0 0)",
-        primary: "oklch(0.205 0 0)",
-        "primary-foreground": "oklch(0.985 0 0)",
-        secondary: "oklch(0.97 0 0)",
-        "secondary-foreground": "oklch(0.205 0 0)",
-        muted: "oklch(0.97 0 0)",
-        "muted-foreground": "oklch(0.556 0 0)",
-        accent: "oklch(0.97 0 0)",
-        "accent-foreground": "oklch(0.205 0 0)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.97 0 0)",
-        border: "oklch(0.922 0 0)",
-        input: "oklch(0.922 0 0)",
-        ring: "oklch(0.205 0 0)",
-      },
-      dark: {
-        background: "oklch(0.145 0 0)",
-        foreground: "oklch(0.985 0 0)",
-        card: "oklch(0.145 0 0)",
-        "card-foreground": "oklch(0.985 0 0)",
-        popover: "oklch(0.145 0 0)",
-        "popover-foreground": "oklch(0.985 0 0)",
-        primary: "oklch(0.985 0 0)",
-        "primary-foreground": "oklch(0.205 0 0)",
-        secondary: "oklch(0.269 0 0)",
-        "secondary-foreground": "oklch(0.985 0 0)",
-        muted: "oklch(0.269 0 0)",
-        "muted-foreground": "oklch(0.708 0 0)",
-        accent: "oklch(0.269 0 0)",
-        "accent-foreground": "oklch(0.985 0 0)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.985 0 0)",
-        border: "oklch(0.269 0 0)",
-        input: "oklch(0.269 0 0)",
-        ring: "oklch(0.87 0 0)",
-      },
-    },
-  },
-  slate: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "222.2 84% 4.9%",
-        card: "0 0% 100%",
-        "card-foreground": "222.2 84% 4.9%",
-        popover: "0 0% 100%",
-        "popover-foreground": "222.2 84% 4.9%",
-        primary: "222.2 47.4% 11.2%",
-        "primary-foreground": "210 40% 98%",
-        secondary: "210 40% 96.1%",
-        "secondary-foreground": "222.2 47.4% 11.2%",
-        muted: "210 40% 96.1%",
-        "muted-foreground": "215.4 16.3% 46.9%",
-        accent: "210 40% 96.1%",
-        "accent-foreground": "222.2 47.4% 11.2%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "210 40% 98%",
-        border: "214.3 31.8% 91.4%",
-        input: "214.3 31.8% 91.4%",
-        ring: "222.2 84% 4.9%",
-      },
-      dark: {
-        background: "222.2 84% 4.9%",
-        foreground: "210 40% 98%",
-        card: "222.2 84% 4.9%",
-        "card-foreground": "210 40% 98%",
-        popover: "222.2 84% 4.9%",
-        "popover-foreground": "210 40% 98%",
-        primary: "210 40% 98%",
-        "primary-foreground": "222.2 47.4% 11.2%",
-        secondary: "217.2 32.6% 17.5%",
-        "secondary-foreground": "210 40% 98%",
-        muted: "217.2 32.6% 17.5%",
-        "muted-foreground": "215 20.2% 65.1%",
-        accent: "217.2 32.6% 17.5%",
-        "accent-foreground": "210 40% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "210 40% 98%",
-        border: "217.2 32.6% 17.5%",
-        input: "217.2 32.6% 17.5%",
-        ring: "224.3 76.3% 48%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.129 0.042 264.695)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.129 0.042 264.695)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.129 0.042 264.695)",
-        primary: "oklch(0.208 0.042 265.755)",
-        "primary-foreground": "oklch(0.968 0.007 247.896)",
-        secondary: "oklch(0.968 0.007 247.896)",
-        "secondary-foreground": "oklch(0.208 0.042 265.755)",
-        muted: "oklch(0.968 0.007 247.896)",
-        "muted-foreground": "oklch(0.554 0.046 257.417)",
-        accent: "oklch(0.968 0.007 247.896)",
-        "accent-foreground": "oklch(0.208 0.042 265.755)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.968 0.007 247.896)",
-        border: "oklch(0.929 0.013 255.508)",
-        input: "oklch(0.929 0.013 255.508)",
-        ring: "oklch(0.129 0.042 264.695)",
-      },
-      dark: {
-        background: "oklch(0.129 0.042 264.695)",
-        foreground: "oklch(0.968 0.007 247.896)",
-        card: "oklch(0.129 0.042 264.695)",
-        "card-foreground": "oklch(0.968 0.007 247.896)",
-        popover: "oklch(0.129 0.042 264.695)",
-        "popover-foreground": "oklch(0.968 0.007 247.896)",
-        primary: "oklch(0.968 0.007 247.896)",
-        "primary-foreground": "oklch(0.208 0.042 265.755)",
-        secondary: "oklch(0.279 0.041 260.031)",
-        "secondary-foreground": "oklch(0.968 0.007 247.896)",
-        muted: "oklch(0.279 0.041 260.031)",
-        "muted-foreground": "oklch(0.704 0.04 256.788)",
-        accent: "oklch(0.279 0.041 260.031)",
-        "accent-foreground": "oklch(0.968 0.007 247.896)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.968 0.007 247.896)",
-        border: "oklch(0.279 0.041 260.031)",
-        input: "oklch(0.279 0.041 260.031)",
-        ring: "oklch(0.87 0 0)",
-      },
-    },
-  },
-  stone: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "24 9.8% 10%",
-        card: "0 0% 100%",
-        "card-foreground": "24 9.8% 10%",
-        popover: "0 0% 100%",
-        "popover-foreground": "24 9.8% 10%",
-        primary: "24 9.8% 10%",
-        "primary-foreground": "60 9.1% 97.8%",
-        secondary: "60 4.8% 95.9%",
-        "secondary-foreground": "24 9.8% 10%",
-        muted: "60 4.8% 95.9%",
-        "muted-foreground": "25 5.3% 44.7%",
-        accent: "60 4.8% 95.9%",
-        "accent-foreground": "24 9.8% 10%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "60 9.1% 97.8%",
-        border: "20 5.9% 90%",
-        input: "20 5.9% 90%",
-        ring: "24 9.8% 10%",
-      },
-      dark: {
-        background: "24 9.8% 10%",
-        foreground: "60 9.1% 97.8%",
-        card: "24 9.8% 10%",
-        "card-foreground": "60 9.1% 97.8%",
-        popover: "24 9.8% 10%",
-        "popover-foreground": "60 9.1% 97.8%",
-        primary: "60 9.1% 97.8%",
-        "primary-foreground": "24 9.8% 10%",
-        secondary: "12 6.5% 15.1%",
-        "secondary-foreground": "60 9.1% 97.8%",
-        muted: "12 6.5% 15.1%",
-        "muted-foreground": "24 5.4% 63.9%",
-        accent: "12 6.5% 15.1%",
-        "accent-foreground": "60 9.1% 97.8%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "60 9.1% 97.8%",
-        border: "12 6.5% 15.1%",
-        input: "12 6.5% 15.1%",
-        ring: "24 9.8% 10%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.147 0.004 49.25)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.147 0.004 49.25)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.147 0.004 49.25)",
-        primary: "oklch(0.216 0.006 56.043)",
-        "primary-foreground": "oklch(0.97 0.001 106.424)",
-        secondary: "oklch(0.97 0.001 106.424)",
-        "secondary-foreground": "oklch(0.216 0.006 56.043)",
-        muted: "oklch(0.97 0.001 106.424)",
-        "muted-foreground": "oklch(0.553 0.013 58.071)",
-        accent: "oklch(0.97 0.001 106.424)",
-        "accent-foreground": "oklch(0.216 0.006 56.043)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.97 0.001 106.424)",
-        border: "oklch(0.923 0.003 48.717)",
-        input: "oklch(0.923 0.003 48.717)",
-        ring: "oklch(0.216 0.006 56.043)",
-      },
-      dark: {
-        background: "oklch(0.147 0.004 49.25)",
-        foreground: "oklch(0.97 0.001 106.424)",
-        card: "oklch(0.147 0.004 49.25)",
-        "card-foreground": "oklch(0.97 0.001 106.424)",
-        popover: "oklch(0.147 0.004 49.25)",
-        "popover-foreground": "oklch(0.97 0.001 106.424)",
-        primary: "oklch(0.97 0.001 106.424)",
-        "primary-foreground": "oklch(0.216 0.006 56.043)",
-        secondary: "oklch(0.268 0.007 34.298)",
-        "secondary-foreground": "oklch(0.97 0.001 106.424)",
-        muted: "oklch(0.268 0.007 34.298)",
-        "muted-foreground": "oklch(0.709 0.01 56.259)",
-        accent: "oklch(0.268 0.007 34.298)",
-        "accent-foreground": "oklch(0.97 0.001 106.424)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.97 0.001 106.424)",
-        border: "oklch(0.268 0.007 34.298)",
-        input: "oklch(0.268 0.007 34.298)",
-        ring: "oklch(0.87 0 0)",
-      },
-    },
-  },
-  gray: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "224 71.4% 4.1%",
-        card: "0 0% 100%",
-        "card-foreground": "224 71.4% 4.1%",
-        popover: "0 0% 100%",
-        "popover-foreground": "224 71.4% 4.1%",
-        primary: "220 9% 18%",
-        "primary-foreground": "220 14.3% 95.9%",
-        secondary: "220 14.3% 95.9%",
-        "secondary-foreground": "220 9% 18%",
-        muted: "220 14.3% 95.9%",
-        "muted-foreground": "220 8.9% 46.1%",
-        accent: "220 14.3% 95.9%",
-        "accent-foreground": "220 9% 18%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "220 14.3% 95.9%",
-        border: "220 13% 91%",
-        input: "220 13% 91%",
-        ring: "224 71.4% 4.1%",
-      },
-      dark: {
-        background: "224 71.4% 4.1%",
-        foreground: "220 14.3% 95.9%",
-        card: "224 71.4% 4.1%",
-        "card-foreground": "220 14.3% 95.9%",
-        popover: "224 71.4% 4.1%",
-        "popover-foreground": "220 14.3% 95.9%",
-        primary: "220 14.3% 95.9%",
-        "primary-foreground": "220 9% 18%",
-        secondary: "220 9% 18%",
-        "secondary-foreground": "220 14.3% 95.9%",
-        muted: "220 9% 18%",
-        "muted-foreground": "220 10% 64.9%",
-        accent: "220 9% 18%",
-        "accent-foreground": "220 14.3% 95.9%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "220 14.3% 95.9%",
-        border: "220 9% 18%",
-        input: "220 9% 18%",
-        ring: "220 14.3% 95.9%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.13 0.028 261.692)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.13 0.028 261.692)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.13 0.028 261.692)",
-        primary: "oklch(0.21 0.034 264.665)",
-        "primary-foreground": "oklch(0.967 0.003 264.542)",
-        secondary: "oklch(0.967 0.003 264.542)",
-        "secondary-foreground": "oklch(0.21 0.034 264.665)",
-        muted: "oklch(0.967 0.003 264.542)",
-        "muted-foreground": "oklch(0.551 0.027 264.364)",
-        accent: "oklch(0.967 0.003 264.542)",
-        "accent-foreground": "oklch(0.21 0.034 264.665)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.967 0.003 264.542)",
-        border: "oklch(0.928 0.006 264.531)",
-        input: "oklch(0.928 0.006 264.531)",
-        ring: "oklch(0.13 0.028 261.692)",
-      },
-      dark: {
-        background: "oklch(0.13 0.028 261.692)",
-        foreground: "oklch(0.967 0.003 264.542)",
-        card: "oklch(0.13 0.028 261.692)",
-        "card-foreground": "oklch(0.967 0.003 264.542)",
-        popover: "oklch(0.13 0.028 261.692)",
-        "popover-foreground": "oklch(0.967 0.003 264.542)",
-        primary: "oklch(0.967 0.003 264.542)",
-        "primary-foreground": "oklch(0.21 0.034 264.665)",
-        secondary: "oklch(0.278 0.033 256.848)",
-        "secondary-foreground": "oklch(0.967 0.003 264.542)",
-        muted: "oklch(0.278 0.033 256.848)",
-        "muted-foreground": "oklch(0.707 0.022 261.325)",
-        accent: "oklch(0.278 0.033 256.848)",
-        "accent-foreground": "oklch(0.967 0.003 264.542)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.967 0.003 264.542)",
-        border: "oklch(0.278 0.033 256.848)",
-        input: "oklch(0.278 0.033 256.848)",
-        ring: "oklch(0.87 0 0)",
-      },
-    },
-  },
-  taupe: {
-    hsl: {
-      light: {
-        background: "30 20% 98%",
-        foreground: "30 10% 5%",
-        card: "30 20% 98%",
-        "card-foreground": "30 10% 5%",
-        popover: "30 20% 98%",
-        "popover-foreground": "30 10% 5%",
-        primary: "30 10% 12%",
-        "primary-foreground": "30 20% 98%",
-        secondary: "30 10% 92%",
-        "secondary-foreground": "30 10% 12%",
-        muted: "30 10% 92%",
-        "muted-foreground": "30 5% 45%",
-        accent: "30 10% 92%",
-        "accent-foreground": "30 10% 12%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "0 0% 98%",
-        border: "30 10% 88%",
-        input: "30 10% 88%",
-        ring: "30 10% 12%",
-      },
-      dark: {
-        background: "30 10% 5%",
-        foreground: "30 20% 98%",
-        card: "30 10% 5%",
-        "card-foreground": "30 20% 98%",
-        popover: "30 10% 5%",
-        "popover-foreground": "30 20% 98%",
-        primary: "30 20% 98%",
-        "primary-foreground": "30 10% 12%",
-        secondary: "30 10% 18%",
-        "secondary-foreground": "30 20% 98%",
-        muted: "30 10% 18%",
-        "muted-foreground": "30 5% 65%",
-        accent: "30 10% 18%",
-        "accent-foreground": "30 20% 98%",
-        destructive: "0 70.9% 59.4%",
-        "destructive-foreground": "30 20% 98%",
-        border: "30 10% 18%",
-        input: "30 10% 18%",
-        ring: "30 10% 84%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(0.986 0.002 67.8)",
-        foreground: "oklch(0.147 0.004 49.3)",
-        card: "oklch(0.986 0.002 67.8)",
-        "card-foreground": "oklch(0.147 0.004 49.3)",
-        popover: "oklch(0.986 0.002 67.8)",
-        "popover-foreground": "oklch(0.147 0.004 49.3)",
-        primary: "oklch(0.214 0.009 43.1)",
-        "primary-foreground": "oklch(0.986 0.002 67.8)",
-        secondary: "oklch(0.922 0.005 34.3)",
-        "secondary-foreground": "oklch(0.214 0.009 43.1)",
-        muted: "oklch(0.922 0.005 34.3)",
-        "muted-foreground": "oklch(0.547 0.021 43.1)",
-        accent: "oklch(0.922 0.005 34.3)",
-        "accent-foreground": "oklch(0.214 0.009 43.1)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.97 0 0)",
-        border: "oklch(0.868 0.007 39.5)",
-        input: "oklch(0.868 0.007 39.5)",
-        ring: "oklch(0.214 0.009 43.1)",
-      },
-      dark: {
-        background: "oklch(0.147 0.004 49.3)",
-        foreground: "oklch(0.986 0.002 67.8)",
-        card: "oklch(0.147 0.004 49.3)",
-        "card-foreground": "oklch(0.986 0.002 67.8)",
-        popover: "oklch(0.147 0.004 49.3)",
-        "popover-foreground": "oklch(0.986 0.002 67.8)",
-        primary: "oklch(0.986 0.002 67.8)",
-        "primary-foreground": "oklch(0.214 0.009 43.1)",
-        secondary: "oklch(0.268 0.011 36.5)",
-        "secondary-foreground": "oklch(0.986 0.002 67.8)",
-        muted: "oklch(0.268 0.011 36.5)",
-        "muted-foreground": "oklch(0.714 0.014 41.2)",
-        accent: "oklch(0.268 0.011 36.5)",
-        "accent-foreground": "oklch(0.986 0.002 67.8)",
-        destructive: "oklch(0.396 0.141 25.723)",
-        "destructive-foreground": "oklch(0.986 0.002 67.8)",
-        border: "oklch(0.268 0.011 36.5)",
-        input: "oklch(0.268 0.011 36.5)",
-        ring: "oklch(0.868 0.007 39.5)",
-      },
-    },
-  },
-  mauve: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "326 5% 5%",
-        card: "0 0% 100%",
-        "card-foreground": "326 5% 5%",
-        popover: "0 0% 100%",
-        "popover-foreground": "326 5% 5%",
-        primary: "322 10% 13%",
-        "primary-foreground": "0 0% 98%",
-        secondary: "325 5% 95%",
-        "secondary-foreground": "322 10% 13%",
-        muted: "325 5% 95%",
-        "muted-foreground": "322 8% 45%",
-        accent: "325 5% 95%",
-        "accent-foreground": "322 10% 13%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "0 0% 98%",
-        border: "325 5% 91%",
-        input: "325 5% 91%",
-        ring: "322 10% 13%",
-      },
-      dark: {
-        background: "326 5% 5%",
-        foreground: "0 0% 98%",
-        card: "322 10% 13%",
-        "card-foreground": "0 0% 98%",
-        popover: "322 10% 13%",
-        "popover-foreground": "0 0% 98%",
-        primary: "325 5% 91%",
-        "primary-foreground": "322 10% 13%",
-        secondary: "320 6% 17%",
-        "secondary-foreground": "0 0% 98%",
-        muted: "320 6% 17%",
-        "muted-foreground": "323 6% 65%",
-        accent: "320 6% 17%",
-        "accent-foreground": "0 0% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "0 0% 98%",
-        border: "320 6% 17%",
-        input: "320 6% 17%",
-        ring: "322 8% 45%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.145 0.008 326)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.145 0.008 326)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.145 0.008 326)",
-        primary: "oklch(0.212 0.019 322.12)",
-        "primary-foreground": "oklch(0.985 0 0)",
-        secondary: "oklch(0.96 0.003 325.6)",
-        "secondary-foreground": "oklch(0.212 0.019 322.12)",
-        muted: "oklch(0.96 0.003 325.6)",
-        "muted-foreground": "oklch(0.542 0.034 322.5)",
-        accent: "oklch(0.96 0.003 325.6)",
-        "accent-foreground": "oklch(0.212 0.019 322.12)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.985 0 0)",
-        border: "oklch(0.922 0.005 325.62)",
-        input: "oklch(0.922 0.005 325.62)",
-        ring: "oklch(0.711 0.019 323.02)",
-      },
-      dark: {
-        background: "oklch(0.145 0.008 326)",
-        foreground: "oklch(0.985 0 0)",
-        card: "oklch(0.212 0.019 322.12)",
-        "card-foreground": "oklch(0.985 0 0)",
-        popover: "oklch(0.212 0.019 322.12)",
-        "popover-foreground": "oklch(0.985 0 0)",
-        primary: "oklch(0.922 0.005 325.62)",
-        "primary-foreground": "oklch(0.212 0.019 322.12)",
-        secondary: "oklch(0.263 0.024 320.12)",
-        "secondary-foreground": "oklch(0.985 0 0)",
-        muted: "oklch(0.263 0.024 320.12)",
-        "muted-foreground": "oklch(0.711 0.019 323.02)",
-        accent: "oklch(0.263 0.024 320.12)",
-        "accent-foreground": "oklch(0.985 0 0)",
-        destructive: "oklch(0.704 0.191 22.216)",
-        "destructive-foreground": "oklch(0.985 0 0)",
-        border: "oklch(0.263 0.024 320.12)",
-        input: "oklch(0.263 0.024 320.12)",
-        ring: "oklch(0.542 0.034 322.5)",
-      },
-    },
-  },
-  olive: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "107 3% 5%",
-        card: "0 0% 100%",
-        "card-foreground": "107 3% 5%",
-        popover: "0 0% 100%",
-        "popover-foreground": "107 3% 5%",
-        primary: "107 6% 13%",
-        "primary-foreground": "107 4% 98%",
-        secondary: "107 4% 95%",
-        "secondary-foreground": "107 6% 13%",
-        muted: "107 4% 95%",
-        "muted-foreground": "107 9% 45%",
-        accent: "107 4% 95%",
-        "accent-foreground": "107 6% 13%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "107 4% 98%",
-        border: "107 5% 91%",
-        input: "107 5% 91%",
-        ring: "107 6% 13%",
-      },
-      dark: {
-        background: "107 3% 5%",
-        foreground: "107 4% 98%",
-        card: "107 6% 13%",
-        "card-foreground": "107 4% 98%",
-        popover: "107 6% 13%",
-        "popover-foreground": "107 4% 98%",
-        primary: "107 5% 91%",
-        "primary-foreground": "107 6% 13%",
-        secondary: "107 4% 17%",
-        "secondary-foreground": "107 4% 98%",
-        muted: "107 4% 17%",
-        "muted-foreground": "107 6% 65%",
-        accent: "107 4% 17%",
-        "accent-foreground": "107 4% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "107 4% 98%",
-        border: "107 4% 17%",
-        input: "107 4% 17%",
-        ring: "107 9% 45%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.153 0.006 107.1)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.153 0.006 107.1)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.153 0.006 107.1)",
-        primary: "oklch(0.228 0.013 107.4)",
-        "primary-foreground": "oklch(0.988 0.003 106.5)",
-        secondary: "oklch(0.966 0.005 106.5)",
-        "secondary-foreground": "oklch(0.228 0.013 107.4)",
-        muted: "oklch(0.966 0.005 106.5)",
-        "muted-foreground": "oklch(0.58 0.031 107.3)",
-        accent: "oklch(0.966 0.005 106.5)",
-        "accent-foreground": "oklch(0.228 0.013 107.4)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.988 0.003 106.5)",
-        border: "oklch(0.93 0.007 106.5)",
-        input: "oklch(0.93 0.007 106.5)",
-        ring: "oklch(0.737 0.021 106.9)",
-      },
-      dark: {
-        background: "oklch(0.153 0.006 107.1)",
-        foreground: "oklch(0.988 0.003 106.5)",
-        card: "oklch(0.228 0.013 107.4)",
-        "card-foreground": "oklch(0.988 0.003 106.5)",
-        popover: "oklch(0.228 0.013 107.4)",
-        "popover-foreground": "oklch(0.988 0.003 106.5)",
-        primary: "oklch(0.93 0.007 106.5)",
-        "primary-foreground": "oklch(0.228 0.013 107.4)",
-        secondary: "oklch(0.286 0.016 107.4)",
-        "secondary-foreground": "oklch(0.988 0.003 106.5)",
-        muted: "oklch(0.286 0.016 107.4)",
-        "muted-foreground": "oklch(0.737 0.021 106.9)",
-        accent: "oklch(0.286 0.016 107.4)",
-        "accent-foreground": "oklch(0.988 0.003 106.5)",
-        destructive: "oklch(0.704 0.191 22.216)",
-        "destructive-foreground": "oklch(0.988 0.003 106.5)",
-        border: "oklch(0.286 0.016 107.4)",
-        input: "oklch(0.286 0.016 107.4)",
-        ring: "oklch(0.58 0.031 107.3)",
-      },
-    },
-  },
-  mist: {
-    hsl: {
-      light: {
-        background: "0 0% 100%",
-        foreground: "228 4% 5%",
-        card: "0 0% 100%",
-        "card-foreground": "228 4% 5%",
-        popover: "0 0% 100%",
-        "popover-foreground": "228 4% 5%",
-        primary: "223 6% 13%",
-        "primary-foreground": "197 2% 98%",
-        secondary: "197 2% 95%",
-        "secondary-foreground": "223 6% 13%",
-        muted: "197 2% 95%",
-        "muted-foreground": "213 7% 45%",
-        accent: "197 2% 95%",
-        "accent-foreground": "223 6% 13%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "197 2% 98%",
-        border: "214 5% 91%",
-        input: "214 5% 91%",
-        ring: "223 6% 13%",
-      },
-      dark: {
-        background: "228 4% 5%",
-        foreground: "197 2% 98%",
-        card: "223 6% 13%",
-        "card-foreground": "197 2% 98%",
-        popover: "223 6% 13%",
-        "popover-foreground": "197 2% 98%",
-        primary: "214 5% 91%",
-        "primary-foreground": "223 6% 13%",
-        secondary: "216 4% 17%",
-        "secondary-foreground": "197 2% 98%",
-        muted: "216 4% 17%",
-        "muted-foreground": "214 6% 65%",
-        accent: "216 4% 17%",
-        "accent-foreground": "197 2% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "197 2% 98%",
-        border: "216 4% 17%",
-        input: "216 4% 17%",
-        ring: "213 7% 45%",
-      },
-    },
-    oklch: {
-      light: {
-        background: "oklch(1 0 0)",
-        foreground: "oklch(0.148 0.004 228.8)",
-        card: "oklch(1 0 0)",
-        "card-foreground": "oklch(0.148 0.004 228.8)",
-        popover: "oklch(1 0 0)",
-        "popover-foreground": "oklch(0.148 0.004 228.8)",
-        primary: "oklch(0.218 0.008 223.9)",
-        "primary-foreground": "oklch(0.987 0.002 197.1)",
-        secondary: "oklch(0.963 0.002 197.1)",
-        "secondary-foreground": "oklch(0.218 0.008 223.9)",
-        muted: "oklch(0.963 0.002 197.1)",
-        "muted-foreground": "oklch(0.56 0.021 213.5)",
-        accent: "oklch(0.963 0.002 197.1)",
-        "accent-foreground": "oklch(0.218 0.008 223.9)",
-        destructive: "oklch(0.577 0.245 27.325)",
-        "destructive-foreground": "oklch(0.987 0.002 197.1)",
-        border: "oklch(0.925 0.005 214.3)",
-        input: "oklch(0.925 0.005 214.3)",
-        ring: "oklch(0.723 0.014 214.4)",
-      },
-      dark: {
-        background: "oklch(0.148 0.004 228.8)",
-        foreground: "oklch(0.987 0.002 197.1)",
-        card: "oklch(0.218 0.008 223.9)",
-        "card-foreground": "oklch(0.987 0.002 197.1)",
-        popover: "oklch(0.218 0.008 223.9)",
-        "popover-foreground": "oklch(0.987 0.002 197.1)",
-        primary: "oklch(0.925 0.005 214.3)",
-        "primary-foreground": "oklch(0.218 0.008 223.9)",
-        secondary: "oklch(0.275 0.011 216.9)",
-        "secondary-foreground": "oklch(0.987 0.002 197.1)",
-        muted: "oklch(0.275 0.011 216.9)",
-        "muted-foreground": "oklch(0.723 0.014 214.4)",
-        accent: "oklch(0.275 0.011 216.9)",
-        "accent-foreground": "oklch(0.987 0.002 197.1)",
-        destructive: "oklch(0.704 0.191 22.216)",
-        "destructive-foreground": "oklch(0.987 0.002 197.1)",
-        border: "oklch(0.275 0.011 216.9)",
-        input: "oklch(0.275 0.011 216.9)",
-        ring: "oklch(0.56 0.021 213.5)",
-      },
-    },
-  },
-};
-
 type StyleConfig = {
   radius: string;
   fontSans: string;
-  defaultBaseColor: "zinc" | "slate" | "stone" | "gray" | "neutral" | "taupe" | "mauve" | "olive" | "mist";
+  defaultBaseColor: BaseColorName;
 };
 
-const STYLE_CONFIGS: Record<string, StyleConfig> = {
+// Legacy shadcn styles are not part of the generated catalog, so they keep their
+// historical hand-authored fallback.
+const LEGACY_STYLE_CONFIGS: Record<string, StyleConfig> = {
   "default": {
     radius: "0.5rem",
     fontSans: "Inter",
@@ -1686,84 +854,137 @@ const STYLE_CONFIGS: Record<string, StyleConfig> = {
     fontSans: "Inter",
     defaultBaseColor: "zinc",
   },
-  luma: {
-    radius: "0.75rem",
-    fontSans: "Inter",
-    defaultBaseColor: "neutral",
-  },
-  lyra: {
-    radius: "0.125rem",
-    fontSans: "JetBrains Mono",
-    defaultBaseColor: "stone",
-  },
-  maia: {
-    radius: "1rem",
-    fontSans: "Inter",
-    defaultBaseColor: "neutral",
-  },
-  mira: {
-    // Bounded "full" radius. Short controls (buttons, inputs ~36px) still clamp
-    // to a full pill via CSS, while containers (card/alert/dialog) stay rounded
-    // rectangles instead of exploding into ovals. Mirrors shadcn's approach of a
-    // bounded --radius + per-component rounded-full for genuinely pill elements.
-    radius: "1.5rem",
-    fontSans: "Inter",
-    defaultBaseColor: "zinc",
-  },
-  nova: {
-    radius: "0.125rem",
-    fontSans: "Inter",
-    defaultBaseColor: "neutral",
-  },
-  rhea: {
-    // Bounded "full" radius — see mira note above.
-    radius: "1.5rem",
-    fontSans: "Inter",
-    defaultBaseColor: "neutral",
-  },
-  sera: {
-    radius: "0rem",
-    fontSans: "Instrument Serif",
-    defaultBaseColor: "taupe",
-  },
-  vega: {
-    radius: "0.625rem",
-    fontSans: "Inter",
-    defaultBaseColor: "neutral",
-  },
 };
 
-function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", baseColor: string, theme?: string, chartColor?: string, fontKey?: string, radiusKey?: string): string {
+// Active-style fallbacks are DERIVED from the generated default presets + the
+// canonical radius/font maps. This keeps the fallback radius/font/base in lock
+// step with the catalog — a changed canonical radius (e.g. mira/rhea "full")
+// never leaves a stale static rem value behind. Fallbacks only apply when a
+// preset omits or malforms the field; a valid preset always wins via
+// RADIUS_VALUES/FONT_FAMILIES directly.
+const STYLE_CONFIGS: Record<string, StyleConfig> = {
+  ...LEGACY_STYLE_CONFIGS,
+  ...Object.fromEntries(
+    PRESET_STYLES.map((style) => {
+      const preset = DEFAULT_PRESETS[style];
+      return [
+        style,
+        {
+          radius: RADIUS_VALUES[preset.radius],
+          fontSans: FONT_FAMILIES[preset.font],
+          defaultBaseColor: preset.baseColor,
+        } satisfies StyleConfig,
+      ];
+    })
+  ),
+};
+
+// Narrow the loosely-typed preset strings to the canonical resolver's unions.
+const isBaseColorName = (value: string): value is BaseColorName =>
+  (BASE_COLOR_NAMES as readonly string[]).includes(value)
+const isThemeTokenName = (value: string | undefined): value is ThemeTokenName =>
+  value !== undefined && (THEME_TOKEN_NAMES as readonly string[]).includes(value)
+const isRadiusName = (value: string | undefined): value is RadiusName =>
+  value !== undefined && (RADIUS_NAMES as readonly string[]).includes(value)
+
+// shadcn's canonical token set no longer ships --destructive-foreground, but the
+// generated @theme/tailwind mappings and existing components still reference it.
+// Emit a near-white value in both schemes so destructive surfaces keep a legible
+// foreground — never a black fallback.
+function destructiveForeground(format: "oklch" | "hsl"): string {
+  return format === "hsl" ? "0 0% 98%" : "oklch(0.985 0 0)"
+}
+
+function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", baseColor: string, theme?: string, chartColor?: string, fontKey?: string, radiusKey?: string, fontHeadingKey?: string, menuAccent?: string, menuColor?: string): string {
   const styleConfig: StyleConfig = STYLE_CONFIGS[style] ?? STYLE_CONFIGS[DEFAULT_PRESET_CONFIG.style]!;
 
-  let resolvedColor: "zinc" | "slate" | "stone" | "gray" | "neutral" | "taupe" | "mauve" | "olive" | "mist" = "zinc";
-  if (baseColor in THEME_COLORS) {
-    resolvedColor = baseColor as any;
-  } else {
-    resolvedColor = styleConfig.defaultBaseColor;
-  }
-
-  const colorConfig = THEME_COLORS[resolvedColor];
+  // Resolve the canonical inputs. Unknown/omitted values fall back safely:
+  //   - base color  → the style's default base color
+  //   - theme       → the base color itself (a no-op accent merge)
+  //   - chart color → the theme, else the base color
+  // so every generated map stays complete without ever defaulting to blue.
+  const resolvedBase: BaseColorName = isBaseColorName(baseColor)
+    ? baseColor
+    : styleConfig.defaultBaseColor;
+  const resolvedTheme: ThemeTokenName = isThemeTokenName(theme) ? theme : resolvedBase;
+  const resolvedChart: ThemeTokenName = isThemeTokenName(chartColor)
+    ? chartColor
+    : isThemeTokenName(theme)
+      ? theme
+      : resolvedBase;
 
   // Radius + font are first-class preset dimensions: resolve from the preset's
-  // own field when provided, falling back to the style's default otherwise.
-  const radius =
-    radiusKey && radiusKey in RADIUS_VALUES
-      ? RADIUS_VALUES[radiusKey as keyof typeof RADIUS_VALUES]
-      : styleConfig.radius;
+  // own field when provided, falling back to the style's default otherwise. The
+  // style radius is an arbitrary rem string, so it lives outside the canonical
+  // RADIUS_VALUES ladder.
+  const radiusName: RadiusName | null = isRadiusName(radiusKey) ? radiusKey : null;
+  const canonicalStyle = (PRESET_STYLES as readonly string[]).includes(style)
+    ? style as PresetConfig["style"]
+    : DEFAULT_PRESET_CONFIG.style;
+  const effectiveRadiusName = resolveEffectiveRadius({
+    style: canonicalStyle,
+    radius: radiusName ?? DEFAULT_PRESET_CONFIG.radius,
+  });
+  const radius = radiusName || effectiveRadiusName !== DEFAULT_PRESET_CONFIG.radius
+    ? RADIUS_VALUES[effectiveRadiusName]
+    : styleConfig.radius;
   const fontSans =
     fontKey && fontKey in FONT_FAMILIES
       ? FONT_FAMILIES[fontKey as keyof typeof FONT_FAMILIES]
       : styleConfig.fontSans;
+  const fontHeading =
+    fontHeadingKey && fontHeadingKey !== "inherit" && fontHeadingKey in FONT_FAMILIES
+      ? FONT_FAMILIES[fontHeadingKey as keyof typeof FONT_FAMILIES]
+      : fontSans;
+  const resolvedMenuColor =
+    menuColor && (PRESET_MENU_COLORS as readonly string[]).includes(menuColor)
+      ? menuColor
+      : DEFAULT_PRESET_CONFIG.menuColor;
 
-  // Resolve theme (accent primary override) and chart color ramp.
+  // Resolve the COMPLETE light/dark token maps (core + chart + sidebar) from the
+  // canonical resolver. Uniwind emits raw OKLCH; NativeWind emits HSL triplets
+  // with alpha preserved. The resolver's own radius field is unused — the style
+  // fallback above owns the emitted --radius.
   const cssFormat: "oklch" | "hsl" = styleEngine === "uniwind" ? "oklch" : "hsl";
-  const themePrimary = theme ? getThemePrimary(theme, cssFormat) : null;
-  const chartRamp = getChartRamp(chartColor ?? theme ?? "blue", cssFormat);
+  const resolved = resolveThemeTokens(
+    {
+      baseColor: resolvedBase,
+      theme: resolvedTheme,
+      chartColor: resolvedChart,
+      radius: effectiveRadiusName,
+    },
+    { format: cssFormat }
+  );
+  const schemes = {
+    light: { ...resolved.light },
+    dark: { ...resolved.dark },
+  };
+  if (menuAccent === "bold") {
+    schemes.light.accent = schemes.light.primary;
+    schemes.light["accent-foreground"] = schemes.light["primary-foreground"];
+    schemes.dark.accent = schemes.dark.primary;
+    schemes.dark["accent-foreground"] = schemes.dark["primary-foreground"];
+  }
+  const destructiveFg = destructiveForeground(cssFormat);
+
+  // Emit every canonical token (core + chart-1..5 + sidebar-*) followed by the
+  // destructive-foreground compatibility token.
+  const emitVars = (scheme: typeof resolved.light, indent: string): string => {
+    let out = "";
+    for (const key of THEME_TOKEN_KEYS) {
+      out += `${indent}--${key}: ${scheme[key]};\n`;
+    }
+    out += `${indent}--destructive-foreground: ${destructiveFg};\n`;
+    return out;
+  };
 
   const fontVariables = `:root {
   --font-sans: ${fontSans}, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
     Segoe UI Symbol, Noto Color Emoji;
+  --font-heading: ${fontHeading}, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
+    Segoe UI Symbol, Noto Color Emoji;
+  --lvcn-menu-accent: ${menuAccent === "bold" ? "bold" : "subtle"};
+  --lvcn-menu-color: ${resolvedMenuColor};
   --font-display:
     Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
     Segoe UI Symbol, Noto Color Emoji;
@@ -1775,23 +996,8 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
 `;
 
   if (styleEngine === "uniwind") {
-    let lightVars = "";
-    for (const [key, val] of Object.entries(colorConfig.oklch.light)) {
-      // Apply theme primary override
-      if (themePrimary && key === "primary") { lightVars += `  --primary: ${themePrimary.light.primary};\n`; continue; }
-      if (themePrimary && key === "primary-foreground") { lightVars += `  --primary-foreground: ${themePrimary.light.foreground};\n`; continue; }
-      lightVars += `  --${key}: ${val};\n`;
-    }
-    // Chart colors (light)
-    chartRamp.light.forEach((c, i) => { lightVars += `  --chart-${i + 1}: ${c};\n`; });
-
-    let darkVars = "";
-    for (const [key, val] of Object.entries(colorConfig.oklch.dark)) {
-      if (themePrimary && key === "primary") { darkVars += `  --primary: ${themePrimary.dark.primary};\n`; continue; }
-      if (themePrimary && key === "primary-foreground") { darkVars += `  --primary-foreground: ${themePrimary.dark.foreground};\n`; continue; }
-      darkVars += `  --${key}: ${val};\n`;
-    }
-    chartRamp.dark.forEach((c, i) => { darkVars += `  --chart-${i + 1}: ${c};\n`; });
+    const lightVars = emitVars(schemes.light, "  ");
+    const darkVars = emitVars(schemes.dark, "  ");
 
     return `@theme inline {
   /* shadcn-style multiplicative radius scale. Small control tokens (sm/md)
@@ -1831,6 +1037,14 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 :root {
@@ -1841,21 +1055,8 @@ ${darkVars}}
 
 ${fontVariables}`;
   } else {
-    let lightVars = "";
-    for (const [key, val] of Object.entries(colorConfig.hsl.light)) {
-      if (themePrimary && key === "primary") { lightVars += `    --primary: ${themePrimary.light.primary};\n`; continue; }
-      if (themePrimary && key === "primary-foreground") { lightVars += `    --primary-foreground: ${themePrimary.light.foreground};\n`; continue; }
-      lightVars += `    --${key}: ${val};\n`;
-    }
-    chartRamp.light.forEach((c, i) => { lightVars += `    --chart-${i + 1}: ${c};\n`; });
-
-    let darkVars = "";
-    for (const [key, val] of Object.entries(colorConfig.hsl.dark)) {
-      if (themePrimary && key === "primary") { darkVars += `    --primary: ${themePrimary.dark.primary};\n`; continue; }
-      if (themePrimary && key === "primary-foreground") { darkVars += `    --primary-foreground: ${themePrimary.dark.foreground};\n`; continue; }
-      darkVars += `    --${key}: ${val};\n`;
-    }
-    chartRamp.dark.forEach((c, i) => { darkVars += `    --chart-${i + 1}: ${c};\n`; });
+    const lightVars = emitVars(schemes.light, "    ");
+    const darkVars = emitVars(schemes.dark, "    ");
 
     return `@layer base {
   :root {
@@ -1900,7 +1101,7 @@ const REDUCED_MOTION_CSS = `
 }
 `
 
-async function configureGlobalCss(projectPath: string, styleEngine: "nativewind" | "uniwind", cssRelativePath: string, style: string, baseColor: string, theme?: string, chartColor?: string, font?: string, radius?: string) {
+async function configureGlobalCss(projectPath: string, styleEngine: "nativewind" | "uniwind", cssRelativePath: string, style: string, baseColor: string, theme?: string, chartColor?: string, font?: string, radius?: string, fontHeading?: string, menuAccent?: string, menuColor?: string) {
   const cssPath = path.join(projectPath, cssRelativePath)
   fs.ensureDirSync(path.dirname(cssPath))
 
@@ -1914,7 +1115,7 @@ async function configureGlobalCss(projectPath: string, styleEngine: "nativewind"
     content += '@tailwind utilities;\n'
   }
 
-  content += "\n" + getStyleVars(style, styleEngine, baseColor, theme, chartColor, font, radius) + "\n"
+  content += "\n" + getStyleVars(style, styleEngine, baseColor, theme, chartColor, font, radius, fontHeading, menuAccent, menuColor) + "\n"
   content += REDUCED_MOTION_CSS
 
   fs.writeFileSync(cssPath, content, "utf8")
@@ -1933,6 +1134,9 @@ export async function regenerateProjectCss(opts: {
   chartColor?: string
   font?: string
   radius?: string
+  fontHeading?: string
+  menuAccent?: string
+  menuColor?: string
 }) {
   await configureGlobalCss(
     opts.projectPath,
@@ -1943,7 +1147,10 @@ export async function regenerateProjectCss(opts: {
     opts.theme,
     opts.chartColor,
     opts.font,
-    opts.radius
+    opts.radius,
+    opts.fontHeading,
+    opts.menuAccent,
+    opts.menuColor
   )
 }
 
@@ -2023,7 +1230,7 @@ module.exports = withNativeWind(config, { input: '${cssRelativePath}' });
   }
 }
 
-function configureTailwindConfig(projectPath: string, templateTailwindPath: string) {
+export function configureTailwindConfig(projectPath: string, templateTailwindPath: string) {
   const filenames = [
     "tailwind.config.js",
     "tailwind.config.ts",
@@ -2130,6 +1337,38 @@ function configureTailwindConfig(projectPath: string, templateTailwindPath: stri
     }
   }
 
+  // Ensure sidebar colors exist in the colors block (for configs that already
+  // had a colors block with the core tokens but predate sidebar-token support).
+  if (
+    /colors\s*:\s*\{[^}]*hsl\(var\(--background\)\)/s.test(content) &&
+    !/["']?sidebar["']?\s*:/.test(content)
+  ) {
+    const sidebarLines = `        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },`
+    if (/["']chart-5["']\s*:\s*["']hsl\(var\(--chart-5\)\)["'],?/.test(content)) {
+      // Keep the block ordered: sidebar follows the chart entries.
+      content = content.replace(
+        /(["']chart-5["']\s*:\s*["']hsl\(var\(--chart-5\)\)["'],?)/,
+        `$1\n${sidebarLines}`
+      )
+      patches.push("sidebar colors")
+    } else if (/card:\s*\{[^}]*hsl\(var\(--card-foreground\)\)[^}]*\},/s.test(content)) {
+      content = content.replace(
+        /(card:\s*\{[^}]*hsl\(var\(--card-foreground\)\)[^}]*\},)/s,
+        `$1\n${sidebarLines}`
+      )
+      patches.push("sidebar colors")
+    }
+  }
+
   // Ensure tailwindcss-animate is in plugins
   if (!/tailwindcss-animate/.test(content)) {
     if (/plugins\s*:\s*\[\s*\]/.test(content)) {
@@ -2206,6 +1445,16 @@ function buildTailwindExtendBlock(opts: {
         "chart-3": "hsl(var(--chart-3))",
         "chart-4": "hsl(var(--chart-4))",
         "chart-5": "hsl(var(--chart-5))",
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
       }`)
   }
   if (opts.includeBorderRadius) {
@@ -2436,7 +1685,7 @@ function hslToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-function configureThemeTs(projectPath: string, baseColor: string) {
+export function configureThemeTs(projectPath: string, baseColor: string, theme?: string, chartColor?: string, radius?: string, menuAccent?: string) {
   // Find theme.ts file
   const possiblePaths = [
     "src/constants/theme.ts",
@@ -2457,27 +1706,40 @@ function configureThemeTs(projectPath: string, baseColor: string) {
   const targetPath = path.join(projectPath, foundPath)
   let content = fs.readFileSync(targetPath, "utf8")
 
-  // Get HSL config for the selected base color
-  let resolvedColor: "zinc" | "slate" | "stone" | "gray" | "neutral" | "taupe" | "mauve" | "olive" | "mist" = "zinc";
-  if (baseColor in THEME_COLORS) {
-    resolvedColor = baseColor as any;
-  } else {
-    resolvedColor = "neutral";
-  }
-  const colorConfig = THEME_COLORS[resolvedColor];
+  // Resolve the COMPLETE preset (base + theme + chart + radius) in HSL, then
+  // derive the React Navigation hex palette from the canonical tokens instead of
+  // a legacy base-only table. Accents don't override background/muted/accent, so
+  // these still track the base color while staying on the canonical source.
+  const resolvedBase: BaseColorName = isBaseColorName(baseColor) ? baseColor : "neutral";
+  const resolvedTheme: ThemeTokenName = isThemeTokenName(theme) ? theme : resolvedBase;
+  const resolvedChart: ThemeTokenName = isThemeTokenName(chartColor)
+    ? chartColor
+    : isThemeTokenName(theme)
+      ? theme
+      : resolvedBase;
+  const resolvedRadiusName: RadiusName = isRadiusName(radius) ? radius : "medium";
+  const { light, dark } = resolveThemeTokens(
+    {
+      baseColor: resolvedBase,
+      theme: resolvedTheme,
+      chartColor: resolvedChart,
+      radius: resolvedRadiusName,
+    },
+    { format: "hsl" }
+  );
 
   // Convert HSL to Hex
-  const hexBackground = hslToHex(colorConfig.hsl.light.background)
-  const hexForeground = hslToHex(colorConfig.hsl.light.foreground)
-  const hexMuted = hslToHex(colorConfig.hsl.light.muted)
-  const hexAccent = hslToHex(colorConfig.hsl.light.accent)
-  const hexMutedForeground = hslToHex(colorConfig.hsl.light["muted-foreground"])
+  const hexBackground = hslToHex(light.background)
+  const hexForeground = hslToHex(light.foreground)
+  const hexMuted = hslToHex(light.muted)
+  const hexAccent = hslToHex(menuAccent === "bold" ? light.primary : light.accent)
+  const hexMutedForeground = hslToHex(light["muted-foreground"])
 
-  const hexBackgroundDark = hslToHex(colorConfig.hsl.dark.background)
-  const hexForegroundDark = hslToHex(colorConfig.hsl.dark.foreground)
-  const hexMutedDark = hslToHex(colorConfig.hsl.dark.muted)
-  const hexAccentDark = hslToHex(colorConfig.hsl.dark.accent)
-  const hexMutedForegroundDark = hslToHex(colorConfig.hsl.dark["muted-foreground"])
+  const hexBackgroundDark = hslToHex(dark.background)
+  const hexForegroundDark = hslToHex(dark.foreground)
+  const hexMutedDark = hslToHex(dark.muted)
+  const hexAccentDark = hslToHex(menuAccent === "bold" ? dark.primary : dark.accent)
+  const hexMutedForegroundDark = hslToHex(dark["muted-foreground"])
 
   const newColorsBlock = `export const Colors = {
   light: {

@@ -237,6 +237,56 @@ const LOADERS: Record<PresetFont, () => Promise<LoadedFontFaces>> = {
       await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
     }
     return aliases
+  },
+  "noto-sans": async () => {
+    const module = await import("@expo-google-fonts/noto-sans")
+    const sources = { regular: module.NotoSans_400Regular, medium: module.NotoSans_500Medium, semibold: module.NotoSans_600SemiBold, bold: module.NotoSans_700Bold }
+    const aliases = { regular: "NotoSans_400Regular", medium: "NotoSans_500Medium", semibold: "NotoSans_600SemiBold", bold: "NotoSans_700Bold" } as const
+    const unloaded = Object.entries(sources).filter(([weight]) => !Font.isLoaded(aliases[weight as keyof typeof aliases]))
+    if (unloaded.length > 0) {
+      await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
+    }
+    return aliases
+  },
+  "geist-mono": async () => {
+    const module = await import("@expo-google-fonts/geist-mono")
+    const sources = { regular: module.GeistMono_400Regular, medium: module.GeistMono_500Medium, semibold: module.GeistMono_600SemiBold, bold: module.GeistMono_700Bold }
+    const aliases = { regular: "GeistMono_400Regular", medium: "GeistMono_500Medium", semibold: "GeistMono_600SemiBold", bold: "GeistMono_700Bold" } as const
+    const unloaded = Object.entries(sources).filter(([weight]) => !Font.isLoaded(aliases[weight as keyof typeof aliases]))
+    if (unloaded.length > 0) {
+      await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
+    }
+    return aliases
+  },
+  "oxanium": async () => {
+    const module = await import("@expo-google-fonts/oxanium")
+    const sources = { regular: module.Oxanium_400Regular, medium: module.Oxanium_500Medium, semibold: module.Oxanium_600SemiBold, bold: module.Oxanium_700Bold }
+    const aliases = { regular: "Oxanium_400Regular", medium: "Oxanium_500Medium", semibold: "Oxanium_600SemiBold", bold: "Oxanium_700Bold" } as const
+    const unloaded = Object.entries(sources).filter(([weight]) => !Font.isLoaded(aliases[weight as keyof typeof aliases]))
+    if (unloaded.length > 0) {
+      await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
+    }
+    return aliases
+  },
+  "ibm-plex-sans": async () => {
+    const module = await import("@expo-google-fonts/ibm-plex-sans")
+    const sources = { regular: module.IBMPlexSans_400Regular, medium: module.IBMPlexSans_500Medium, semibold: module.IBMPlexSans_600SemiBold, bold: module.IBMPlexSans_700Bold }
+    const aliases = { regular: "IBMPlexSans_400Regular", medium: "IBMPlexSans_500Medium", semibold: "IBMPlexSans_600SemiBold", bold: "IBMPlexSans_700Bold" } as const
+    const unloaded = Object.entries(sources).filter(([weight]) => !Font.isLoaded(aliases[weight as keyof typeof aliases]))
+    if (unloaded.length > 0) {
+      await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
+    }
+    return aliases
+  },
+  "eb-garamond": async () => {
+    const module = await import("@expo-google-fonts/eb-garamond")
+    const sources = { regular: module.EBGaramond_400Regular, medium: module.EBGaramond_500Medium, semibold: module.EBGaramond_600SemiBold, bold: module.EBGaramond_700Bold }
+    const aliases = { regular: "EBGaramond_400Regular", medium: "EBGaramond_500Medium", semibold: "EBGaramond_600SemiBold", bold: "EBGaramond_700Bold" } as const
+    const unloaded = Object.entries(sources).filter(([weight]) => !Font.isLoaded(aliases[weight as keyof typeof aliases]))
+    if (unloaded.length > 0) {
+      await Font.loadAsync(Object.fromEntries(unloaded.map(([weight, source]) => [aliases[weight as keyof typeof aliases], source])))
+    }
+    return aliases
   }
 }
 

@@ -2,59 +2,128 @@
 
 import type { PresetStyle } from './preset-catalog'
 
-export const CUSTOMIZER_RECIPE_VERSION = "1.0.0-e2d29ba67e95f21f" as const
+export const CUSTOMIZER_RECIPE_VERSION = "2.0.0-3af13d62d42fc960" as const
 export const CUSTOMIZER_RECIPES = {
-  "luma": {
+  "nova": {
     "components": {
       "button": {
-        "container": "rounded-4xl border border-transparent min-h-9 gap-1.5 px-3",
+        "container": "rounded-lg border border-transparent min-h-8 gap-1.5 px-2.5",
         "default": "bg-primary hover:bg-primary/80",
-        "outline": "border-border bg-background dark:bg-transparent hover:bg-muted dark:hover:bg-input/30 aria-expanded:bg-muted",
-        "small": "min-h-8 gap-1 px-3",
+        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted",
+        "small": "min-h-7 gap-1 px-2.5",
+        "text": "text-sm font-medium",
+        "smallText": "text-[0.8rem]"
+      },
+      "card": {
+        "shell": "bg-card overflow-hidden rounded-xl",
+        "header": "gap-1 rounded-t-xl",
+        "title": "text-base leading-snug font-medium",
+        "description": "text-muted-foreground text-sm",
+        "content": ""
+      },
+      "input": "dark:bg-input/30 border-input disabled:bg-input/50 dark:disabled:bg-input/80 min-h-8 rounded-lg border bg-transparent px-2.5 py-1 text-base transition-colors file:min-h-6 file:text-sm file:font-medium md:text-sm",
+      "label": "text-sm font-medium",
+      "badge": {
+        "shell": "min-h-5 gap-1 rounded-4xl border px-2 py-0.5 border-border",
+        "text": "text-xs font-medium text-foreground"
+      },
+      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-[4px] border transition-colors group-has-disabled/field:opacity-50",
+      "checkboxIndicator": "",
+      "progress": "bg-muted h-1 rounded-full",
+      "progressIndicator": "bg-primary",
+      "separator": "bg-border shrink-0"
+    },
+    "layout": {
+      "pagePaddingX": 20,
+      "pagePaddingBottom": 44,
+      "grid": "-mx-2 gap-y-4",
+      "column": "px-2 gap-4",
+      "stackXs": "gap-1",
+      "stackSm": "gap-1.5",
+      "stackMd": "gap-3",
+      "stackLg": "gap-4",
+      "field": "gap-1.5",
+      "inline": "gap-1.5",
+      "section": "gap-3"
+    },
+    "typography": {
+      "display": "text-2xl font-semibold tracking-tight",
+      "heading": "text-lg font-semibold tracking-tight",
+      "cardTitle": "text-base font-medium tracking-tight",
+      "dialogTitle": "text-base font-medium",
+      "body": "text-sm leading-snug",
+      "label": "text-xs font-medium",
+      "caption": "text-xs leading-snug",
+      "metric": "text-2xl font-semibold tracking-tight",
+      "menuItem": "text-xs font-medium",
+      "badge": "text-xs font-medium",
+      "button": "text-xs font-medium",
+      "code": "text-xs font-medium"
+    },
+    "icon": {
+      "size": 15,
+      "strokeWidth": 2,
+      "weight": "regular"
+    },
+    "block": {
+      "page": "px-5 py-6",
+      "grid": "gap-4",
+      "column": "gap-4",
+      "section": "gap-3",
+      "fieldGroup": "gap-3"
+    }
+  },
+  "vega": {
+    "components": {
+      "button": {
+        "container": "rounded-md border border-transparent min-h-9 gap-1.5 px-2.5",
+        "default": "bg-primary hover:bg-primary/80",
+        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted shadow-xs",
+        "small": "min-h-8 gap-1 px-2.5",
         "text": "text-sm font-medium",
         "smallText": ""
       },
       "card": {
-        "shell": "bg-card rounded-4xl shadow-md",
-        "header": "gap-1.5 rounded-t-4xl",
-        "title": "text-base font-medium",
+        "shell": "bg-card rounded-xl shadow-xs",
+        "header": "gap-1 rounded-t-xl",
+        "title": "text-base leading-normal font-medium",
         "description": "text-muted-foreground text-sm",
         "content": ""
       },
-      "input": "bg-input/50 border-transparent min-h-9 rounded-3xl border px-3 py-1 text-base file:min-h-7 file:text-sm file:font-medium md:text-sm",
+      "input": "dark:bg-input/30 border-input min-h-9 rounded-md border bg-transparent px-2.5 py-1 text-base shadow-xs file:min-h-7 file:text-sm file:font-medium md:text-sm",
       "label": "text-sm font-medium",
       "badge": {
-        "shell": "min-h-5 gap-1 rounded-3xl border px-2 py-0.5 border-border",
+        "shell": "min-h-5 gap-1 rounded-4xl border px-2 py-0.5 border-border",
         "text": "text-xs font-medium text-foreground"
       },
-      "checkbox": "bg-input/90 dark:data-checked:bg-primary border-transparent flex size-4 items-center justify-center rounded-[5px] border transition-shadow group-has-disabled/field:opacity-50",
+      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-[4px] border shadow-xs transition-shadow group-has-disabled/field:opacity-50",
       "checkboxIndicator": "",
-      "progress": "bg-muted h-3 rounded-full",
+      "progress": "bg-muted h-1.5 rounded-full",
       "progressIndicator": "bg-primary",
       "separator": "bg-border shrink-0"
     },
     "layout": {
       "pagePaddingX": 24,
-      "pagePaddingBottom": 56,
-      "grid": "-mx-3 gap-y-7",
-      "column": "px-3 gap-7",
+      "pagePaddingBottom": 52,
+      "grid": "-mx-3 gap-y-6",
+      "column": "px-3 gap-6",
       "stackXs": "gap-1.5",
       "stackSm": "gap-2",
       "stackMd": "gap-4",
       "stackLg": "gap-6",
-      "field": "gap-2",
+      "field": "gap-1.5",
       "inline": "gap-2",
-      "section": "gap-5"
+      "section": "gap-4"
     },
     "typography": {
-      "display": "text-3xl font-bold tracking-tight",
+      "display": "text-3xl font-semibold tracking-tight",
       "heading": "text-xl font-semibold tracking-tight",
       "cardTitle": "text-lg font-semibold tracking-tight",
       "dialogTitle": "text-lg font-semibold",
       "body": "text-sm leading-relaxed",
       "label": "text-sm font-medium",
       "caption": "text-xs leading-relaxed",
-      "metric": "text-2xl font-bold tracking-tight",
+      "metric": "text-2xl font-semibold tracking-tight",
       "menuItem": "text-sm font-medium",
       "badge": "text-xs font-medium",
       "button": "text-sm font-medium",
@@ -67,79 +136,10 @@ export const CUSTOMIZER_RECIPES = {
     },
     "block": {
       "page": "px-6 py-8",
-      "grid": "gap-7",
-      "column": "gap-7",
-      "section": "gap-5",
+      "grid": "gap-6",
+      "column": "gap-6",
+      "section": "gap-4",
       "fieldGroup": "gap-4"
-    }
-  },
-  "lyra": {
-    "components": {
-      "button": {
-        "container": "rounded-none border border-transparent min-h-8 gap-1.5 px-2.5",
-        "default": "bg-primary hover:bg-primary/80",
-        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted",
-        "small": "min-h-7 gap-1 rounded-none px-2.5",
-        "text": "text-xs font-medium",
-        "smallText": ""
-      },
-      "card": {
-        "shell": "bg-card overflow-hidden rounded-none",
-        "header": "gap-1 rounded-none",
-        "title": "text-sm font-medium",
-        "description": "text-muted-foreground text-xs/relaxed",
-        "content": ""
-      },
-      "input": "dark:bg-input/30 border-input disabled:bg-input/50 dark:disabled:bg-input/80 min-h-8 rounded-none border bg-transparent px-2.5 py-1 text-xs transition-colors file:min-h-6 file:text-xs file:font-medium md:text-xs",
-      "label": "text-xs",
-      "badge": {
-        "shell": "min-h-5 gap-1 rounded-none border px-2 py-0.5 border-border",
-        "text": "text-xs font-medium text-foreground"
-      },
-      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-none border transition-colors group-has-disabled/field:opacity-50",
-      "checkboxIndicator": "",
-      "progress": "bg-muted h-1 rounded-none",
-      "progressIndicator": "bg-primary",
-      "separator": "bg-border shrink-0"
-    },
-    "layout": {
-      "pagePaddingX": 18,
-      "pagePaddingBottom": 40,
-      "grid": "-mx-2 gap-y-4",
-      "column": "px-2 gap-4",
-      "stackXs": "gap-1",
-      "stackSm": "gap-1.5",
-      "stackMd": "gap-3",
-      "stackLg": "gap-4",
-      "field": "gap-1",
-      "inline": "gap-1.5",
-      "section": "gap-3"
-    },
-    "typography": {
-      "display": "text-2xl font-semibold tracking-tight",
-      "heading": "text-base font-semibold tracking-tight",
-      "cardTitle": "text-sm font-semibold tracking-tight",
-      "dialogTitle": "text-sm font-semibold",
-      "body": "text-xs leading-relaxed",
-      "label": "text-xs font-medium",
-      "caption": "text-[10px] leading-relaxed",
-      "metric": "text-xl font-semibold tracking-tight",
-      "menuItem": "text-xs font-medium",
-      "badge": "text-[10px] font-medium uppercase tracking-wide",
-      "button": "text-xs font-medium",
-      "code": "text-xs font-medium"
-    },
-    "icon": {
-      "size": 14,
-      "strokeWidth": 1.75,
-      "weight": "regular"
-    },
-    "block": {
-      "page": "px-4 py-5",
-      "grid": "gap-4",
-      "column": "gap-4",
-      "section": "gap-3",
-      "fieldGroup": "gap-3"
     }
   },
   "maia": {
@@ -211,6 +211,75 @@ export const CUSTOMIZER_RECIPES = {
       "fieldGroup": "gap-5"
     }
   },
+  "lyra": {
+    "components": {
+      "button": {
+        "container": "rounded-none border border-transparent min-h-8 gap-1.5 px-2.5",
+        "default": "bg-primary hover:bg-primary/80",
+        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted",
+        "small": "min-h-7 gap-1 rounded-none px-2.5",
+        "text": "text-xs font-medium",
+        "smallText": ""
+      },
+      "card": {
+        "shell": "bg-card overflow-hidden rounded-none",
+        "header": "gap-1 rounded-none",
+        "title": "text-sm font-medium",
+        "description": "text-muted-foreground text-xs/relaxed",
+        "content": ""
+      },
+      "input": "dark:bg-input/30 border-input disabled:bg-input/50 dark:disabled:bg-input/80 min-h-8 rounded-none border bg-transparent px-2.5 py-1 text-xs transition-colors file:min-h-6 file:text-xs file:font-medium md:text-xs",
+      "label": "text-xs",
+      "badge": {
+        "shell": "min-h-5 gap-1 rounded-none border px-2 py-0.5 border-border",
+        "text": "text-xs font-medium text-foreground"
+      },
+      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-none border transition-colors group-has-disabled/field:opacity-50",
+      "checkboxIndicator": "",
+      "progress": "bg-muted h-1 rounded-none",
+      "progressIndicator": "bg-primary",
+      "separator": "bg-border shrink-0"
+    },
+    "layout": {
+      "pagePaddingX": 18,
+      "pagePaddingBottom": 40,
+      "grid": "-mx-2 gap-y-4",
+      "column": "px-2 gap-4",
+      "stackXs": "gap-1",
+      "stackSm": "gap-1.5",
+      "stackMd": "gap-3",
+      "stackLg": "gap-4",
+      "field": "gap-1",
+      "inline": "gap-1.5",
+      "section": "gap-3"
+    },
+    "typography": {
+      "display": "text-2xl font-semibold tracking-tight",
+      "heading": "text-base font-semibold tracking-tight",
+      "cardTitle": "text-sm font-semibold tracking-tight",
+      "dialogTitle": "text-sm font-semibold",
+      "body": "text-xs leading-relaxed",
+      "label": "text-xs font-medium",
+      "caption": "text-[10px] leading-relaxed",
+      "metric": "text-xl font-semibold tracking-tight",
+      "menuItem": "text-xs font-medium",
+      "badge": "text-[10px] font-medium uppercase tracking-wide",
+      "button": "text-xs font-medium",
+      "code": "text-xs font-medium"
+    },
+    "icon": {
+      "size": 14,
+      "strokeWidth": 1.75,
+      "weight": "regular"
+    },
+    "block": {
+      "page": "px-4 py-5",
+      "grid": "gap-4",
+      "column": "gap-4",
+      "section": "gap-3",
+      "fieldGroup": "gap-3"
+    }
+  },
   "mira": {
     "components": {
       "button": {
@@ -280,109 +349,40 @@ export const CUSTOMIZER_RECIPES = {
       "fieldGroup": "gap-2"
     }
   },
-  "nova": {
+  "luma": {
     "components": {
       "button": {
-        "container": "rounded-lg border border-transparent min-h-8 gap-1.5 px-2.5",
-        "default": "bg-primary hover:bg-primary/80",
-        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted",
-        "small": "min-h-7 gap-1 px-2.5",
-        "text": "text-sm font-medium",
-        "smallText": "text-[0.8rem]"
-      },
-      "card": {
-        "shell": "bg-card overflow-hidden rounded-xl",
-        "header": "gap-1 rounded-t-xl",
-        "title": "text-base leading-snug font-medium",
-        "description": "text-muted-foreground text-sm",
-        "content": ""
-      },
-      "input": "dark:bg-input/30 border-input disabled:bg-input/50 dark:disabled:bg-input/80 min-h-8 rounded-lg border bg-transparent px-2.5 py-1 text-base transition-colors file:min-h-6 file:text-sm file:font-medium md:text-sm",
-      "label": "text-sm font-medium",
-      "badge": {
-        "shell": "min-h-5 gap-1 rounded-4xl border px-2 py-0.5 border-border",
-        "text": "text-xs font-medium text-foreground"
-      },
-      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-[4px] border transition-colors group-has-disabled/field:opacity-50",
-      "checkboxIndicator": "",
-      "progress": "bg-muted h-1 rounded-full",
-      "progressIndicator": "bg-primary",
-      "separator": "bg-border shrink-0"
-    },
-    "layout": {
-      "pagePaddingX": 20,
-      "pagePaddingBottom": 44,
-      "grid": "-mx-2 gap-y-4",
-      "column": "px-2 gap-4",
-      "stackXs": "gap-1",
-      "stackSm": "gap-1.5",
-      "stackMd": "gap-3",
-      "stackLg": "gap-4",
-      "field": "gap-1.5",
-      "inline": "gap-1.5",
-      "section": "gap-3"
-    },
-    "typography": {
-      "display": "text-2xl font-semibold tracking-tight",
-      "heading": "text-lg font-semibold tracking-tight",
-      "cardTitle": "text-base font-medium tracking-tight",
-      "dialogTitle": "text-base font-medium",
-      "body": "text-sm leading-snug",
-      "label": "text-xs font-medium",
-      "caption": "text-xs leading-snug",
-      "metric": "text-2xl font-semibold tracking-tight",
-      "menuItem": "text-xs font-medium",
-      "badge": "text-xs font-medium",
-      "button": "text-xs font-medium",
-      "code": "text-xs font-medium"
-    },
-    "icon": {
-      "size": 15,
-      "strokeWidth": 2,
-      "weight": "regular"
-    },
-    "block": {
-      "page": "px-5 py-6",
-      "grid": "gap-4",
-      "column": "gap-4",
-      "section": "gap-3",
-      "fieldGroup": "gap-3"
-    }
-  },
-  "rhea": {
-    "components": {
-      "button": {
-        "container": "rounded-2xl border border-transparent min-h-8 gap-1.5 px-3",
+        "container": "rounded-4xl border border-transparent min-h-9 gap-1.5 px-3",
         "default": "bg-primary hover:bg-primary/80",
         "outline": "border-border bg-background dark:bg-transparent hover:bg-muted dark:hover:bg-input/30 aria-expanded:bg-muted",
-        "small": "min-h-7 gap-1 px-3",
+        "small": "min-h-8 gap-1 px-3",
         "text": "text-sm font-medium",
         "smallText": ""
       },
       "card": {
-        "shell": "bg-card shadow-sm",
-        "header": "gap-1.5",
+        "shell": "bg-card rounded-4xl shadow-md",
+        "header": "gap-1.5 rounded-t-4xl",
         "title": "text-base font-medium",
         "description": "text-muted-foreground text-sm",
         "content": ""
       },
-      "input": "bg-input/50 border-transparent min-h-8 rounded-2xl border px-2.5 py-1 text-base file:min-h-6 file:text-sm file:font-medium md:text-sm",
+      "input": "bg-input/50 border-transparent min-h-9 rounded-3xl border px-3 py-1 text-base file:min-h-7 file:text-sm file:font-medium md:text-sm",
       "label": "text-sm font-medium",
       "badge": {
-        "shell": "min-h-5 gap-1 rounded-2xl border px-2 py-0.5 border-border",
+        "shell": "min-h-5 gap-1 rounded-3xl border px-2 py-0.5 border-border",
         "text": "text-xs font-medium text-foreground"
       },
       "checkbox": "bg-input/90 dark:data-checked:bg-primary border-transparent flex size-4 items-center justify-center rounded-[5px] border transition-shadow group-has-disabled/field:opacity-50",
       "checkboxIndicator": "",
-      "progress": "bg-muted h-2 rounded-2xl",
+      "progress": "bg-muted h-3 rounded-full",
       "progressIndicator": "bg-primary",
       "separator": "bg-border shrink-0"
     },
     "layout": {
       "pagePaddingX": 24,
       "pagePaddingBottom": 56,
-      "grid": "-mx-3 gap-y-6",
-      "column": "px-3 gap-6",
+      "grid": "-mx-3 gap-y-7",
+      "column": "px-3 gap-7",
       "stackXs": "gap-1.5",
       "stackSm": "gap-2",
       "stackMd": "gap-4",
@@ -397,23 +397,23 @@ export const CUSTOMIZER_RECIPES = {
       "cardTitle": "text-lg font-semibold tracking-tight",
       "dialogTitle": "text-lg font-semibold",
       "body": "text-sm leading-relaxed",
-      "label": "text-sm font-semibold",
+      "label": "text-sm font-medium",
       "caption": "text-xs leading-relaxed",
       "metric": "text-2xl font-bold tracking-tight",
       "menuItem": "text-sm font-medium",
-      "badge": "text-xs font-semibold",
-      "button": "text-sm font-semibold",
+      "badge": "text-xs font-medium",
+      "button": "text-sm font-medium",
       "code": "text-xs font-medium"
     },
     "icon": {
       "size": 16,
-      "strokeWidth": 2.25,
-      "weight": "bold"
+      "strokeWidth": 2,
+      "weight": "regular"
     },
     "block": {
       "page": "px-6 py-8",
-      "grid": "gap-6",
-      "column": "gap-6",
+      "grid": "gap-7",
+      "column": "gap-7",
       "section": "gap-5",
       "fieldGroup": "gap-4"
     }
@@ -487,72 +487,72 @@ export const CUSTOMIZER_RECIPES = {
       "fieldGroup": "gap-5"
     }
   },
-  "vega": {
+  "rhea": {
     "components": {
       "button": {
-        "container": "rounded-md border border-transparent min-h-9 gap-1.5 px-2.5",
+        "container": "rounded-2xl border border-transparent min-h-8 gap-1.5 px-3",
         "default": "bg-primary hover:bg-primary/80",
-        "outline": "border-border bg-background hover:bg-muted dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted shadow-xs",
-        "small": "min-h-8 gap-1 px-2.5",
+        "outline": "border-border bg-background dark:bg-transparent hover:bg-muted dark:hover:bg-input/30 aria-expanded:bg-muted",
+        "small": "min-h-7 gap-1 px-3",
         "text": "text-sm font-medium",
         "smallText": ""
       },
       "card": {
-        "shell": "bg-card rounded-xl shadow-xs",
-        "header": "gap-1 rounded-t-xl",
-        "title": "text-base leading-normal font-medium",
+        "shell": "bg-card shadow-sm",
+        "header": "gap-1.5",
+        "title": "text-base font-medium",
         "description": "text-muted-foreground text-sm",
         "content": ""
       },
-      "input": "dark:bg-input/30 border-input min-h-9 rounded-md border bg-transparent px-2.5 py-1 text-base shadow-xs file:min-h-7 file:text-sm file:font-medium md:text-sm",
+      "input": "bg-input/50 border-transparent min-h-8 rounded-2xl border px-2.5 py-1 text-base file:min-h-6 file:text-sm file:font-medium md:text-sm",
       "label": "text-sm font-medium",
       "badge": {
-        "shell": "min-h-5 gap-1 rounded-4xl border px-2 py-0.5 border-border",
+        "shell": "min-h-5 gap-1 rounded-2xl border px-2 py-0.5 border-border",
         "text": "text-xs font-medium text-foreground"
       },
-      "checkbox": "border-input dark:bg-input/30 dark:data-checked:bg-primary flex size-4 items-center justify-center rounded-[4px] border shadow-xs transition-shadow group-has-disabled/field:opacity-50",
+      "checkbox": "bg-input/90 dark:data-checked:bg-primary border-transparent flex size-4 items-center justify-center rounded-[5px] border transition-shadow group-has-disabled/field:opacity-50",
       "checkboxIndicator": "",
-      "progress": "bg-muted h-1.5 rounded-full",
+      "progress": "bg-muted h-2 rounded-2xl",
       "progressIndicator": "bg-primary",
       "separator": "bg-border shrink-0"
     },
     "layout": {
       "pagePaddingX": 24,
-      "pagePaddingBottom": 52,
+      "pagePaddingBottom": 56,
       "grid": "-mx-3 gap-y-6",
       "column": "px-3 gap-6",
       "stackXs": "gap-1.5",
       "stackSm": "gap-2",
       "stackMd": "gap-4",
       "stackLg": "gap-6",
-      "field": "gap-1.5",
+      "field": "gap-2",
       "inline": "gap-2",
-      "section": "gap-4"
+      "section": "gap-5"
     },
     "typography": {
-      "display": "text-3xl font-semibold tracking-tight",
+      "display": "text-3xl font-bold tracking-tight",
       "heading": "text-xl font-semibold tracking-tight",
       "cardTitle": "text-lg font-semibold tracking-tight",
       "dialogTitle": "text-lg font-semibold",
       "body": "text-sm leading-relaxed",
-      "label": "text-sm font-medium",
+      "label": "text-sm font-semibold",
       "caption": "text-xs leading-relaxed",
-      "metric": "text-2xl font-semibold tracking-tight",
+      "metric": "text-2xl font-bold tracking-tight",
       "menuItem": "text-sm font-medium",
-      "badge": "text-xs font-medium",
-      "button": "text-sm font-medium",
+      "badge": "text-xs font-semibold",
+      "button": "text-sm font-semibold",
       "code": "text-xs font-medium"
     },
     "icon": {
       "size": 16,
-      "strokeWidth": 2,
-      "weight": "regular"
+      "strokeWidth": 2.25,
+      "weight": "bold"
     },
     "block": {
       "page": "px-6 py-8",
       "grid": "gap-6",
       "column": "gap-6",
-      "section": "gap-4",
+      "section": "gap-5",
       "fieldGroup": "gap-4"
     }
   }

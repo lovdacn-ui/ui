@@ -148,7 +148,7 @@ function Sidebar({
   if (collapsible === "none") {
     return (
       <View
-        className={cn("bg-background h-full flex-col", className)}
+        className={cn("bg-sidebar h-full flex-col", className)}
         style={{ width: SIDEBAR_WIDTH }}
         {...props}
       >
@@ -162,7 +162,7 @@ function Sidebar({
     return (
       <SidebarDrawer side={side} open={openMobile} onOpenChange={setOpenMobile}>
         <View
-          className={cn("bg-background h-full w-full flex-col", className)}
+          className={cn("bg-sidebar h-full w-full flex-col", className)}
           {...props}
         >
           {children}
@@ -186,12 +186,13 @@ function Sidebar({
     >
       <View
         className={cn(
-          "bg-background h-full w-full flex-col",
-          variant === "floating" && "border-border rounded-lg border shadow-sm",
+          "bg-sidebar h-full w-full flex-col",
+          variant === "floating" &&
+            "border-sidebar-border rounded-lg border shadow-sm",
           variant === "sidebar" &&
             (side === "left"
-              ? "border-border border-r"
-              : "border-border border-l"),
+              ? "border-sidebar-border border-r"
+              : "border-sidebar-border border-l"),
           className,
         )}
         {...props}
@@ -398,7 +399,7 @@ function SidebarRail({
       onPress={() => toggleSidebar()}
       className={cn(
         "absolute inset-y-0 right-0 w-1",
-        Platform.select({ web: "hover:bg-border" }),
+        Platform.select({ web: "hover:bg-sidebar-border" }),
         className,
       )}
       {...props}
@@ -447,7 +448,10 @@ function SidebarSeparator({
   ...props
 }: React.ComponentProps<typeof Separator>) {
   return (
-    <Separator className={cn("bg-border mx-2 w-auto", className)} {...props} />
+    <Separator
+      className={cn("bg-sidebar-border mx-2 w-auto", className)}
+      {...props}
+    />
   );
 }
 
@@ -468,7 +472,7 @@ function SidebarGroupLabel({
   return (
     <Text
       className={cn(
-        "text-muted-foreground h-8 px-2 py-1.5 text-xs font-medium",
+        "text-sidebar-foreground/70 h-8 px-2 py-1.5 text-xs font-medium",
         className,
       )}
       {...props}
@@ -502,10 +506,10 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: Platform.select({ web: "hover:bg-accent" }) ?? "",
+        default: Platform.select({ web: "hover:bg-sidebar-accent" }) ?? "",
         outline: cn(
-          "border-border border",
-          Platform.select({ web: "hover:bg-accent" }),
+          "border-sidebar-border border",
+          Platform.select({ web: "hover:bg-sidebar-accent" }),
         ),
       },
       size: {
@@ -555,7 +559,9 @@ function SidebarMenuButton({
     <TextClassContext.Provider
       value={cn(
         "text-sm",
-        isActive ? "text-foreground font-medium" : "text-muted-foreground",
+        isActive
+          ? "text-sidebar-accent-foreground font-medium"
+          : "text-sidebar-foreground",
       )}
     >
       <Pressable
@@ -563,10 +569,12 @@ function SidebarMenuButton({
         accessibilityState={{ selected: isActive }}
         className={cn(
           sidebarMenuButtonVariants({ variant, size }),
-          isActive && "bg-accent",
+          isActive && "bg-sidebar-accent",
           collapsed &&
             "h-8 min-h-11 w-8 min-w-11 justify-center gap-0 self-center px-0",
-          Platform.select({ web: !isActive ? "active:bg-accent" : undefined }),
+          Platform.select({
+            web: !isActive ? "active:bg-sidebar-accent" : undefined,
+          }),
           className,
         )}
         {...props}
@@ -592,7 +600,7 @@ function SidebarMenuAction({
       accessibilityRole="button"
       className={cn(
         "absolute right-1 top-1.5 size-6 items-center justify-center rounded-md",
-        Platform.select({ web: "hover:bg-accent" }),
+        Platform.select({ web: "hover:bg-sidebar-accent" }),
         className,
       )}
       hitSlop={hitSlop ?? 10}
@@ -668,7 +676,7 @@ function SidebarMenuSub({
   return (
     <View
       className={cn(
-        "border-border ml-3.5 flex-col gap-1 border-l px-2.5 py-0.5",
+        "border-sidebar-border ml-3.5 flex-col gap-1 border-l px-2.5 py-0.5",
         className,
       )}
       {...props}
@@ -698,7 +706,9 @@ function SidebarMenuSubButton({
     <TextClassContext.Provider
       value={cn(
         size === "sm" ? "text-xs" : "text-sm",
-        isActive ? "text-foreground font-medium" : "text-muted-foreground",
+        isActive
+          ? "text-sidebar-accent-foreground font-medium"
+          : "text-sidebar-foreground",
       )}
     >
       <Pressable
@@ -706,8 +716,8 @@ function SidebarMenuSubButton({
         accessibilityState={{ selected: isActive }}
         className={cn(
           "min-h-11 min-w-11 w-full flex-row items-center gap-2 overflow-hidden rounded-md px-2",
-          isActive && "bg-accent",
-          Platform.select({ web: "hover:bg-accent" }),
+          isActive && "bg-sidebar-accent",
+          Platform.select({ web: "hover:bg-sidebar-accent" }),
           className,
         )}
         {...props}

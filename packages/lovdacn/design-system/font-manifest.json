@@ -228,5 +228,25 @@
     "fallback": "ui-sans-serif, system-ui, sans-serif",
     "availableWeights": [400, 500, 600, 700],
     "faces": { "regular": "Geist_400Regular", "medium": "Geist_500Medium", "semibold": "Geist_600SemiBold", "bold": "Geist_700Bold" }
+  },
+  "noto-sans": {
+    "label": "Noto Sans", "family": "Noto Sans", "category": "sans", "package": "@expo-google-fonts/noto-sans", "version": "0.4.2", "fallback": "ui-sans-serif, system-ui, sans-serif", "availableWeights": [400, 500, 600, 700],
+    "faces": { "regular": "NotoSans_400Regular", "medium": "NotoSans_500Medium", "semibold": "NotoSans_600SemiBold", "bold": "NotoSans_700Bold" }
+  },
+  "geist-mono": {
+    "label": "Geist Mono", "family": "Geist Mono", "category": "mono", "package": "@expo-google-fonts/geist-mono", "version": "0.4.3", "fallback": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", "availableWeights": [400, 500, 600, 700],
+    "faces": { "regular": "GeistMono_400Regular", "medium": "GeistMono_500Medium", "semibold": "GeistMono_600SemiBold", "bold": "GeistMono_700Bold" }
+  },
+  "oxanium": {
+    "label": "Oxanium", "family": "Oxanium", "category": "sans", "package": "@expo-google-fonts/oxanium", "version": "0.4.2", "fallback": "ui-sans-serif, system-ui, sans-serif", "availableWeights": [400, 500, 600, 700],
+    "faces": { "regular": "Oxanium_400Regular", "medium": "Oxanium_500Medium", "semibold": "Oxanium_600SemiBold", "bold": "Oxanium_700Bold" }
+  },
+  "ibm-plex-sans": {
+    "label": "IBM Plex Sans", "family": "IBM Plex Sans", "category": "sans", "package": "@expo-google-fonts/ibm-plex-sans", "version": "0.4.1", "fallback": "ui-sans-serif, system-ui, sans-serif", "availableWeights": [400, 500, 600, 700],
+    "faces": { "regular": "IBMPlexSans_400Regular", "medium": "IBMPlexSans_500Medium", "semibold": "IBMPlexSans_600SemiBold", "bold": "IBMPlexSans_700Bold" }
+  },
+  "eb-garamond": {
+    "label": "EB Garamond", "family": "EB Garamond", "category": "serif", "package": "@expo-google-fonts/eb-garamond", "version": "0.4.3", "fallback": "Georgia, 'Times New Roman', serif", "availableWeights": [400, 500, 600, 700],
+    "faces": { "regular": "EBGaramond_400Regular", "medium": "EBGaramond_500Medium", "semibold": "EBGaramond_600SemiBold", "bold": "EBGaramond_700Bold" }
   }
 }

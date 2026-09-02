@@ -65,6 +65,7 @@ const config: NextConfig = {
     "react-native-css-interop",
     "react-native-gesture-handler",
     "react-native-reanimated",
+    "react-native-remix-icon",
     "react-native-safe-area-context",
     "react-native-svg",
     "react-native-web",

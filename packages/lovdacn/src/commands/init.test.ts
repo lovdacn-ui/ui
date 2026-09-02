@@ -119,7 +119,8 @@ describe("runInit", () => {
     // Check lvcn.json copied
     const lvcnContent = await readFile(path.join(projectPath, "lvcn.json"), "utf8")
     const lvcn = JSON.parse(lvcnContent)
-    expect(lvcn.style).toBe("vega")
+    // The global shadcn default is Nova.
+    expect(lvcn.style).toBe("nova")
     expect(lvcn.styleEngine).toBe("nativewind")
 
         // Check ignored files are NOT copied
@@ -311,10 +312,26 @@ describe("runInit", () => {
     const lvcn = JSON.parse(lvcnContent)
 
     expect(lvcn.style).toBe("mira")
+    expect(lvcn).toMatchObject({
+      fontHeading: "inherit",
+      menuAccent: "subtle",
+      menuColor: "default",
+    })
 
     const cssPath = path.join(projectPath, "global.css")
     const cssContent = await readFile(cssPath, "utf8")
-    expect(cssContent).toContain("--radius: 1.5rem")
+    expect(cssContent).toContain("--radius: 0.625rem")
+    expect(execa).toHaveBeenCalledWith(
+      "npm",
+      [
+        "install",
+        "@expo-google-fonts/inter@0.4.2",
+        "@hugeicons/react-native@1.0.16",
+        "@hugeicons/core-free-icons@4.3.0",
+        "react-native-svg",
+      ],
+      { cwd: projectPath, stdio: "inherit" },
+    )
   })
 
   it("should prompt for chart color and thread it into lvcn.json and global.css", async () => {
@@ -413,6 +430,53 @@ describe("runInit", () => {
     expect(lvcn.components).toContain("card") // Preserved installed components
   })
 
+  it("should let a preset override existing canonical fields without dropping project settings", async () => {
+    const projectPath = path.join(tempCwd, "preset-existing-app")
+    await mkdir(projectPath, { recursive: true })
+    await writeFile(
+      path.join(projectPath, "package.json"),
+      JSON.stringify({ name: "preset-existing-app", dependencies: {} }, null, 2),
+      "utf8"
+    )
+    await writeFile(
+      path.join(projectPath, "lvcn.json"),
+      JSON.stringify({
+        $schema: "https://lovdacn.vercel.app/schema.json",
+        style: "new-york",
+        tsx: true,
+        tailwind: { config: "custom-tailwind.js", css: "global.css", baseColor: "zinc" },
+        aliases: { components: "~/components", utils: "~/utils", ui: "~/components/ui" },
+        components: ["button"],
+      }, null, 2),
+      "utf8"
+    )
+
+    await runInit({
+      cwd: tempCwd,
+      name: "preset-existing-app",
+      preset: "sera",
+      yes: true,
+      force: true,
+    })
+
+    const lvcn = fs.readJsonSync(path.join(projectPath, "lvcn.json"))
+    expect(lvcn).toMatchObject({
+      style: "sera",
+      baseColor: "taupe",
+      theme: "taupe",
+      chartColor: "taupe",
+      font: "noto-sans",
+      fontHeading: "playfair-display",
+      tailwind: {
+        config: "custom-tailwind.js",
+        css: "global.css",
+        baseColor: "taupe",
+      },
+    })
+    expect(lvcn.aliases.components).toBe("~/components")
+    expect(lvcn.components).toContain("button")
+  })
+
   it("should initialize inside existing projects without creating subdirectories or prompting for project name", async () => {
     // Write package.json inside tempCwd to simulate being in an existing project
     await writeFile(
@@ -453,7 +517,8 @@ describe("runInit", () => {
     expect(fs.existsSync(lvcnPath)).toBe(true)
 
     const lvcn = fs.readJsonSync(lvcnPath)
-    expect(lvcn.style).toBe("vega")
+    // The global shadcn default is Nova.
+    expect(lvcn.style).toBe("nova")
     expect(lvcn.styleEngine).toBe("nativewind")
 
     // Verify that package.json was NOT overwritten or template files copied (no index.js should exist in tempCwd)
@@ -617,6 +682,12 @@ module.exports = {
     expect(tw).toContain('primary: {')
     expect(tw).toContain('DEFAULT: "hsl(var(--primary))"')
     expect(tw).toContain('background: "hsl(var(--background))"')
+    // Sidebar color scale is mapped for NativeWind consumers via the generated
+    // Tailwind extend path (config only — no component changes yet).
+    expect(tw).toContain('sidebar: {')
+    expect(tw).toContain('DEFAULT: "hsl(var(--sidebar))"')
+    expect(tw).toContain('"primary-foreground": "hsl(var(--sidebar-primary-foreground))"')
+    expect(tw).toContain('ring: "hsl(var(--sidebar-ring))"')
     // Border radius wired to theme --radius with shadcn multiplicative scale +
     // px-capped container tokens so large-radius styles (mira/rhea) can't oval out.
     expect(tw).toContain('lg: "min(var(--radius), 20px)"')
