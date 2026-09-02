@@ -24,8 +24,11 @@ const ALL_FIELDS: PresetField[] = [
   "theme",
   "chartColor",
   "font",
+  "fontHeading",
   "iconLibrary",
   "radius",
+  "menuAccent",
+  "menuColor",
 ];
 
 describe("generated randomizeConfig compatibility", () => {

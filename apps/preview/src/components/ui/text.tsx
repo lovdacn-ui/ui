@@ -17,15 +17,21 @@ const textVariants = cva(
       variant: {
         default: '',
         h1: cn(
-          'text-center text-4xl font-extrabold tracking-tight',
+          'font-heading text-center text-4xl font-extrabold tracking-tight',
           Platform.select({ web: 'scroll-m-20 text-balance' })
         ),
         h2: cn(
-          'border-border border-b pb-2 text-3xl font-semibold tracking-tight',
+          'font-heading border-border border-b pb-2 text-3xl font-semibold tracking-tight',
           Platform.select({ web: 'scroll-m-20 first:mt-0' })
         ),
-        h3: cn('text-2xl font-semibold tracking-tight', Platform.select({ web: 'scroll-m-20' })),
-        h4: cn('text-xl font-semibold tracking-tight', Platform.select({ web: 'scroll-m-20' })),
+        h3: cn(
+          'font-heading text-2xl font-semibold tracking-tight',
+          Platform.select({ web: 'scroll-m-20' })
+        ),
+        h4: cn(
+          'font-heading text-xl font-semibold tracking-tight',
+          Platform.select({ web: 'scroll-m-20' })
+        ),
         p: 'mt-3 leading-7 sm:mt-6',
         blockquote: 'mt-4 border-l-2 pl-3 italic sm:mt-6 sm:pl-6',
         code: cn(
@@ -85,12 +91,21 @@ function Text({
   }) {
   const textClass = React.useContext(TextClassContext);
   const Component = asChild ? Slot : RNText;
+  const resolvedClassName = cn(textVariants({ variant }), textClass, className);
+  const previewFontStyle =
+    Platform.OS === 'web' && !resolvedClassName.includes('font-mono')
+      ? {
+          fontFamily: resolvedClassName.includes('font-heading')
+            ? 'var(--font-heading)'
+            : 'var(--font-sans)',
+        }
+      : undefined;
   return (
     <Component
-      className={cn(textVariants({ variant }), textClass, className)}
+      className={resolvedClassName}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
-      style={[textStyle, style]}
+      style={[textStyle, previewFontStyle, style]}
       {...props}
     />
   );

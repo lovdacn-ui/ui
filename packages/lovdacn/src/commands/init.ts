@@ -18,16 +18,17 @@ import {
   isPresetCode,
   normalizePreset,
   FONT_FAMILIES,
-  FONT_PACKAGES,
-  ICON_PACKAGES,
+  ICON_PACKAGE_DEPENDENCIES,
   RADIUS_VALUES,
   RADIUS_NAMES,
   STYLE_LABELS,
   PRESET_STYLES,
+  PRESET_MENU_COLORS,
   getFontCategory,
   PRESET_CHART_COLORS,
   DEFAULT_PRESET_CONFIG,
   resolveThemeTokens,
+  resolveEffectiveRadius,
   THEME_TOKEN_KEYS,
   THEME_TOKEN_NAMES,
   BASE_COLOR_NAMES,
@@ -38,7 +39,7 @@ import {
 } from "../preset/index.js"
 import { DEFAULT_PRESETS } from "../preset/defaults.js"
 import { normalizeLvcnConfig } from "../utils/normalize-config.js"
-import { configureProjectFont } from "../utils/project-fonts.js"
+import { configureProjectFonts } from "../utils/project-fonts.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -270,7 +271,7 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     chartColor = presetConfig.chartColor
     console.log(pc.blue(`Using preset: ${pc.cyan(options.preset)}`))
     for (const warning of warnings) console.log(pc.yellow(`⚠ ${warning}`))
-    console.log(pc.dim(`  style: ${style}, base: ${baseColor}, theme: ${presetConfig.theme}, chart: ${presetConfig.chartColor}, font: ${FONT_FAMILIES[presetConfig.font]}, icons: ${presetConfig.iconLibrary}, radius: ${RADIUS_VALUES[presetConfig.radius]}`))
+    console.log(pc.dim(`  style: ${style}, base: ${baseColor}, theme: ${presetConfig.theme}, chart: ${presetConfig.chartColor}, font: ${FONT_FAMILIES[presetConfig.font]}, heading: ${presetConfig.fontHeading === "inherit" ? "inherit" : FONT_FAMILIES[presetConfig.fontHeading]}, icons: ${presetConfig.iconLibrary}, radius: ${RADIUS_VALUES[resolveEffectiveRadius(presetConfig)]}, menu accent: ${presetConfig.menuAccent}, menu color: ${presetConfig.menuColor}`))
   }
 
   if (hasPackageJson) {
@@ -644,8 +645,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     )
 
     // 2. Setup global.css file
-    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius)
-    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius)
+    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius, presetConfig?.fontHeading, presetConfig?.menuAccent, presetConfig?.menuColor)
+    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius, presetConfig?.menuAccent)
 
     // 3. Configure tailwind.config.js (only for nativewind - uniwind uses @theme in CSS)
     if (styleEngine === "nativewind") {
@@ -695,8 +696,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     adaptScaffoldedProject(projectPath, packageManager!)
 
     // Setup global.css file with style-specific styles
-    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius)
-    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius)
+    await configureGlobalCss(projectPath, styleEngine, cssRelativePath, style, baseColor, presetConfig?.theme, chartColor, presetConfig?.font, presetConfig?.radius, presetConfig?.fontHeading, presetConfig?.menuAccent, presetConfig?.menuColor)
+    configureThemeTs(projectPath, baseColor, presetConfig?.theme, chartColor, presetConfig?.radius, presetConfig?.menuAccent)
   }
 
   // Template files are no longer needed once scaffolding/config is done.
@@ -708,9 +709,9 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     const templateLvcn = fs.readJsonSync(lvcnJsonPath)
     const mergedConfig = {
       ...templateLvcn,
-      style: style,
       styleEngine: styleEngine,
       ...(existingLvcnConfig || {}),
+      style: style,
       // Preset fields
       baseColor: baseColor,
       chartColor: chartColor,
@@ -720,6 +721,9 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
         font: presetConfig.font,
         iconLibrary: presetConfig.iconLibrary,
         radius: presetConfig.radius,
+        fontHeading: presetConfig.fontHeading,
+        menuAccent: presetConfig.menuAccent,
+        menuColor: presetConfig.menuColor,
       } : {}),
       aliases: {
         ...templateLvcn.aliases,
@@ -727,8 +731,8 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
       },
       tailwind: {
         ...templateLvcn.tailwind,
-        baseColor: baseColor,
         ...((existingLvcnConfig && existingLvcnConfig.tailwind) || {}),
+        baseColor: baseColor,
       },
       components: Array.from(
         new Set([
@@ -740,9 +744,12 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
     fs.writeJsonSync(lvcnJsonPath, mergedConfig, { spaces: 2 })
   }
 
-  const fontResource = configureProjectFont(projectPath, presetConfig.font)
+  const fontResource = configureProjectFonts(projectPath, presetConfig.font, presetConfig.fontHeading)
+  const headingLabel = presetConfig.fontHeading === "inherit"
+    ? FONT_FAMILIES[presetConfig.font]
+    : FONT_FAMILIES[presetConfig.fontHeading]
   console.log(
-    pc.green(`✔ Configured ${pc.cyan(path.relative(projectPath, fontResource.loaderPath))} for ${FONT_FAMILIES[presetConfig.font]}`)
+    pc.green(`✔ Configured ${pc.cyan(path.relative(projectPath, fontResource.loaderPath))} for ${FONT_FAMILIES[presetConfig.font]} (heading: ${headingLabel})`)
   )
 
   console.log(pc.blue(`Installing dependencies using ${pc.cyan(packageManager!)}...`))
@@ -765,11 +772,11 @@ export async function runInit(options: z.infer<typeof initOptionsSchema>) {
   }
 
   // Install exact selected font + icon packages for every initialization path.
-  const presetDeps = [
-    FONT_PACKAGES[presetConfig.font],
-    ICON_PACKAGES[presetConfig.iconLibrary],
+  const presetDeps = Array.from(new Set([
+    ...fontResource.packageSpecifiers,
+    ...ICON_PACKAGE_DEPENDENCIES[presetConfig.iconLibrary],
     "react-native-svg",
-  ]
+  ]))
   console.log(pc.blue(`Installing design-system packages: ${pc.cyan(presetDeps.join(", "))}...`))
   try {
     await execa(packageManager!, ["install", ...presetDeps], {
@@ -888,7 +895,7 @@ function destructiveForeground(format: "oklch" | "hsl"): string {
   return format === "hsl" ? "0 0% 98%" : "oklch(0.985 0 0)"
 }
 
-function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", baseColor: string, theme?: string, chartColor?: string, fontKey?: string, radiusKey?: string): string {
+function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", baseColor: string, theme?: string, chartColor?: string, fontKey?: string, radiusKey?: string, fontHeadingKey?: string, menuAccent?: string, menuColor?: string): string {
   const styleConfig: StyleConfig = STYLE_CONFIGS[style] ?? STYLE_CONFIGS[DEFAULT_PRESET_CONFIG.style]!;
 
   // Resolve the canonical inputs. Unknown/omitted values fall back safely:
@@ -911,11 +918,28 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
   // style radius is an arbitrary rem string, so it lives outside the canonical
   // RADIUS_VALUES ladder.
   const radiusName: RadiusName | null = isRadiusName(radiusKey) ? radiusKey : null;
-  const radius = radiusName ? RADIUS_VALUES[radiusName] : styleConfig.radius;
+  const canonicalStyle = (PRESET_STYLES as readonly string[]).includes(style)
+    ? style as PresetConfig["style"]
+    : DEFAULT_PRESET_CONFIG.style;
+  const effectiveRadiusName = resolveEffectiveRadius({
+    style: canonicalStyle,
+    radius: radiusName ?? DEFAULT_PRESET_CONFIG.radius,
+  });
+  const radius = radiusName || effectiveRadiusName !== DEFAULT_PRESET_CONFIG.radius
+    ? RADIUS_VALUES[effectiveRadiusName]
+    : styleConfig.radius;
   const fontSans =
     fontKey && fontKey in FONT_FAMILIES
       ? FONT_FAMILIES[fontKey as keyof typeof FONT_FAMILIES]
       : styleConfig.fontSans;
+  const fontHeading =
+    fontHeadingKey && fontHeadingKey !== "inherit" && fontHeadingKey in FONT_FAMILIES
+      ? FONT_FAMILIES[fontHeadingKey as keyof typeof FONT_FAMILIES]
+      : fontSans;
+  const resolvedMenuColor =
+    menuColor && (PRESET_MENU_COLORS as readonly string[]).includes(menuColor)
+      ? menuColor
+      : DEFAULT_PRESET_CONFIG.menuColor;
 
   // Resolve the COMPLETE light/dark token maps (core + chart + sidebar) from the
   // canonical resolver. Uniwind emits raw OKLCH; NativeWind emits HSL triplets
@@ -927,10 +951,20 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
       baseColor: resolvedBase,
       theme: resolvedTheme,
       chartColor: resolvedChart,
-      radius: radiusName ?? "medium",
+      radius: effectiveRadiusName,
     },
     { format: cssFormat }
   );
+  const schemes = {
+    light: { ...resolved.light },
+    dark: { ...resolved.dark },
+  };
+  if (menuAccent === "bold") {
+    schemes.light.accent = schemes.light.primary;
+    schemes.light["accent-foreground"] = schemes.light["primary-foreground"];
+    schemes.dark.accent = schemes.dark.primary;
+    schemes.dark["accent-foreground"] = schemes.dark["primary-foreground"];
+  }
   const destructiveFg = destructiveForeground(cssFormat);
 
   // Emit every canonical token (core + chart-1..5 + sidebar-*) followed by the
@@ -947,6 +981,10 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
   const fontVariables = `:root {
   --font-sans: ${fontSans}, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
     Segoe UI Symbol, Noto Color Emoji;
+  --font-heading: ${fontHeading}, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
+    Segoe UI Symbol, Noto Color Emoji;
+  --lvcn-menu-accent: ${menuAccent === "bold" ? "bold" : "subtle"};
+  --lvcn-menu-color: ${resolvedMenuColor};
   --font-display:
     Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
     Segoe UI Symbol, Noto Color Emoji;
@@ -958,8 +996,8 @@ function getStyleVars(style: string, styleEngine: "nativewind" | "uniwind", base
 `;
 
   if (styleEngine === "uniwind") {
-    const lightVars = emitVars(resolved.light, "  ");
-    const darkVars = emitVars(resolved.dark, "  ");
+    const lightVars = emitVars(schemes.light, "  ");
+    const darkVars = emitVars(schemes.dark, "  ");
 
     return `@theme inline {
   /* shadcn-style multiplicative radius scale. Small control tokens (sm/md)
@@ -1017,8 +1055,8 @@ ${darkVars}}
 
 ${fontVariables}`;
   } else {
-    const lightVars = emitVars(resolved.light, "    ");
-    const darkVars = emitVars(resolved.dark, "    ");
+    const lightVars = emitVars(schemes.light, "    ");
+    const darkVars = emitVars(schemes.dark, "    ");
 
     return `@layer base {
   :root {
@@ -1063,7 +1101,7 @@ const REDUCED_MOTION_CSS = `
 }
 `
 
-async function configureGlobalCss(projectPath: string, styleEngine: "nativewind" | "uniwind", cssRelativePath: string, style: string, baseColor: string, theme?: string, chartColor?: string, font?: string, radius?: string) {
+async function configureGlobalCss(projectPath: string, styleEngine: "nativewind" | "uniwind", cssRelativePath: string, style: string, baseColor: string, theme?: string, chartColor?: string, font?: string, radius?: string, fontHeading?: string, menuAccent?: string, menuColor?: string) {
   const cssPath = path.join(projectPath, cssRelativePath)
   fs.ensureDirSync(path.dirname(cssPath))
 
@@ -1077,7 +1115,7 @@ async function configureGlobalCss(projectPath: string, styleEngine: "nativewind"
     content += '@tailwind utilities;\n'
   }
 
-  content += "\n" + getStyleVars(style, styleEngine, baseColor, theme, chartColor, font, radius) + "\n"
+  content += "\n" + getStyleVars(style, styleEngine, baseColor, theme, chartColor, font, radius, fontHeading, menuAccent, menuColor) + "\n"
   content += REDUCED_MOTION_CSS
 
   fs.writeFileSync(cssPath, content, "utf8")
@@ -1096,6 +1134,9 @@ export async function regenerateProjectCss(opts: {
   chartColor?: string
   font?: string
   radius?: string
+  fontHeading?: string
+  menuAccent?: string
+  menuColor?: string
 }) {
   await configureGlobalCss(
     opts.projectPath,
@@ -1106,7 +1147,10 @@ export async function regenerateProjectCss(opts: {
     opts.theme,
     opts.chartColor,
     opts.font,
-    opts.radius
+    opts.radius,
+    opts.fontHeading,
+    opts.menuAccent,
+    opts.menuColor
   )
 }
 
@@ -1641,7 +1685,7 @@ function hslToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-export function configureThemeTs(projectPath: string, baseColor: string, theme?: string, chartColor?: string, radius?: string) {
+export function configureThemeTs(projectPath: string, baseColor: string, theme?: string, chartColor?: string, radius?: string, menuAccent?: string) {
   // Find theme.ts file
   const possiblePaths = [
     "src/constants/theme.ts",
@@ -1688,13 +1732,13 @@ export function configureThemeTs(projectPath: string, baseColor: string, theme?:
   const hexBackground = hslToHex(light.background)
   const hexForeground = hslToHex(light.foreground)
   const hexMuted = hslToHex(light.muted)
-  const hexAccent = hslToHex(light.accent)
+  const hexAccent = hslToHex(menuAccent === "bold" ? light.primary : light.accent)
   const hexMutedForeground = hslToHex(light["muted-foreground"])
 
   const hexBackgroundDark = hslToHex(dark.background)
   const hexForegroundDark = hslToHex(dark.foreground)
   const hexMutedDark = hslToHex(dark.muted)
-  const hexAccentDark = hslToHex(dark.accent)
+  const hexAccentDark = hslToHex(menuAccent === "bold" ? dark.primary : dark.accent)
   const hexMutedForegroundDark = hslToHex(dark["muted-foreground"])
 
   const newColorsBlock = `export const Colors = {

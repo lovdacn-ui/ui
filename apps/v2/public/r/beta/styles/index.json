@@ -1,13 +1,13 @@
 [
   {
-    "name": "luma",
-    "label": "Luma",
-    "description": "Soft, rounded, comfortable"
+    "name": "nova",
+    "label": "Nova",
+    "description": "Compact, restrained, tight cards"
   },
   {
-    "name": "lyra",
-    "label": "Lyra",
-    "description": "Technical, compact, square"
+    "name": "vega",
+    "label": "Vega",
+    "description": "Balanced, classic default"
   },
   {
     "name": "maia",
@@ -15,19 +15,19 @@
     "description": "Spacious and strongly rounded"
   },
   {
+    "name": "lyra",
+    "label": "Lyra",
+    "description": "Technical, compact, square"
+  },
+  {
     "name": "mira",
     "label": "Mira",
     "description": "Dense, compact controls and type"
   },
   {
-    "name": "nova",
-    "label": "Nova",
-    "description": "Compact, restrained, tight cards"
-  },
-  {
-    "name": "rhea",
-    "label": "Rhea",
-    "description": "Soft, pill-oriented, approachable"
+    "name": "luma",
+    "label": "Luma",
+    "description": "Soft, rounded, comfortable"
   },
   {
     "name": "sera",
@@ -35,8 +35,8 @@
     "description": "Editorial, square, uppercase accents"
   },
   {
-    "name": "vega",
-    "label": "Vega",
-    "description": "Balanced, classic default"
+    "name": "rhea",
+    "label": "Rhea",
+    "description": "Soft, pill-oriented, approachable"
   }
 ]

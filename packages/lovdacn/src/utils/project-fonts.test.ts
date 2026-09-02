@@ -7,6 +7,7 @@ import path from 'path'
 import { FONT_MANIFEST, type PresetFont } from '../preset/index.js'
 import {
   configureProjectFont,
+  configureProjectFonts,
   getExactFontPackage,
   wireProjectFontLoader,
   writeProjectFontLoader,
@@ -75,13 +76,39 @@ describe('project font resources', () => {
     expect(await readFile(layoutPath, 'utf8')).toBe(placeholder)
   })
 
+  it('inherits and deduplicates the body font when no distinct heading is selected', async () => {
+    const result = configureProjectFonts(projectPath, 'inter', 'inherit')
+    const content = await readFile(result.loaderPath, 'utf8')
+
+    expect(result.packageSpecifiers).toEqual(['@expo-google-fonts/inter@0.4.2'])
+    expect(content.match(/from '@expo-google-fonts\/inter'/g)).toHaveLength(1)
+    expect(content).toContain('export const LVCN_HEADING_FONT_FACES')
+    expect(content).toContain("className.includes('font-heading')")
+  })
+
+  it('loads a distinct heading family and returns both exact package specifiers', async () => {
+    const result = configureProjectFonts(projectPath, 'inter', 'playfair-display')
+    const content = await readFile(result.loaderPath, 'utf8')
+
+    expect(result.packageSpecifiers).toEqual([
+      '@expo-google-fonts/inter@0.4.2',
+      '@expo-google-fonts/playfair-display@0.4.2',
+    ])
+    expect(content).toContain("from '@expo-google-fonts/inter'")
+    expect(content).toContain("from '@expo-google-fonts/playfair-display'")
+    expect(content).toContain("regular: 'PlayfairDisplay_400Regular'")
+  })
+
   it('supports every historical v1 font as a first-class selectable value', async () => {
     const { WIRE_PRESET_FONTS, PRESET_FONTS, FONT_ALIASES } = await import('../preset/index.js')
 
-    // No font may be normalized away: the active catalog matches the immutable wire order.
-    expect([...PRESET_FONTS]).toEqual([...WIRE_PRESET_FONTS])
+    // Every immutable v1 font remains directly supported; v2 appends verified shadcn parity fonts.
+    expect(PRESET_FONTS.slice(0, 26)).toContain('noto-sans')
+    for (const font of WIRE_PRESET_FONTS) expect(PRESET_FONTS).toContain(font)
+    expect(PRESET_FONTS).toContain('space-mono')
+    expect(PRESET_FONTS).toContain('fira-code')
     expect(Object.keys(FONT_ALIASES)).toHaveLength(0)
-    expect(Object.keys(FONT_MANIFEST)).toHaveLength(23)
+    expect(Object.keys(FONT_MANIFEST)).toHaveLength(28)
   })
 
   it('resolves partial-weight fonts to real faces instead of implying missing weights', async () => {

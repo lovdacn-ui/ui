@@ -39,7 +39,7 @@ async function loadFont(fontFamily: string, source: FontSource) {
 
     const face = new FontFace(fontFamily, `url(${JSON.stringify(url)})`)
     await face.load()
-    document.fonts.add(face)
+    ;(document.fonts as any).add(face)
     loadedFaces.set(fontFamily, face)
     loadedFonts.add(fontFamily)
   })().finally(() => pendingFonts.delete(fontFamily))
@@ -73,7 +73,7 @@ export async function loadAsync(
 
 export async function unloadAsync(fontFamily: string) {
   const face = loadedFaces.get(fontFamily)
-  if (face && typeof document !== "undefined") document.fonts.delete(face)
+  if (face && typeof document !== "undefined") (document.fonts as any).delete(face)
   loadedFaces.delete(fontFamily)
   loadedFonts.delete(fontFamily)
 }

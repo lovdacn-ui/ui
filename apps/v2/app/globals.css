@@ -273,11 +273,9 @@
 }
 
 .beta-panel-body {
-  color: color-mix(
-    in oklab,
-    var(--beta-accent-strong) 78%,
-    var(--color-foreground)
-  );
+  color: color-mix(in oklab,
+      var(--beta-accent-strong) 78%,
+      var(--color-foreground));
 }
 
 /*
@@ -289,7 +287,8 @@
  * primary colour carry the tint, which keeps long documentation readable.
  */
 .beta {
-  --primary: oklch(0.52 0.135 44); /* burnt orange */
+  --primary: oklch(0.52 0.135 44);
+  /* burnt orange */
   --primary-foreground: oklch(0.985 0.008 70);
   --secondary: oklch(0.955 0.012 62);
   --secondary-foreground: oklch(0.35 0.085 42);
@@ -318,7 +317,8 @@
 }
 
 .beta.dark {
-  --primary: oklch(0.66 0.14 48); /* ember, not neon */
+  --primary: oklch(0.66 0.14 48);
+  /* ember, not neon */
   --primary-foreground: oklch(0.18 0.035 38);
   --secondary: oklch(0.26 0.028 40);
   --secondary-foreground: oklch(0.85 0.05 66);
@@ -363,6 +363,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .theme-morph,
   .theme-morph *:not(canvas) {
     transition-duration: 0ms;
@@ -392,17 +393,21 @@ html.beta [data-beta-off-only] {
   * {
     @apply border-border outline-ring/50;
   }
+
   ::selection {
     @apply bg-selection text-selection-foreground;
   }
+
   html {
     @apply overscroll-y-none;
   }
+
   body {
     @apply bg-background text-foreground;
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
   }
+
   a:active,
   button:active {
     @apply opacity-60 md:opacity-100;
@@ -512,6 +517,29 @@ html.beta [data-beta-off-only] {
   @apply font-semibold;
 }
 
+
+.lvcn-create-preview-stage {
+  background-color: #f6f6f7;
+  background-image:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 96%), transparent 46%),
+    linear-gradient(rgb(24 24 27 / 2.2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(24 24 27 / 2.2%) 1px, transparent 1px);
+  background-position: center top, center, center;
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+.dark .lvcn-create-preview-stage,
+html.dark .lvcn-create-preview-stage,
+[data-theme="dark"] .lvcn-create-preview-stage {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 4%), transparent 46%),
+    linear-gradient(rgb(255 255 255 / 3.5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3.5%) 1px, transparent 1px);
+  background-position: center top, center, center;
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
 /*
  * Live preview frames — see lib/preview-protocol.ts.
  *
@@ -526,7 +554,14 @@ html.beta [data-beta-off-only] {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-preview-frame="create"] {
+  transition-property: opacity;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
+
   /*
    * Reduced motion removes the animation, never the state change: opacity still
    * goes from 0 to 1, it just arrives immediately. Rules stay scoped to

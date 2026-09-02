@@ -47,3 +47,11 @@ Vendored snapshot date: 2026-09-01.
 - Run `pnpm --filter lovdacn design-system:generate` after edits.
 - Run `pnpm --filter lovdacn design-system:check` to fail on stale output, missing recipes, unsupported manifest entries, or incomplete icon mappings.
 - Runtime preview artifacts contain static class literals. Installed projects receive one static style plus one generated icon/font adapter, not all selectable profiles.
+
+## Canonical configuration provenance
+
+The ten visual fields, v2 value orders, global default, and eight named defaults are synced from `shadcn-ui/ui` at audited provenance commit `35983528c233250b990f6172f1a60df228409a37` and corroborated against audited main `8a1b5386010e1a4a50367fff39ee3216bf6f01b2`. The snapshot was reviewed on 2026-09-02. `wire-v2.json` uses shadcn's 51-bit `b` layout; lvcn-only values are append-only extensions after upstream values.
+
+`wire-v1.json` remains byte-immutable and is guarded by SHA-256 in the generator. Never reorder, remove, or append its values. `wire-v2.json` is likewise append-only: existing values and fields may not move, every field default stays at index 0, and the total must remain within JavaScript's 53-bit safe integer limit.
+
+The five added font entries use verified exact Expo Google Fonts pins. Hugeicons uses `@hugeicons/react-native@1.0.16` with `@hugeicons/core-free-icons@4.3.0`. Remix uses the viable RN adapter `react-native-remix-icon@4.7.0`, but its manifest capability is deliberately `provisional`: license provenance and acceptance of its community-maintained upstream lag must be approved before release. Do not represent that blocker as unconditional support.

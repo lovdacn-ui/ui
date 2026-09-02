@@ -17,8 +17,11 @@ export function normalizeLvcnConfig(input: Record<string, any>): LvcnConfigNorma
     theme: input.theme,
     chartColor: input.chartColor,
     font: input.font,
+    fontHeading: input.fontHeading,
     iconLibrary: input.iconLibrary,
     radius: input.radius,
+    menuAccent: input.menuAccent,
+    menuColor: input.menuColor,
   }
   const normalization = normalizePreset(candidate)
   const config = {

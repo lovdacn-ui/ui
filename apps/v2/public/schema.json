@@ -13,14 +13,14 @@
       "type": "string",
       "description": "The active visual style recipe.",
       "enum": [
-        "luma",
-        "lyra",
-        "maia",
-        "mira",
         "nova",
-        "rhea",
+        "vega",
+        "maia",
+        "lyra",
+        "mira",
+        "luma",
         "sera",
-        "vega"
+        "rhea"
       ]
     },
     "styleEngine": {
@@ -47,15 +47,15 @@
         "baseColor": {
           "type": "string",
           "enum": [
-            "zinc",
-            "slate",
-            "stone",
-            "gray",
             "neutral",
-            "taupe",
+            "stone",
+            "zinc",
+            "gray",
             "mauve",
             "olive",
-            "mist"
+            "mist",
+            "taupe",
+            "slate"
           ]
         }
       },
@@ -90,113 +90,154 @@
     "baseColor": {
       "type": "string",
       "enum": [
-        "zinc",
-        "slate",
-        "stone",
-        "gray",
         "neutral",
-        "taupe",
+        "stone",
+        "zinc",
+        "gray",
         "mauve",
         "olive",
-        "mist"
+        "mist",
+        "taupe",
+        "slate"
       ]
     },
     "theme": {
       "type": "string",
       "enum": [
-        "zinc",
-        "slate",
-        "stone",
-        "gray",
         "neutral",
-        "red",
-        "orange",
+        "stone",
+        "zinc",
+        "gray",
         "amber",
-        "yellow",
-        "lime",
-        "green",
-        "emerald",
-        "teal",
-        "cyan",
-        "sky",
         "blue",
-        "indigo",
-        "violet",
-        "purple",
+        "cyan",
+        "emerald",
         "fuchsia",
+        "green",
+        "indigo",
+        "lime",
+        "orange",
         "pink",
+        "purple",
+        "red",
         "rose",
+        "sky",
+        "teal",
+        "violet",
+        "yellow",
         "mauve",
         "olive",
         "mist",
-        "taupe"
+        "taupe",
+        "slate"
       ]
     },
     "chartColor": {
       "type": "string",
       "enum": [
-        "zinc",
-        "slate",
-        "stone",
-        "gray",
         "neutral",
-        "red",
-        "orange",
+        "stone",
+        "zinc",
+        "gray",
         "amber",
-        "yellow",
-        "lime",
-        "green",
-        "emerald",
-        "teal",
-        "cyan",
-        "sky",
         "blue",
-        "indigo",
-        "violet",
-        "purple",
+        "cyan",
+        "emerald",
         "fuchsia",
+        "green",
+        "indigo",
+        "lime",
+        "orange",
         "pink",
+        "purple",
+        "red",
         "rose",
+        "sky",
+        "teal",
+        "violet",
+        "yellow",
         "mauve",
         "olive",
         "mist",
-        "taupe"
+        "taupe",
+        "slate"
       ]
     },
     "font": {
       "type": "string",
       "enum": [
         "inter",
-        "dm-sans",
+        "noto-sans",
         "nunito-sans",
         "figtree",
-        "outfit",
-        "manrope",
-        "space-grotesk",
-        "montserrat",
         "roboto",
         "raleway",
+        "dm-sans",
         "public-sans",
-        "source-sans-3",
+        "outfit",
+        "jetbrains-mono",
+        "geist",
+        "geist-mono",
         "lora",
         "merriweather",
         "playfair-display",
-        "jetbrains-mono",
-        "space-mono",
-        "fira-code",
         "noto-serif",
         "roboto-slab",
+        "oxanium",
+        "manrope",
+        "space-grotesk",
+        "montserrat",
+        "ibm-plex-sans",
+        "source-sans-3",
         "instrument-sans",
+        "eb-garamond",
         "instrument-serif",
-        "geist"
+        "space-mono",
+        "fira-code"
+      ]
+    },
+    "fontHeading": {
+      "type": "string",
+      "enum": [
+        "inherit",
+        "inter",
+        "noto-sans",
+        "nunito-sans",
+        "figtree",
+        "roboto",
+        "raleway",
+        "dm-sans",
+        "public-sans",
+        "outfit",
+        "jetbrains-mono",
+        "geist",
+        "geist-mono",
+        "lora",
+        "merriweather",
+        "playfair-display",
+        "noto-serif",
+        "roboto-slab",
+        "oxanium",
+        "manrope",
+        "space-grotesk",
+        "montserrat",
+        "ibm-plex-sans",
+        "source-sans-3",
+        "instrument-sans",
+        "eb-garamond",
+        "instrument-serif",
+        "space-mono",
+        "fira-code"
       ]
     },
     "iconLibrary": {
       "type": "string",
       "enum": [
         "lucide",
-        "phosphor",
+        "hugeicons",
         "tabler",
+        "phosphor",
+        "remixicon",
         "expo",
         "heroicons"
       ]
@@ -210,6 +251,22 @@
         "medium",
         "large",
         "full"
+      ]
+    },
+    "menuAccent": {
+      "type": "string",
+      "enum": [
+        "subtle",
+        "bold"
+      ]
+    },
+    "menuColor": {
+      "type": "string",
+      "enum": [
+        "default",
+        "inverted",
+        "default-translucent",
+        "inverted-translucent"
       ]
     }
   },

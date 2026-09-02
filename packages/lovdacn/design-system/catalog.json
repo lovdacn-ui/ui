@@ -1,67 +1,54 @@
 {
-  "catalogVersion": "1.0.0",
+  "catalogVersion": "2.0.0",
   "defaultPreset": {
-    "style": "vega",
+    "style": "nova",
     "baseColor": "neutral",
-    "theme": "cyan",
-    "chartColor": "teal",
-    "font": "space-grotesk",
+    "theme": "neutral",
+    "chartColor": "neutral",
+    "font": "inter",
+    "fontHeading": "inherit",
     "iconLibrary": "lucide",
-    "radius": "medium"
+    "radius": "default",
+    "menuAccent": "subtle",
+    "menuColor": "default"
   },
   "styles": [
-    {
-      "name": "luma",
-      "label": "Luma",
-      "description": "Soft, rounded, comfortable",
-      "defaults": { "baseColor": "neutral", "theme": "blue", "chartColor": "sky", "font": "inter", "iconLibrary": "lucide", "radius": "large" }
-    },
-    {
-      "name": "lyra",
-      "label": "Lyra",
-      "description": "Technical, compact, square",
-      "defaults": { "baseColor": "stone", "theme": "amber", "chartColor": "orange", "font": "jetbrains-mono", "iconLibrary": "phosphor", "radius": "small" }
-    },
-    {
-      "name": "maia",
-      "label": "Maia",
-      "description": "Spacious and strongly rounded",
-      "defaults": { "baseColor": "neutral", "theme": "violet", "chartColor": "purple", "font": "figtree", "iconLibrary": "tabler", "radius": "large" }
-    },
-    {
-      "name": "mira",
-      "label": "Mira",
-      "description": "Dense, compact controls and type",
-      "defaults": { "baseColor": "zinc", "theme": "emerald", "chartColor": "red", "font": "inter", "iconLibrary": "phosphor", "radius": "full" }
-    },
-    {
-      "name": "nova",
-      "label": "Nova",
-      "description": "Compact, restrained, tight cards",
-      "defaults": { "baseColor": "neutral", "theme": "neutral", "chartColor": "blue", "font": "inter", "iconLibrary": "lucide", "radius": "small" }
-    },
-    {
-      "name": "rhea",
-      "label": "Rhea",
-      "description": "Soft, pill-oriented, approachable",
-      "defaults": { "baseColor": "neutral", "theme": "rose", "chartColor": "pink", "font": "dm-sans", "iconLibrary": "lucide", "radius": "full" }
-    },
-    {
-      "name": "sera",
-      "label": "Sera",
-      "description": "Editorial, square, uppercase accents",
-      "defaults": { "baseColor": "taupe", "theme": "amber", "chartColor": "amber", "font": "playfair-display", "iconLibrary": "lucide", "radius": "none" }
-    },
-    {
-      "name": "vega",
-      "label": "Vega",
-      "description": "Balanced, classic default",
-      "defaults": { "baseColor": "neutral", "theme": "cyan", "chartColor": "teal", "font": "space-grotesk", "iconLibrary": "lucide", "radius": "medium" }
-    }
+    { "name": "nova", "label": "Nova", "description": "Compact, restrained, tight cards" },
+    { "name": "vega", "label": "Vega", "description": "Balanced, classic default" },
+    { "name": "maia", "label": "Maia", "description": "Spacious and strongly rounded" },
+    { "name": "lyra", "label": "Lyra", "description": "Technical, compact, square" },
+    { "name": "mira", "label": "Mira", "description": "Dense, compact controls and type" },
+    { "name": "luma", "label": "Luma", "description": "Soft, rounded, comfortable" },
+    { "name": "sera", "label": "Sera", "description": "Editorial, square, uppercase accents" },
+    { "name": "rhea", "label": "Rhea", "description": "Soft, pill-oriented, approachable" }
   ],
-  "baseColors": ["zinc", "slate", "stone", "gray", "neutral", "taupe", "mauve", "olive", "mist"],
-  "themes": ["zinc", "slate", "stone", "gray", "neutral", "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose", "mauve", "olive", "mist", "taupe"],
+  "namedPresets": {
+    "nova": { "style": "nova", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "geist", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "vega": { "style": "vega", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "inter", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "maia": { "style": "maia", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "figtree", "fontHeading": "inherit", "iconLibrary": "hugeicons", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "lyra": { "style": "lyra", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "jetbrains-mono", "fontHeading": "inherit", "iconLibrary": "phosphor", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "mira": { "style": "mira", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "inter", "fontHeading": "inherit", "iconLibrary": "hugeicons", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "luma": { "style": "luma", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "inter", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "sera": { "style": "sera", "baseColor": "taupe", "theme": "taupe", "chartColor": "taupe", "font": "noto-sans", "fontHeading": "playfair-display", "iconLibrary": "lucide", "radius": "default", "menuAccent": "subtle", "menuColor": "default" },
+    "rhea": { "style": "rhea", "baseColor": "neutral", "theme": "neutral", "chartColor": "neutral", "font": "inter", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "default", "menuAccent": "subtle", "menuColor": "default" }
+  },
+  "legacyNamedPresets": {
+    "luma": { "style": "luma", "baseColor": "neutral", "theme": "blue", "chartColor": "sky", "font": "inter", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "large", "menuAccent": "subtle", "menuColor": "default" },
+    "lyra": { "style": "lyra", "baseColor": "stone", "theme": "amber", "chartColor": "orange", "font": "jetbrains-mono", "fontHeading": "inherit", "iconLibrary": "phosphor", "radius": "small", "menuAccent": "subtle", "menuColor": "default" },
+    "maia": { "style": "maia", "baseColor": "neutral", "theme": "violet", "chartColor": "purple", "font": "figtree", "fontHeading": "inherit", "iconLibrary": "tabler", "radius": "large", "menuAccent": "subtle", "menuColor": "default" },
+    "mira": { "style": "mira", "baseColor": "zinc", "theme": "emerald", "chartColor": "red", "font": "inter", "fontHeading": "inherit", "iconLibrary": "phosphor", "radius": "full", "menuAccent": "subtle", "menuColor": "default" },
+    "nova": { "style": "nova", "baseColor": "neutral", "theme": "neutral", "chartColor": "blue", "font": "inter", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "small", "menuAccent": "subtle", "menuColor": "default" },
+    "rhea": { "style": "rhea", "baseColor": "neutral", "theme": "rose", "chartColor": "pink", "font": "dm-sans", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "full", "menuAccent": "subtle", "menuColor": "default" },
+    "sera": { "style": "sera", "baseColor": "taupe", "theme": "amber", "chartColor": "amber", "font": "playfair-display", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "none", "menuAccent": "subtle", "menuColor": "default" },
+    "vega": { "style": "vega", "baseColor": "neutral", "theme": "cyan", "chartColor": "teal", "font": "space-grotesk", "fontHeading": "inherit", "iconLibrary": "lucide", "radius": "medium", "menuAccent": "subtle", "menuColor": "default" }
+  },
+  "baseColors": ["neutral", "stone", "zinc", "gray", "mauve", "olive", "mist", "taupe", "slate"],
+  "themes": ["neutral", "stone", "zinc", "gray", "amber", "blue", "cyan", "emerald", "fuchsia", "green", "indigo", "lime", "orange", "pink", "purple", "red", "rose", "sky", "teal", "violet", "yellow", "mauve", "olive", "mist", "taupe", "slate"],
   "radii": ["default", "none", "small", "medium", "large", "full"],
+  "fontHeadings": ["inherit"],
+  "menuAccents": ["subtle", "bold"],
+  "menuColors": ["default", "inverted", "default-translucent", "inverted-translucent"],
+  "effectiveRadiusDefaults": { "lyra": "none", "sera": "none" },
   "radiusValues": {
     "default": "0.625rem",
     "none": "0rem",

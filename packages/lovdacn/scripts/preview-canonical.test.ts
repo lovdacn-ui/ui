@@ -13,7 +13,9 @@ function readSource(relativePath: string) {
 }
 
 const PREVIEW_THEME = "apps/preview/src/lib/preview-theme.ts";
+const PREVIEW_DESIGN_SYSTEM = "apps/preview/src/components/design-system/preview-design-system.tsx";
 const PREVIEW_RENDERER = "apps/preview/src/components/preview-renderer.tsx";
+const PREVIEW_TEXT = "apps/preview/src/components/ui/text.tsx";
 const PRESENT = "apps/preview/src/app/present.tsx";
 
 describe("preview canonical theme application", () => {
@@ -38,6 +40,17 @@ describe("preview canonical theme application", () => {
     // Iterates the canonical token keys and emits the destructive-foreground shim.
     expect(source).toContain("for (const key of THEME_TOKEN_KEYS)");
     expect(source).toContain("--destructive-foreground");
+    // Preview and generated CSS expose the same canonical menu metadata surface.
+    expect(source).toContain("--lvcn-menu-accent");
+    expect(source).toContain("--lvcn-menu-color");
+  });
+
+  it("applies the normalized default theme when the raw preview preset is invalid", () => {
+    const source = readSource(PREVIEW_DESIGN_SYSTEM);
+    expect(source).toContain("themePreset: undefined");
+    expect(source).toContain("themePreset: preset");
+    expect(source).toContain("applyPreviewTheme(activeDesign.themePreset");
+    expect(source).toContain("activeDesign.preset !== preset");
   });
 
   it("drops the copied wire codec + color maps from present.tsx but keeps the handshake and web font", () => {
@@ -53,6 +66,16 @@ describe("preview canonical theme application", () => {
     // Preview-child handshake + dynamic web font loading preserved.
     expect(source).toContain("createPreviewChild");
     expect(source).toContain("google-font-customizer");
+    expect(source).toContain("function loadCustomizerWebFonts");
+    expect(source).toContain("Array.from(new Set(fontKeys))");
+    expect(source).toContain("if (!font) return []");
+    expect(source).toContain('families.join("&")');
+    expect(source).toContain("loadCustomizerWebFonts([normalization.config.font, headingFont])");
+
+    const textSource = readSource(PREVIEW_TEXT);
+    expect(textSource).toContain("'font-heading text-center");
+    expect(textSource).toContain("'var(--font-heading)'");
+    expect(textSource).toContain("'var(--font-sans)'");
   });
 
   it("emits byte-identical canonical theme-token copies to the preset package and preview app", () => {

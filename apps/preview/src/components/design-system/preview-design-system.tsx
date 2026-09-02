@@ -23,6 +23,8 @@ const ICON_LOADERS = {
   lucide: async () => lucideIconAdapter,
   phosphor: async () => (await import('./icons/phosphor')).phosphorIconAdapter,
   tabler: async () => (await import('./icons/tabler')).tablerIconAdapter,
+  hugeicons: async () => (await import('./icons/hugeicons')).hugeiconsIconAdapter,
+  remixicon: async () => (await import('./icons/remixicon')).remixiconIconAdapter,
   expo: async () => (await import('./icons/expo')).expoIconAdapter,
   heroicons: async () => (await import('./icons/heroicons')).heroiconsIconAdapter,
 } as const;
@@ -31,6 +33,7 @@ type PreviewDesignSystemValue = {
   config: PresetConfig;
   recipe: CustomizerRecipe;
   fontFaces: LoadedFontFaces;
+  headingFontFaces: LoadedFontFaces;
   iconAdapter: IconAdapter;
   warnings: readonly string[];
 };
@@ -49,20 +52,31 @@ type PreviewDesignSystemProviderProps = {
 type ActiveDesignSystem = PreviewDesignSystemValue & {
   resourceKey: string;
   preset?: string;
+  themePreset?: string;
   colorScheme: PreviewColorScheme;
   revision: number;
 };
 
 const PreviewDesignSystemContext = React.createContext<PreviewDesignSystemValue | null>(null);
+const PREVIEW_STAGE_LIGHT = '#f6f6f7';
+const PREVIEW_STAGE_DARK = '#09090b';
 
-function normalizeDesign(preset: string | undefined): PresetNormalization {
-  if (!preset) return { config: DEFAULT_PRESET_CONFIG, warnings: [] };
-  return (
-    decodePresetWithWarnings(preset) ?? {
-      config: DEFAULT_PRESET_CONFIG,
-      warnings: [`Invalid preset "${preset}"; using the Vega default`],
-    }
-  );
+function getPreviewStageColor(colorScheme: PreviewColorScheme) {
+  return colorScheme === 'dark' ? PREVIEW_STAGE_DARK : PREVIEW_STAGE_LIGHT;
+}
+
+type NormalizedDesign = PresetNormalization & { themePreset?: string };
+
+function normalizeDesign(preset: string | undefined): NormalizedDesign {
+  if (!preset) return { config: DEFAULT_PRESET_CONFIG, warnings: [], themePreset: undefined };
+  const decoded = decodePresetWithWarnings(preset);
+  return decoded
+    ? { ...decoded, themePreset: preset }
+    : {
+        config: DEFAULT_PRESET_CONFIG,
+        warnings: [`Invalid preset "${preset}"; using the Nova default`],
+        themePreset: undefined,
+      };
 }
 
 export function PreviewDesignSystemProvider({
@@ -74,8 +88,9 @@ export function PreviewDesignSystemProvider({
   cssColorValues = false,
 }: PreviewDesignSystemProviderProps) {
   const normalization = React.useMemo(() => normalizeDesign(preset), [preset]);
-  const { config, warnings: normalizationWarnings } = normalization;
-  const resourceKey = `${config.font}:${config.iconLibrary}`;
+  const { config, warnings: normalizationWarnings, themePreset } = normalization;
+  const headingFont = config.fontHeading === 'inherit' ? config.font : config.fontHeading;
+  const resourceKey = `${config.font}:${headingFont}:${config.iconLibrary}`;
   const [activeDesign, setActiveDesign] = React.useState<ActiveDesignSystem | null>(null);
 
   // Build the next design off-screen. Crucially, activeDesign is not cleared here:
@@ -86,18 +101,21 @@ export function PreviewDesignSystemProvider({
 
     Promise.all([
       loadPreviewFont(config.font),
+      loadPreviewFont(headingFont),
       ICON_LOADERS[config.iconLibrary](),
     ])
-      .then(([fontFaces, iconAdapter]) => {
+      .then(([fontFaces, headingFontFaces, iconAdapter]) => {
         if (!active) return;
         setActiveDesign({
           resourceKey,
           preset,
+          themePreset,
           colorScheme,
           revision,
           config,
           recipe: CUSTOMIZER_RECIPES[config.style],
           fontFaces,
+          headingFontFaces,
           iconAdapter,
           warnings: [...normalizationWarnings],
         });
@@ -108,11 +126,18 @@ export function PreviewDesignSystemProvider({
         setActiveDesign({
           resourceKey,
           preset,
+          themePreset,
           colorScheme,
           revision,
           config,
           recipe: CUSTOMIZER_RECIPES[config.style],
           fontFaces: {
+            regular: 'System',
+            medium: 'System',
+            semibold: 'System',
+            bold: 'System',
+          },
+          headingFontFaces: {
             regular: 'System',
             medium: 'System',
             semibold: 'System',
@@ -129,14 +154,14 @@ export function PreviewDesignSystemProvider({
     return () => {
       active = false;
     };
-  }, [colorScheme, config, normalizationWarnings, preset, resourceKey, revision]);
+  }, [colorScheme, config, normalizationWarnings, preset, resourceKey, revision, themePreset]);
 
   // Theme variables and the matching context value are committed in one render.
   // useLayoutEffect runs before paint, preventing a one-frame old/new theme mix.
   React.useLayoutEffect(() => {
     if (!activeDesign) return;
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      applyPreviewTheme(activeDesign.preset, activeDesign.colorScheme, { cssColorValues });
+      applyPreviewTheme(activeDesign.themePreset, activeDesign.colorScheme, { cssColorValues });
     }
   }, [activeDesign, cssColorValues]);
 
@@ -169,8 +194,12 @@ export function PreviewDesignSystemProvider({
   if (!activeDesign) {
     return (
       <View
-        className="flex-1 w-full bg-background"
-        style={Platform.OS === 'web' ? ({ minHeight: '100vh' } as any) : undefined}
+        className="lvcn-create-preview-stage flex-1 w-full"
+        style={
+          Platform.OS === 'web'
+            ? ({ minHeight: '100vh', backgroundColor: getPreviewStageColor(colorScheme) } as any)
+            : { backgroundColor: getPreviewStageColor(colorScheme) }
+        }
       />
     );
   }

@@ -2,6 +2,7 @@ import {
   DEFAULT_PRESET_CONFIG,
   FONT_MANIFEST,
   decodePresetWithWarnings,
+  resolveEffectiveRadius,
   type PresetConfig,
   type PresetNormalization,
 } from '@preview/lib/generated/preset-catalog';
@@ -77,10 +78,19 @@ export function applyPreviewTheme(
     : isThemeTokenName(config.theme)
       ? config.theme
       : baseColor;
-  const radius: RadiusName = isRadiusName(config.radius) ? config.radius : 'medium';
+  const effectiveRadius = resolveEffectiveRadius(config);
+  const radius: RadiusName = isRadiusName(effectiveRadius) ? effectiveRadius : 'default';
 
   const resolved = resolveThemeTokens({ baseColor, theme, chartColor, radius }, { format });
-  const scheme = isDark ? resolved.dark : resolved.light;
+  const scheme = { ...(isDark ? resolved.dark : resolved.light) };
+  if (config.menuAccent === 'bold') {
+    scheme.accent = scheme.primary;
+    scheme['accent-foreground'] = scheme['primary-foreground'];
+  }
+  root.dataset.menuAccent = config.menuAccent;
+  root.dataset.menuColor = config.menuColor;
+  root.style.setProperty('--lvcn-menu-accent', config.menuAccent);
+  root.style.setProperty('--lvcn-menu-color', config.menuColor);
 
   for (const key of THEME_TOKEN_KEYS) {
     root.style.setProperty(`--${key}`, scheme[key]);
@@ -92,6 +102,10 @@ export function applyPreviewTheme(
 
   root.style.setProperty('--radius', resolved.radius);
   const font = FONT_MANIFEST[config.font];
+  const headingFont = FONT_MANIFEST[
+    config.fontHeading === 'inherit' ? config.font : config.fontHeading
+  ];
   root.style.setProperty('--font-sans', `'${font.family}', ${font.fallback}`);
+  root.style.setProperty('--font-heading', `'${headingFont.family}', ${headingFont.fallback}`);
   return normalization;
 }

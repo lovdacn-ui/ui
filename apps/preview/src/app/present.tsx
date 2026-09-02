@@ -23,14 +23,19 @@ import {
 import { FONT_MANIFEST, type PresetFont } from "@preview/lib/generated/preset-catalog";
 import { applyPreviewTheme } from "@preview/lib/preview-theme";
 
-// Dynamically load the selected font's web faces from Google Fonts. The single
-// managed <link> is reused across changes so shuffling never leaks stale tags.
-// Family + weights are read from the generated FONT_MANIFEST so every catalog
-// font requests exactly the weights it ships.
-function loadCustomizerWebFont(fontKey: PresetFont) {
+// Dynamically load the selected body and heading web faces from Google Fonts.
+// The single managed <link> is reused across changes so shuffling never leaks
+// stale tags, while one multi-family request keeps both declarations active.
+function loadCustomizerWebFonts(fontKeys: readonly PresetFont[]) {
   if (typeof document === "undefined") return;
-  const font = FONT_MANIFEST[fontKey];
-  if (!font) return;
+  const families = Array.from(new Set(fontKeys)).flatMap((fontKey) => {
+    const font = FONT_MANIFEST[fontKey];
+    if (!font) return [];
+    const family = font.family.replace(/ /g, "+");
+    const weights = font.availableWeights.join(";");
+    return [`family=${family}:wght@${weights}`];
+  });
+  if (families.length === 0) return;
 
   let fontLink = document.getElementById(
     "google-font-customizer",
@@ -41,9 +46,7 @@ function loadCustomizerWebFont(fontKey: PresetFont) {
     fontLink.rel = "stylesheet";
     document.head.appendChild(fontLink);
   }
-  const family = font.family.replace(/ /g, "+");
-  const weights = font.availableWeights.join(";");
-  fontLink.href = `https://fonts.googleapis.com/css2?family=${family}:wght@${weights}&display=swap`;
+  fontLink.href = `https://fonts.googleapis.com/css2?${families.join("&")}&display=swap`;
 }
 
 function PresentPageContent() {
@@ -125,7 +128,10 @@ function PresentPageContent() {
     if (typeof window === "undefined") return;
     const normalization = applyPreviewTheme(preset, activeColorScheme);
     if (!normalization) return;
-    loadCustomizerWebFont(normalization.config.font);
+    const headingFont = normalization.config.fontHeading === "inherit"
+      ? normalization.config.font
+      : normalization.config.fontHeading;
+    loadCustomizerWebFonts([normalization.config.font, headingFont]);
   }, [preset, activeColorScheme]);
 
   if (!component || !hasComponentPreview(component)) {

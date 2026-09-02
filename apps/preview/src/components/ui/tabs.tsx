@@ -94,7 +94,7 @@ function TabsTrigger({
         native: 'h-full py-0',
       }),
       props.disabled && 'opacity-50',
-      isSelected && 'bg-background dark:border-foreground/10 dark:bg-input/30',
+      isSelected && 'bg-primary text-primary-foreground shadow-xs',
       className
     ),
     ...props,
@@ -103,8 +103,8 @@ function TabsTrigger({
   return (
     <TextClassContext.Provider
       value={cn(
-        'text-foreground dark:text-muted-foreground text-sm font-medium',
-        value === props.value && 'dark:text-foreground'
+        'text-sm font-medium transition-colors',
+        isSelected ? 'text-primary-foreground font-semibold' : 'text-muted-foreground'
       )}>
       {hasMotionProps({ animate, activeAnimate, motionActive }) ? (
         <TabsPrimitive.Trigger {...triggerProps} asChild>

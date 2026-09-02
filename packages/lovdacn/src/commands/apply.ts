@@ -13,6 +13,8 @@ import {
   FONT_PACKAGES,
   FONT_FAMILIES,
   ICON_PACKAGES,
+  ICON_PACKAGE_DEPENDENCIES,
+  resolveEffectiveRadius,
   RADIUS_VALUES,
   type PresetConfig,
 } from "../preset/index.js";
@@ -22,7 +24,7 @@ import { regenerateProjectCss, configureThemeTs } from "./init.js";
 import { snapshotFiles, restoreFiles } from "../utils/file-backup.js";
 import { normalizeLvcnConfig } from "../utils/normalize-config.js";
 import {
-  configureProjectFont,
+  configureProjectFonts,
   findProjectRootLayout,
   packageNameFromSpecifier,
 } from "../utils/project-fonts.js";
@@ -60,7 +62,7 @@ export const apply = new Command()
   .option("-f, --force", "proceed even if the git working tree is dirty", false)
   .option(
     "--only <parts>",
-    "apply only parts of a preset (comma-separated): theme, colors, font, icons, radius",
+    "apply only preset dimensions (comma-separated): theme (theme, chart, menu), colors (base), font (body + heading), icons, radius",
   )
   .option(
     "-p, --package-manager <pm>",
@@ -126,11 +128,16 @@ export const apply = new Command()
       `  ${pc.dim("font:")}         ${presetConfig.font} (${FONT_FAMILIES[presetConfig.font]})`,
     );
     console.log(
+      `  ${pc.dim("fontHeading:")}  ${presetConfig.fontHeading}${presetConfig.fontHeading === "inherit" ? "" : ` (${FONT_FAMILIES[presetConfig.fontHeading]})`}`,
+    );
+    console.log(
       `  ${pc.dim("iconLibrary:")} ${presetConfig.iconLibrary} (${ICON_PACKAGES[presetConfig.iconLibrary]})`,
     );
     console.log(
-      `  ${pc.dim("radius:")}       ${presetConfig.radius} (${RADIUS_VALUES[presetConfig.radius]})`,
+      `  ${pc.dim("radius:")}       ${presetConfig.radius} (${RADIUS_VALUES[resolveEffectiveRadius(presetConfig)]})`,
     );
+    console.log(`  ${pc.dim("menuAccent:")}   ${presetConfig.menuAccent}`);
+    console.log(`  ${pc.dim("menuColor:")}    ${presetConfig.menuColor}`);
 
     const rawLvcnConfig = fs.readJsonSync(lvcnPath);
     const currentNormalization = normalizeLvcnConfig(rawLvcnConfig);
@@ -183,12 +190,21 @@ export const apply = new Command()
       font: wants("font")
         ? presetConfig.font
         : (lvcnConfig.font ?? presetConfig.font),
+      fontHeading: wants("font")
+        ? presetConfig.fontHeading
+        : (lvcnConfig.fontHeading ?? presetConfig.fontHeading),
       iconLibrary: wants("icons")
         ? presetConfig.iconLibrary
         : lvcnConfig.iconLibrary,
       radius: wants("radius")
         ? presetConfig.radius
         : (lvcnConfig.radius ?? presetConfig.radius),
+      menuAccent: wants("theme")
+        ? presetConfig.menuAccent
+        : (lvcnConfig.menuAccent ?? presetConfig.menuAccent),
+      menuColor: wants("theme")
+        ? presetConfig.menuColor
+        : (lvcnConfig.menuColor ?? presetConfig.menuColor),
     };
 
     const row = (
@@ -238,6 +254,13 @@ export const apply = new Command()
       wants("font"),
     );
     row(
+      "fontHeading",
+      lvcnConfig.fontHeading,
+      effective.fontHeading,
+      effective.fontHeading === "inherit" ? "" : `(${FONT_FAMILIES[effective.fontHeading]})`,
+      wants("font"),
+    );
+    row(
       "iconLibrary",
       lvcnConfig.iconLibrary,
       effective.iconLibrary,
@@ -248,9 +271,11 @@ export const apply = new Command()
       "radius",
       lvcnConfig.radius,
       effective.radius,
-      `(${RADIUS_VALUES[effective.radius]})`,
+      `(${RADIUS_VALUES[resolveEffectiveRadius(effective)]})`,
       wants("radius"),
     );
+    row("menuAccent", lvcnConfig.menuAccent, effective.menuAccent, "", wants("theme"));
+    row("menuColor", lvcnConfig.menuColor, effective.menuColor, "", wants("theme"));
     console.log(
       `  ${pc.dim("engine:".padEnd(13))}${styleEngine} ${pc.dim("(unchanged)")}`,
     );
@@ -353,6 +378,7 @@ export const apply = new Command()
     }
     const backup = snapshotFiles(snapshotPaths);
     const previousFont = lvcnConfig.font;
+    const previousFontHeading = lvcnConfig.fontHeading;
     const previousIconLibrary = lvcnConfig.iconLibrary;
 
     try {
@@ -362,8 +388,11 @@ export const apply = new Command()
       lvcnConfig.theme = effective.theme;
       lvcnConfig.chartColor = effective.chartColor;
       lvcnConfig.font = effective.font;
+      lvcnConfig.fontHeading = effective.fontHeading;
       lvcnConfig.iconLibrary = effective.iconLibrary;
       lvcnConfig.radius = effective.radius;
+      lvcnConfig.menuAccent = effective.menuAccent;
+      lvcnConfig.menuColor = effective.menuColor;
       fs.writeJsonSync(lvcnPath, lvcnConfig, { spaces: 2 });
       console.log(pc.green(`✔ Updated lvcn.json`));
 
@@ -379,6 +408,9 @@ export const apply = new Command()
           chartColor: effective.chartColor,
           font: effective.font,
           radius: effective.radius,
+          fontHeading: effective.fontHeading,
+          menuAccent: effective.menuAccent,
+          menuColor: effective.menuColor,
         });
         // Keep the React Navigation palette (constants/theme.ts) in sync with the
         // freshly regenerated CSS. Derives its hex palette from the same canonical
@@ -389,33 +421,33 @@ export const apply = new Command()
           effective.theme,
           effective.chartColor,
           effective.radius,
+          effective.menuAccent,
         );
       }
 
-      // 3. Regenerate the static font loader and install the exact selected package.
+      // 3. Regenerate the body/heading font loader and migrate managed packages.
       if (wants("font")) {
-        const fontResource = configureProjectFont(cwd, effective.font);
-        const fontPkg = FONT_PACKAGES[effective.font];
+        const fontResource = configureProjectFonts(cwd, effective.font, effective.fontHeading);
         console.log(
           pc.blue(
-            `Installing font ${pc.cyan(fontPkg)} and updating ${pc.cyan(path.relative(cwd, fontResource.loaderPath))}...`,
+            `Installing fonts ${pc.cyan(fontResource.packageSpecifiers.join(", "))} and updating ${pc.cyan(path.relative(cwd, fontResource.loaderPath))}...`,
           ),
         );
-        await execa(packageManager, ["install", fontPkg], {
+        await execa(packageManager, ["install", ...fontResource.packageSpecifiers], {
           cwd,
           stdio: "inherit",
         });
-        if (previousFont !== effective.font) {
-          const previousSpecifier =
-            FONT_PACKAGES[previousFont as keyof typeof FONT_PACKAGES];
-          if (!previousSpecifier) {
-            console.log(
-              pc.yellow(
-                `⚠ Previous font "${previousFont}" is not a managed font package — leaving dependencies untouched.`,
-              ),
-            );
-          } else {
-            const previousPackage = packageNameFromSpecifier(previousSpecifier);
+
+        const previousHeading = previousFontHeading === "inherit"
+          ? previousFont
+          : previousFontHeading;
+        const previousSpecifiers = [previousFont, previousHeading]
+          .filter((font): font is keyof typeof FONT_PACKAGES => Boolean(font && FONT_PACKAGES[font as keyof typeof FONT_PACKAGES]))
+          .map((font) => FONT_PACKAGES[font]);
+        const nextPackages = new Set(fontResource.packageSpecifiers.map(packageNameFromSpecifier));
+        for (const previousSpecifier of new Set(previousSpecifiers)) {
+          const previousPackage = packageNameFromSpecifier(previousSpecifier);
+          if (!nextPackages.has(previousPackage)) {
             await execa(packageManager, ["remove", previousPackage], {
               cwd,
               stdio: "inherit",
@@ -424,39 +456,42 @@ export const apply = new Command()
         }
       }
 
-      // 4. Install the selected semantic adapter package and remove the prior library.
+      // 4. Install all selected semantic-adapter packages and remove prior exclusive dependencies.
       if (wants("icons")) {
-        const iconPkg = ICON_PACKAGES[effective.iconLibrary];
-        console.log(pc.blue(`Installing icon library: ${pc.cyan(iconPkg)}...`));
-        await execa(packageManager, ["install", iconPkg, "react-native-svg"], {
+        const iconPkgs = ICON_PACKAGE_DEPENDENCIES[effective.iconLibrary];
+        const installPackages = Array.from(new Set([...iconPkgs, "react-native-svg"]));
+        console.log(pc.blue(`Installing icon library: ${pc.cyan(iconPkgs.join(", "))}...`));
+        await execa(packageManager, ["install", ...installPackages], {
           cwd,
           stdio: "inherit",
         });
         if (previousIconLibrary !== effective.iconLibrary) {
-          const previousSpecifier =
-            ICON_PACKAGES[previousIconLibrary as keyof typeof ICON_PACKAGES];
-          const previousPackage = previousSpecifier
-            ? packageNameFromSpecifier(previousSpecifier)
-            : undefined;
-          if (!previousPackage) {
+          const previousSpecifiers =
+            ICON_PACKAGE_DEPENDENCIES[previousIconLibrary as keyof typeof ICON_PACKAGE_DEPENDENCIES];
+          if (!previousSpecifiers) {
             console.log(
               pc.yellow(
-                `⚠ Previous icon library "${previousIconLibrary}" is not a managed icon package — leaving dependencies untouched.`,
-              ),
-            );
-          } else if (PROTECTED_RUNTIME_PACKAGES.has(previousPackage)) {
-            // Shared or template-owned runtime dependencies (navigation icons, SVG host)
-            // stay installed even when the managed adapter stops importing them.
-            console.log(
-              pc.dim(
-                `• Kept ${previousPackage} (shared runtime dependency, not managed exclusively)`,
+                `⚠ Previous icon library "${previousIconLibrary}" is not managed — leaving dependencies untouched.`,
               ),
             );
           } else {
-            await execa(packageManager, ["remove", previousPackage], {
-              cwd,
-              stdio: "inherit",
-            });
+            const nextPackages = new Set(installPackages.map(packageNameFromSpecifier));
+            for (const previousSpecifier of previousSpecifiers) {
+              const previousPackage = packageNameFromSpecifier(previousSpecifier);
+              if (nextPackages.has(previousPackage)) continue;
+              if (PROTECTED_RUNTIME_PACKAGES.has(previousPackage)) {
+                console.log(
+                  pc.dim(
+                    `• Kept ${previousPackage} (shared runtime dependency, not managed exclusively)`,
+                  ),
+                );
+              } else {
+                await execa(packageManager, ["remove", previousPackage], {
+                  cwd,
+                  stdio: "inherit",
+                });
+              }
+            }
           }
         }
       }

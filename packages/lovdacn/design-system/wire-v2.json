@@ -1,0 +1,16 @@
+{
+  "version": "b",
+  "base62": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+  "fields": [
+    { "key": "menuColor", "bits": 3, "values": ["default", "inverted", "default-translucent", "inverted-translucent"] },
+    { "key": "menuAccent", "bits": 3, "values": ["subtle", "bold"] },
+    { "key": "radius", "bits": 4, "values": ["default", "none", "small", "medium", "large", "full"] },
+    { "key": "font", "bits": 6, "values": ["inter", "noto-sans", "nunito-sans", "figtree", "roboto", "raleway", "dm-sans", "public-sans", "outfit", "jetbrains-mono", "geist", "geist-mono", "lora", "merriweather", "playfair-display", "noto-serif", "roboto-slab", "oxanium", "manrope", "space-grotesk", "montserrat", "ibm-plex-sans", "source-sans-3", "instrument-sans", "eb-garamond", "instrument-serif", "space-mono", "fira-code"] },
+    { "key": "iconLibrary", "bits": 6, "values": ["lucide", "hugeicons", "tabler", "phosphor", "remixicon", "expo", "heroicons"] },
+    { "key": "theme", "bits": 6, "values": ["neutral", "stone", "zinc", "gray", "amber", "blue", "cyan", "emerald", "fuchsia", "green", "indigo", "lime", "orange", "pink", "purple", "red", "rose", "sky", "teal", "violet", "yellow", "mauve", "olive", "mist", "taupe", "slate"] },
+    { "key": "baseColor", "bits": 6, "values": ["neutral", "stone", "zinc", "gray", "mauve", "olive", "mist", "taupe", "slate"] },
+    { "key": "style", "bits": 6, "values": ["nova", "vega", "maia", "lyra", "mira", "luma", "sera", "rhea"] },
+    { "key": "chartColor", "bits": 6, "values": ["neutral", "stone", "zinc", "gray", "amber", "blue", "cyan", "emerald", "fuchsia", "green", "indigo", "lime", "orange", "pink", "purple", "red", "rose", "sky", "teal", "violet", "yellow", "mauve", "olive", "mist", "taupe", "slate"] },
+    { "key": "fontHeading", "bits": 5, "values": ["inherit", "inter", "noto-sans", "nunito-sans", "figtree", "roboto", "raleway", "dm-sans", "public-sans", "outfit", "jetbrains-mono", "geist", "geist-mono", "lora", "merriweather", "playfair-display", "noto-serif", "roboto-slab", "oxanium", "manrope", "space-grotesk", "montserrat", "ibm-plex-sans", "source-sans-3", "instrument-sans", "eb-garamond", "instrument-serif", "space-mono", "fira-code"] }
+  ]
+}

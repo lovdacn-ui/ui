@@ -1,64 +1,621 @@
 {
   "libraries": {
-    "lucide": { "label": "Lucide", "package": "lucide-react-native", "version": "1.24.0" },
-    "phosphor": { "label": "Phosphor", "package": "phosphor-react-native", "version": "3.0.6" },
-    "tabler": { "label": "Tabler", "package": "@tabler/icons-react-native", "version": "3.46.0" },
-    "expo": { "label": "Expo", "package": "@expo/vector-icons", "version": "15.0.3" },
-    "heroicons": { "label": "Heroicons", "package": "react-native-heroicons", "version": "4.0.0" }
+    "lucide": {
+      "label": "Lucide",
+      "adapter": "component",
+      "packages": [
+        {
+          "package": "lucide-react-native",
+          "version": "1.24.0"
+        }
+      ],
+      "import": "lucide-react-native"
+    },
+    "hugeicons": {
+      "label": "Hugeicons",
+      "adapter": "hugeicons-data",
+      "packages": [
+        {
+          "package": "@hugeicons/react-native",
+          "version": "1.0.16"
+        },
+        {
+          "package": "@hugeicons/core-free-icons",
+          "version": "4.3.0"
+        }
+      ],
+      "import": "@hugeicons/react-native",
+      "glyphImport": "@hugeicons/core-free-icons"
+    },
+    "tabler": {
+      "label": "Tabler",
+      "adapter": "component",
+      "packages": [
+        {
+          "package": "@tabler/icons-react-native",
+          "version": "3.46.0"
+        }
+      ],
+      "import": "@tabler/icons-react-native"
+    },
+    "phosphor": {
+      "label": "Phosphor",
+      "adapter": "component",
+      "packages": [
+        {
+          "package": "phosphor-react-native",
+          "version": "3.0.6"
+        }
+      ],
+      "import": "phosphor-react-native"
+    },
+    "remixicon": {
+      "label": "Remix Icon",
+      "adapter": "remix-string",
+      "packages": [
+        {
+          "package": "react-native-remix-icon",
+          "version": "4.7.0"
+        }
+      ],
+      "import": "react-native-remix-icon",
+      "capability": {
+        "status": "supported"
+      }
+    },
+    "expo": {
+      "label": "Expo Icons",
+      "adapter": "expo-set",
+      "packages": [
+        {
+          "package": "@expo/vector-icons",
+          "version": "15.0.3"
+        }
+      ],
+      "import": "@expo/vector-icons"
+    },
+    "heroicons": {
+      "label": "Heroicons",
+      "adapter": "component",
+      "packages": [
+        {
+          "package": "react-native-heroicons",
+          "version": "4.0.0"
+        }
+      ],
+      "import": "react-native-heroicons"
+    }
   },
   "icons": {
-    "activity": { "export": "Activity", "lucide": "Activity", "phosphor": "Pulse", "tabler": "IconActivity", "expo": "Feather:activity", "heroicons": "SignalIcon" },
-    "apple": { "export": "Apple", "lucide": "Apple", "phosphor": "AppleLogo", "tabler": "IconBrandApple", "expo": "Ionicons:logo-apple", "heroicons": "DevicePhoneMobileIcon" },
-    "arrow-right": { "export": "ArrowRight", "lucide": "ArrowRight", "phosphor": "ArrowRight", "tabler": "IconArrowRight", "expo": "Feather:arrow-right", "heroicons": "ArrowRightIcon" },
-    "bell": { "export": "Bell", "lucide": "Bell", "phosphor": "Bell", "tabler": "IconBell", "expo": "Feather:bell", "heroicons": "BellIcon" },
-    "book-open": { "export": "BookOpen", "lucide": "BookOpen", "phosphor": "BookOpen", "tabler": "IconBook", "expo": "Feather:book-open", "heroicons": "BookOpenIcon" },
-    "bot": { "export": "Bot", "lucide": "Bot", "phosphor": "Robot", "tabler": "IconRobot", "expo": "MaterialCommunityIcons:robot", "heroicons": "CpuChipIcon" },
-    "calendar": { "export": "Calendar", "lucide": "Calendar", "phosphor": "CalendarBlank", "tabler": "IconCalendar", "expo": "Feather:calendar", "heroicons": "CalendarIcon" },
-    "chart": { "export": "Chart", "lucide": "ChartNoAxesCombined", "phosphor": "ChartLineUp", "tabler": "IconChartLine", "expo": "Feather:trending-up", "heroicons": "ChartBarIcon" },
-    "check": { "export": "Check", "lucide": "Check", "phosphor": "Check", "tabler": "IconCheck", "expo": "Feather:check", "heroicons": "CheckIcon" },
-    "chevron-down": { "export": "ChevronDown", "lucide": "ChevronDown", "phosphor": "CaretDown", "tabler": "IconChevronDown", "expo": "Feather:chevron-down", "heroicons": "ChevronDownIcon" },
-    "chevron-down-icon": { "export": "ChevronDownIcon", "lucide": "ChevronDown", "phosphor": "CaretDown", "tabler": "IconChevronDown", "expo": "Feather:chevron-down", "heroicons": "ChevronDownIcon" },
-    "chevron-left": { "export": "ChevronLeft", "lucide": "ChevronLeft", "phosphor": "CaretLeft", "tabler": "IconChevronLeft", "expo": "Feather:chevron-left", "heroicons": "ChevronLeftIcon" },
-    "chevron-right": { "export": "ChevronRight", "lucide": "ChevronRight", "phosphor": "CaretRight", "tabler": "IconChevronRight", "expo": "Feather:chevron-right", "heroicons": "ChevronRightIcon" },
-    "chevrons-up-down": { "export": "ChevronsUpDown", "lucide": "ChevronsUpDown", "phosphor": "CaretUpDown", "tabler": "IconSelector", "expo": "Feather:chevrons-up-down", "heroicons": "ChevronUpDownIcon" },
-    "chevron-up": { "export": "ChevronUp", "lucide": "ChevronUp", "phosphor": "CaretUp", "tabler": "IconChevronUp", "expo": "Feather:chevron-up", "heroicons": "ChevronUpIcon" },
-    "chevron-up-icon": { "export": "ChevronUpIcon", "lucide": "ChevronUp", "phosphor": "CaretUp", "tabler": "IconChevronUp", "expo": "Feather:chevron-up", "heroicons": "ChevronUpIcon" },
-    "close": { "export": "X", "lucide": "X", "phosphor": "X", "tabler": "IconX", "expo": "Feather:x", "heroicons": "XMarkIcon" },
-    "command": { "export": "Command", "lucide": "Command", "phosphor": "Command", "tabler": "IconCommand", "expo": "Feather:command", "heroicons": "CommandLineIcon" },
-    "credit-card": { "export": "CreditCard", "lucide": "CreditCard", "phosphor": "CreditCard", "tabler": "IconCreditCard", "expo": "Feather:credit-card", "heroicons": "CreditCardIcon" },
-    "dollar": { "export": "DollarSign", "lucide": "DollarSign", "phosphor": "CurrencyDollar", "tabler": "IconCurrencyDollar", "expo": "Feather:dollar-sign", "heroicons": "CurrencyDollarIcon" },
-    "error": { "export": "ErrorIcon", "lucide": "CircleX", "phosphor": "XCircle", "tabler": "IconCircleX", "expo": "Feather:x-circle", "heroicons": "XCircleIcon" },
-    "frame": { "export": "Frame", "lucide": "Frame", "phosphor": "FrameCorners", "tabler": "IconFrame", "expo": "Feather:grid", "heroicons": "Square2StackIcon" },
-    "gallery": { "export": "GalleryVerticalEnd", "lucide": "GalleryVerticalEnd", "phosphor": "ImagesSquare", "tabler": "IconLayoutRows", "expo": "MaterialCommunityIcons:view-gallery-outline", "heroicons": "PhotoIcon" },
-    "git-fork": { "export": "GitFork", "lucide": "GitFork", "phosphor": "GitFork", "tabler": "IconGitFork", "expo": "Feather:git-pull-request", "heroicons": "ShareIcon" },
-    "home": { "export": "Home", "lucide": "Home", "phosphor": "House", "tabler": "IconHome", "expo": "Feather:home", "heroicons": "HomeIcon" },
-    "info": { "export": "Info", "lucide": "Info", "phosphor": "Info", "tabler": "IconInfoCircle", "expo": "Feather:info", "heroicons": "InformationCircleIcon" },
-    "layout-dashboard": { "export": "LayoutDashboard", "lucide": "LayoutDashboard", "phosphor": "SquaresFour", "tabler": "IconLayoutDashboard", "expo": "Feather:layout", "heroicons": "Squares2X2Icon" },
-    "life-buoy": { "export": "LifeBuoy", "lucide": "LifeBuoy", "phosphor": "Lifebuoy", "tabler": "IconLifebuoy", "expo": "Feather:life-buoy", "heroicons": "LifebuoyIcon" },
-    "loader": { "export": "Loader", "lucide": "LoaderCircle", "phosphor": "SpinnerGap", "tabler": "IconLoader2", "expo": "Feather:loader", "heroicons": "ArrowPathIcon" },
-    "loader-2": { "export": "Loader2", "lucide": "Loader2", "phosphor": "SpinnerGap", "tabler": "IconLoader2", "expo": "Feather:loader", "heroicons": "ArrowPathIcon" },
-    "panel-left": { "export": "PanelLeft", "lucide": "PanelLeft", "phosphor": "SidebarSimple", "tabler": "IconLayoutSidebar", "expo": "Feather:sidebar", "heroicons": "ViewColumnsIcon" },
-    "success-2": { "export": "CheckCircle2", "lucide": "CheckCircle2", "phosphor": "CheckCircle", "tabler": "IconCircleCheck", "expo": "Feather:check-circle", "heroicons": "CheckCircleIcon" },
-    "alert-circle": { "export": "AlertCircle", "lucide": "AlertCircle", "phosphor": "WarningCircle", "tabler": "IconAlertCircle", "expo": "Feather:alert-circle", "heroicons": "ExclamationCircleIcon" },
-    "lock": { "export": "Lock", "lucide": "Lock", "phosphor": "Lock", "tabler": "IconLock", "expo": "Feather:lock", "heroicons": "LockClosedIcon" },
-    "mail": { "export": "Mail", "lucide": "Mail", "phosphor": "EnvelopeSimple", "tabler": "IconMail", "expo": "Feather:mail", "heroicons": "EnvelopeIcon" },
-    "menu": { "export": "Menu", "lucide": "Menu", "phosphor": "List", "tabler": "IconMenu2", "expo": "Feather:menu", "heroicons": "Bars3Icon" },
-    "minus": { "export": "Minus", "lucide": "Minus", "phosphor": "Minus", "tabler": "IconMinus", "expo": "Feather:minus", "heroicons": "MinusIcon" },
-    "more-horizontal": { "export": "MoreHorizontal", "lucide": "Ellipsis", "phosphor": "DotsThree", "tabler": "IconDots", "expo": "Feather:more-horizontal", "heroicons": "EllipsisHorizontalIcon" },
-    "package": { "export": "Package", "lucide": "Package", "phosphor": "Package", "tabler": "IconPackage", "expo": "Feather:package", "heroicons": "CubeIcon" },
-    "pie-chart": { "export": "PieChart", "lucide": "ChartPie", "phosphor": "ChartPie", "tabler": "IconChartPie", "expo": "Feather:pie-chart", "heroicons": "ChartPieIcon" },
-    "plus": { "export": "Plus", "lucide": "Plus", "phosphor": "Plus", "tabler": "IconPlus", "expo": "Feather:plus", "heroicons": "PlusIcon" },
-    "search": { "export": "Search", "lucide": "Search", "phosphor": "MagnifyingGlass", "tabler": "IconSearch", "expo": "Feather:search", "heroicons": "MagnifyingGlassIcon" },
-    "settings": { "export": "Settings", "lucide": "Settings", "phosphor": "Gear", "tabler": "IconSettings", "expo": "Feather:settings", "heroicons": "Cog6ToothIcon" },
-    "settings-2": { "export": "Settings2", "lucide": "Settings2", "phosphor": "SlidersHorizontal", "tabler": "IconAdjustmentsHorizontal", "expo": "Feather:sliders", "heroicons": "AdjustmentsHorizontalIcon" },
-    "shopping-cart": { "export": "ShoppingCart", "lucide": "ShoppingCart", "phosphor": "ShoppingCart", "tabler": "IconShoppingCart", "expo": "Feather:shopping-cart", "heroicons": "ShoppingCartIcon" },
-    "square-terminal": { "export": "SquareTerminal", "lucide": "SquareTerminal", "phosphor": "TerminalWindow", "tabler": "IconTerminal2", "expo": "Feather:terminal", "heroicons": "CommandLineIcon" },
-    "success": { "export": "SuccessIcon", "lucide": "CircleCheck", "phosphor": "CheckCircle", "tabler": "IconCircleCheck", "expo": "Feather:check-circle", "heroicons": "CheckCircleIcon" },
-    "trending-down": { "export": "TrendingDown", "lucide": "TrendingDown", "phosphor": "TrendDown", "tabler": "IconTrendingDown", "expo": "Feather:trending-down", "heroicons": "ArrowTrendingDownIcon" },
-    "trending-up": { "export": "TrendingUp", "lucide": "TrendingUp", "phosphor": "TrendUp", "tabler": "IconTrendingUp", "expo": "Feather:trending-up", "heroicons": "ArrowTrendingUpIcon" },
-    "user": { "export": "User", "lucide": "User", "phosphor": "User", "tabler": "IconUser", "expo": "Feather:user", "heroicons": "UserIcon" },
-    "users": { "export": "Users", "lucide": "Users", "phosphor": "Users", "tabler": "IconUsers", "expo": "Feather:users", "heroicons": "UsersIcon" },
-    "wallet": { "export": "Wallet", "lucide": "WalletCards", "phosphor": "Wallet", "tabler": "IconWallet", "expo": "Ionicons:wallet-outline", "heroicons": "WalletIcon" },
-    "warning": { "export": "Warning", "lucide": "TriangleAlert", "phosphor": "Warning", "tabler": "IconAlertTriangle", "expo": "Feather:alert-triangle", "heroicons": "ExclamationTriangleIcon" }
+    "activity": {
+      "export": "Activity",
+      "lucide": "Activity",
+      "phosphor": "Pulse",
+      "tabler": "IconActivity",
+      "expo": "Feather:activity",
+      "heroicons": "SignalIcon",
+      "hugeicons": "Activity01Icon",
+      "remixicon": "pulse-line"
+    },
+    "apple": {
+      "export": "Apple",
+      "lucide": "Apple",
+      "phosphor": "AppleLogo",
+      "tabler": "IconBrandApple",
+      "expo": "Ionicons:logo-apple",
+      "heroicons": "DevicePhoneMobileIcon",
+      "hugeicons": "AppleIcon",
+      "remixicon": "apple-line"
+    },
+    "arrow-right": {
+      "export": "ArrowRight",
+      "lucide": "ArrowRight",
+      "phosphor": "ArrowRight",
+      "tabler": "IconArrowRight",
+      "expo": "Feather:arrow-right",
+      "heroicons": "ArrowRightIcon",
+      "hugeicons": "ArrowRight01Icon",
+      "remixicon": "arrow-right-line"
+    },
+    "bell": {
+      "export": "Bell",
+      "lucide": "Bell",
+      "phosphor": "Bell",
+      "tabler": "IconBell",
+      "expo": "Feather:bell",
+      "heroicons": "BellIcon",
+      "hugeicons": "Notification03Icon",
+      "remixicon": "notification-3-line"
+    },
+    "book-open": {
+      "export": "BookOpen",
+      "lucide": "BookOpen",
+      "phosphor": "BookOpen",
+      "tabler": "IconBook",
+      "expo": "Feather:book-open",
+      "heroicons": "BookOpenIcon",
+      "hugeicons": "BookOpen02Icon",
+      "remixicon": "book-open-line"
+    },
+    "bot": {
+      "export": "Bot",
+      "lucide": "Bot",
+      "phosphor": "Robot",
+      "tabler": "IconRobot",
+      "expo": "MaterialCommunityIcons:robot",
+      "heroicons": "CpuChipIcon",
+      "hugeicons": "RoboticIcon",
+      "remixicon": "robot-line"
+    },
+    "calendar": {
+      "export": "Calendar",
+      "lucide": "Calendar",
+      "phosphor": "CalendarBlank",
+      "tabler": "IconCalendar",
+      "expo": "Feather:calendar",
+      "heroicons": "CalendarIcon",
+      "hugeicons": "Calendar03Icon",
+      "remixicon": "calendar-line"
+    },
+    "chart": {
+      "export": "Chart",
+      "lucide": "ChartNoAxesCombined",
+      "phosphor": "ChartLineUp",
+      "tabler": "IconChartLine",
+      "expo": "Feather:trending-up",
+      "heroicons": "ChartBarIcon",
+      "hugeicons": "ChartUpIcon",
+      "remixicon": "line-chart-line"
+    },
+    "check": {
+      "export": "Check",
+      "lucide": "Check",
+      "phosphor": "Check",
+      "tabler": "IconCheck",
+      "expo": "Feather:check",
+      "heroicons": "CheckIcon",
+      "hugeicons": "Tick02Icon",
+      "remixicon": "check-line"
+    },
+    "chevron-down": {
+      "export": "ChevronDown",
+      "lucide": "ChevronDown",
+      "phosphor": "CaretDown",
+      "tabler": "IconChevronDown",
+      "expo": "Feather:chevron-down",
+      "heroicons": "ChevronDownIcon",
+      "hugeicons": "ArrowDown01Icon",
+      "remixicon": "arrow-down-s-line"
+    },
+    "chevron-down-icon": {
+      "export": "ChevronDownIcon",
+      "lucide": "ChevronDown",
+      "phosphor": "CaretDown",
+      "tabler": "IconChevronDown",
+      "expo": "Feather:chevron-down",
+      "heroicons": "ChevronDownIcon",
+      "hugeicons": "ArrowDown01Icon",
+      "remixicon": "arrow-down-s-line"
+    },
+    "chevron-left": {
+      "export": "ChevronLeft",
+      "lucide": "ChevronLeft",
+      "phosphor": "CaretLeft",
+      "tabler": "IconChevronLeft",
+      "expo": "Feather:chevron-left",
+      "heroicons": "ChevronLeftIcon",
+      "hugeicons": "ArrowLeft01Icon",
+      "remixicon": "arrow-left-s-line"
+    },
+    "chevron-right": {
+      "export": "ChevronRight",
+      "lucide": "ChevronRight",
+      "phosphor": "CaretRight",
+      "tabler": "IconChevronRight",
+      "expo": "Feather:chevron-right",
+      "heroicons": "ChevronRightIcon",
+      "hugeicons": "ArrowRight01Icon",
+      "remixicon": "arrow-right-s-line"
+    },
+    "chevrons-up-down": {
+      "export": "ChevronsUpDown",
+      "lucide": "ChevronsUpDown",
+      "phosphor": "CaretUpDown",
+      "tabler": "IconSelector",
+      "expo": "Feather:chevrons-up-down",
+      "heroicons": "ChevronUpDownIcon",
+      "hugeicons": "UnfoldMoreIcon",
+      "remixicon": "arrow-up-down-line"
+    },
+    "chevron-up": {
+      "export": "ChevronUp",
+      "lucide": "ChevronUp",
+      "phosphor": "CaretUp",
+      "tabler": "IconChevronUp",
+      "expo": "Feather:chevron-up",
+      "heroicons": "ChevronUpIcon",
+      "hugeicons": "ArrowUp01Icon",
+      "remixicon": "arrow-up-s-line"
+    },
+    "chevron-up-icon": {
+      "export": "ChevronUpIcon",
+      "lucide": "ChevronUp",
+      "phosphor": "CaretUp",
+      "tabler": "IconChevronUp",
+      "expo": "Feather:chevron-up",
+      "heroicons": "ChevronUpIcon",
+      "hugeicons": "ArrowUp01Icon",
+      "remixicon": "arrow-up-s-line"
+    },
+    "close": {
+      "export": "X",
+      "lucide": "X",
+      "phosphor": "X",
+      "tabler": "IconX",
+      "expo": "Feather:x",
+      "heroicons": "XMarkIcon",
+      "hugeicons": "Cancel01Icon",
+      "remixicon": "close-line"
+    },
+    "command": {
+      "export": "Command",
+      "lucide": "Command",
+      "phosphor": "Command",
+      "tabler": "IconCommand",
+      "expo": "Feather:command",
+      "heroicons": "CommandLineIcon",
+      "hugeicons": "CommandIcon",
+      "remixicon": "command-line"
+    },
+    "credit-card": {
+      "export": "CreditCard",
+      "lucide": "CreditCard",
+      "phosphor": "CreditCard",
+      "tabler": "IconCreditCard",
+      "expo": "Feather:credit-card",
+      "heroicons": "CreditCardIcon",
+      "hugeicons": "CreditCardIcon",
+      "remixicon": "bank-card-line"
+    },
+    "dollar": {
+      "export": "DollarSign",
+      "lucide": "DollarSign",
+      "phosphor": "CurrencyDollar",
+      "tabler": "IconCurrencyDollar",
+      "expo": "Feather:dollar-sign",
+      "heroicons": "CurrencyDollarIcon",
+      "hugeicons": "DollarSignIcon",
+      "remixicon": "money-dollar-circle-line"
+    },
+    "error": {
+      "export": "ErrorIcon",
+      "lucide": "CircleX",
+      "phosphor": "XCircle",
+      "tabler": "IconCircleX",
+      "expo": "Feather:x-circle",
+      "heroicons": "XCircleIcon",
+      "hugeicons": "MultiplicationSignCircleIcon",
+      "remixicon": "close-circle-line"
+    },
+    "frame": {
+      "export": "Frame",
+      "lucide": "Frame",
+      "phosphor": "FrameCorners",
+      "tabler": "IconFrame",
+      "expo": "Feather:grid",
+      "heroicons": "Square2StackIcon",
+      "hugeicons": "FrameIcon",
+      "remixicon": "focus-3-line"
+    },
+    "gallery": {
+      "export": "GalleryVerticalEnd",
+      "lucide": "GalleryVerticalEnd",
+      "phosphor": "ImagesSquare",
+      "tabler": "IconLayoutRows",
+      "expo": "MaterialCommunityIcons:view-gallery-outline",
+      "heroicons": "PhotoIcon",
+      "hugeicons": "Image01Icon",
+      "remixicon": "gallery-line"
+    },
+    "git-fork": {
+      "export": "GitFork",
+      "lucide": "GitFork",
+      "phosphor": "GitFork",
+      "tabler": "IconGitFork",
+      "expo": "Feather:git-pull-request",
+      "heroicons": "ShareIcon",
+      "hugeicons": "GitForkIcon",
+      "remixicon": "git-fork-line"
+    },
+    "home": {
+      "export": "Home",
+      "lucide": "Home",
+      "phosphor": "House",
+      "tabler": "IconHome",
+      "expo": "Feather:home",
+      "heroicons": "HomeIcon",
+      "hugeicons": "Home01Icon",
+      "remixicon": "home-line"
+    },
+    "info": {
+      "export": "Info",
+      "lucide": "Info",
+      "phosphor": "Info",
+      "tabler": "IconInfoCircle",
+      "expo": "Feather:info",
+      "heroicons": "InformationCircleIcon",
+      "hugeicons": "InformationCircleIcon",
+      "remixicon": "information-line"
+    },
+    "layout-dashboard": {
+      "export": "LayoutDashboard",
+      "lucide": "LayoutDashboard",
+      "phosphor": "SquaresFour",
+      "tabler": "IconLayoutDashboard",
+      "expo": "Feather:layout",
+      "heroicons": "Squares2X2Icon",
+      "hugeicons": "DashboardSquare01Icon",
+      "remixicon": "dashboard-line"
+    },
+    "life-buoy": {
+      "export": "LifeBuoy",
+      "lucide": "LifeBuoy",
+      "phosphor": "Lifebuoy",
+      "tabler": "IconLifebuoy",
+      "expo": "Feather:life-buoy",
+      "heroicons": "LifebuoyIcon",
+      "hugeicons": "LifebuoyIcon",
+      "remixicon": "lifebuoy-line"
+    },
+    "loader": {
+      "export": "Loader",
+      "lucide": "LoaderCircle",
+      "phosphor": "SpinnerGap",
+      "tabler": "IconLoader2",
+      "expo": "Feather:loader",
+      "heroicons": "ArrowPathIcon",
+      "hugeicons": "Loading03Icon",
+      "remixicon": "loader-4-line"
+    },
+    "loader-2": {
+      "export": "Loader2",
+      "lucide": "Loader2",
+      "phosphor": "SpinnerGap",
+      "tabler": "IconLoader2",
+      "expo": "Feather:loader",
+      "heroicons": "ArrowPathIcon",
+      "hugeicons": "Loading03Icon",
+      "remixicon": "loader-4-line"
+    },
+    "panel-left": {
+      "export": "PanelLeft",
+      "lucide": "PanelLeft",
+      "phosphor": "SidebarSimple",
+      "tabler": "IconLayoutSidebar",
+      "expo": "Feather:sidebar",
+      "heroicons": "ViewColumnsIcon",
+      "hugeicons": "SidebarLeftIcon",
+      "remixicon": "side-bar-line"
+    },
+    "success-2": {
+      "export": "CheckCircle2",
+      "lucide": "CheckCircle2",
+      "phosphor": "CheckCircle",
+      "tabler": "IconCircleCheck",
+      "expo": "Feather:check-circle",
+      "heroicons": "CheckCircleIcon",
+      "hugeicons": "CheckmarkCircle02Icon",
+      "remixicon": "checkbox-circle-line"
+    },
+    "alert-circle": {
+      "export": "AlertCircle",
+      "lucide": "AlertCircle",
+      "phosphor": "WarningCircle",
+      "tabler": "IconAlertCircle",
+      "expo": "Feather:alert-circle",
+      "heroicons": "ExclamationCircleIcon",
+      "hugeicons": "AlertCircleIcon",
+      "remixicon": "error-warning-line"
+    },
+    "lock": {
+      "export": "Lock",
+      "lucide": "Lock",
+      "phosphor": "Lock",
+      "tabler": "IconLock",
+      "expo": "Feather:lock",
+      "heroicons": "LockClosedIcon",
+      "hugeicons": "SquareLock02Icon",
+      "remixicon": "lock-line"
+    },
+    "mail": {
+      "export": "Mail",
+      "lucide": "Mail",
+      "phosphor": "EnvelopeSimple",
+      "tabler": "IconMail",
+      "expo": "Feather:mail",
+      "heroicons": "EnvelopeIcon",
+      "hugeicons": "Mail01Icon",
+      "remixicon": "mail-line"
+    },
+    "menu": {
+      "export": "Menu",
+      "lucide": "Menu",
+      "phosphor": "List",
+      "tabler": "IconMenu2",
+      "expo": "Feather:menu",
+      "heroicons": "Bars3Icon",
+      "hugeicons": "Menu01Icon",
+      "remixicon": "menu-line"
+    },
+    "minus": {
+      "export": "Minus",
+      "lucide": "Minus",
+      "phosphor": "Minus",
+      "tabler": "IconMinus",
+      "expo": "Feather:minus",
+      "heroicons": "MinusIcon",
+      "hugeicons": "MinusSignIcon",
+      "remixicon": "subtract-line"
+    },
+    "more-horizontal": {
+      "export": "MoreHorizontal",
+      "lucide": "Ellipsis",
+      "phosphor": "DotsThree",
+      "tabler": "IconDots",
+      "expo": "Feather:more-horizontal",
+      "heroicons": "EllipsisHorizontalIcon",
+      "hugeicons": "MoreHorizontalCircle01Icon",
+      "remixicon": "more-line"
+    },
+    "package": {
+      "export": "Package",
+      "lucide": "Package",
+      "phosphor": "Package",
+      "tabler": "IconPackage",
+      "expo": "Feather:package",
+      "heroicons": "CubeIcon",
+      "hugeicons": "PackageIcon",
+      "remixicon": "box-3-line"
+    },
+    "pie-chart": {
+      "export": "PieChart",
+      "lucide": "ChartPie",
+      "phosphor": "ChartPie",
+      "tabler": "IconChartPie",
+      "expo": "Feather:pie-chart",
+      "heroicons": "ChartPieIcon",
+      "hugeicons": "PieChartIcon",
+      "remixicon": "pie-chart-line"
+    },
+    "plus": {
+      "export": "Plus",
+      "lucide": "Plus",
+      "phosphor": "Plus",
+      "tabler": "IconPlus",
+      "expo": "Feather:plus",
+      "heroicons": "PlusIcon",
+      "hugeicons": "PlusSignIcon",
+      "remixicon": "add-line"
+    },
+    "search": {
+      "export": "Search",
+      "lucide": "Search",
+      "phosphor": "MagnifyingGlass",
+      "tabler": "IconSearch",
+      "expo": "Feather:search",
+      "heroicons": "MagnifyingGlassIcon",
+      "hugeicons": "Search01Icon",
+      "remixicon": "search-line"
+    },
+    "settings": {
+      "export": "Settings",
+      "lucide": "Settings",
+      "phosphor": "Gear",
+      "tabler": "IconSettings",
+      "expo": "Feather:settings",
+      "heroicons": "Cog6ToothIcon",
+      "hugeicons": "Settings01Icon",
+      "remixicon": "settings-line"
+    },
+    "settings-2": {
+      "export": "Settings2",
+      "lucide": "Settings2",
+      "phosphor": "SlidersHorizontal",
+      "tabler": "IconAdjustmentsHorizontal",
+      "expo": "Feather:sliders",
+      "heroicons": "AdjustmentsHorizontalIcon",
+      "hugeicons": "Settings05Icon",
+      "remixicon": "equalizer-2-line"
+    },
+    "shopping-cart": {
+      "export": "ShoppingCart",
+      "lucide": "ShoppingCart",
+      "phosphor": "ShoppingCart",
+      "tabler": "IconShoppingCart",
+      "expo": "Feather:shopping-cart",
+      "heroicons": "ShoppingCartIcon",
+      "hugeicons": "ShoppingCart01Icon",
+      "remixicon": "shopping-cart-line"
+    },
+    "square-terminal": {
+      "export": "SquareTerminal",
+      "lucide": "SquareTerminal",
+      "phosphor": "TerminalWindow",
+      "tabler": "IconTerminal2",
+      "expo": "Feather:terminal",
+      "heroicons": "CommandLineIcon",
+      "hugeicons": "ComputerTerminal01Icon",
+      "remixicon": "terminal-box-line"
+    },
+    "success": {
+      "export": "SuccessIcon",
+      "lucide": "CircleCheck",
+      "phosphor": "CheckCircle",
+      "tabler": "IconCircleCheck",
+      "expo": "Feather:check-circle",
+      "heroicons": "CheckCircleIcon",
+      "hugeicons": "CheckmarkCircle02Icon",
+      "remixicon": "checkbox-circle-line"
+    },
+    "trending-down": {
+      "export": "TrendingDown",
+      "lucide": "TrendingDown",
+      "phosphor": "TrendDown",
+      "tabler": "IconTrendingDown",
+      "expo": "Feather:trending-down",
+      "heroicons": "ArrowTrendingDownIcon",
+      "hugeicons": "TrendingDownIcon",
+      "remixicon": "arrow-down-line"
+    },
+    "trending-up": {
+      "export": "TrendingUp",
+      "lucide": "TrendingUp",
+      "phosphor": "TrendUp",
+      "tabler": "IconTrendingUp",
+      "expo": "Feather:trending-up",
+      "heroicons": "ArrowTrendingUpIcon",
+      "hugeicons": "TrendingUpIcon",
+      "remixicon": "arrow-up-line"
+    },
+    "user": {
+      "export": "User",
+      "lucide": "User",
+      "phosphor": "User",
+      "tabler": "IconUser",
+      "expo": "Feather:user",
+      "heroicons": "UserIcon",
+      "hugeicons": "UserIcon",
+      "remixicon": "user-line"
+    },
+    "users": {
+      "export": "Users",
+      "lucide": "Users",
+      "phosphor": "Users",
+      "tabler": "IconUsers",
+      "expo": "Feather:users",
+      "heroicons": "UsersIcon",
+      "hugeicons": "UserGroupIcon",
+      "remixicon": "group-line"
+    },
+    "wallet": {
+      "export": "Wallet",
+      "lucide": "WalletCards",
+      "phosphor": "Wallet",
+      "tabler": "IconWallet",
+      "expo": "Ionicons:wallet-outline",
+      "heroicons": "WalletIcon",
+      "hugeicons": "Wallet01Icon",
+      "remixicon": "wallet-line"
+    },
+    "warning": {
+      "export": "Warning",
+      "lucide": "TriangleAlert",
+      "phosphor": "Warning",
+      "tabler": "IconAlertTriangle",
+      "expo": "Feather:alert-triangle",
+      "heroicons": "ExclamationTriangleIcon",
+      "hugeicons": "Alert02Icon",
+      "remixicon": "alert-line"
+    }
   }
 }
