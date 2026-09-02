@@ -29,9 +29,9 @@ export function BetaToggle({ className }: { className?: string }) {
           : "Turn on Beta mode to see beta components and beta install commands"
       }
       className={cn(
-        "group inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs font-semibold transition-colors active:scale-[0.98]",
+        "group inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-300 ease-out active:scale-[0.97]",
         beta
-          ? "beta-pill"
+          ? "border-[var(--beta-accent-line)] bg-[var(--beta-accent-soft)] text-[var(--beta-accent-strong)] shadow-xs"
           : "border-border/80 bg-muted/40 text-muted-foreground hover:border-border hover:text-foreground",
         className
       )}
@@ -39,18 +39,18 @@ export function BetaToggle({ className }: { className?: string }) {
       <span
         aria-hidden
         className={cn(
-          "relative h-3.5 w-6 shrink-0 rounded-full transition-colors",
+          "relative flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors duration-300 ease-out",
           beta ? "bg-[var(--beta-accent)]" : "bg-foreground/20"
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 size-2.5 rounded-full bg-background shadow-sm transition-all duration-200",
-            beta ? "left-[0.8125rem]" : "left-0.5"
+            "size-3 rounded-full bg-white shadow-xs transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            beta ? "translate-x-3" : "translate-x-0"
           )}
         />
       </span>
-      <span className="pr-0.5">Beta</span>
+      <span className="pr-0.5 select-none transition-colors duration-300">Beta</span>
     </button>
   )
 }
