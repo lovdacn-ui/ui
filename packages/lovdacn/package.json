@@ -1,15 +1,14 @@
 {
   "name": "lovdacn",
   "type": "module",
-  "version": "1.0.0-beta.8",
+  "version": "0.5.0",
   "private": false,
   "license": "MIT",
   "files": [
     "dist"
   ],
   "publishConfig": {
-    "access": "public",
-    "tag": "beta"
+    "access": "public"
   },
   "exports": {
     ".": {
